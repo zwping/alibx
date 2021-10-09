@@ -4,7 +4,7 @@
  基于nodejs自动发布jitpack
 
  使用
-    复制当前js脚本至项目根目录 [如果配置自定义域名, 需要手动添加]
+    复制当前js脚本至项目根目录 [自定义域名需要手动添加]
     [export NODE_PATH=$(npm root -g)]
     npm install -g shelljs axios
     node 自动发布jitpack脚本.js
@@ -148,10 +148,10 @@ function get_builds() {
                 echo(`${getCusBuildTag()}恭喜您, 自动发布jitpack成功 /撒花`)
                 echo(`${getCusBuildTag()}maven { url 'https://jitpack.io' }`)
                 var multi = r.data.modules.length>0 ? `:[${r.data.modules}]` : '' // 多lib
-                echo(`${getCusBuildTag()}implementation 'com.github.${cfg.groupId}.${cfg.artifactId}${multi}:${cfg.newVName}'`)
+                echo(`${getCusBuildTag()}implementation '${getDomainName()}.${cfg.artifactId}${multi}:${cfg.newVName}'`)
                 get_downs()
                 if (cfg.cusGroupId) {
-                    cusGroupIdBuilding = true; get_refs(); // 第二轮自定义域名编译
+                    errNum=0; cfg.cusGroupId = ''; get_refs(); // 第二轮同步编译
                 }
                 return
             }
@@ -205,10 +205,9 @@ function get_refs() {
 
 get_refs()
 
-var cusGroupIdBuilding = false
 function getDomainName() {
-    return cusGroupIdBuilding && cfg.cusGroupId ? `${cfg.cusGroupId}` : `com.github.${cfg.groupId}`
+    return cfg.cusGroupId ? `${cfg.cusGroupId}` : `com.github.${cfg.groupId}`
 }
 function getCusBuildTag() {
-    return cusGroupIdBuilding ? '[自定义域名] ' : ''
+    return cfg.cusGroupId ? '[自定义域名] ' : ''
 }
