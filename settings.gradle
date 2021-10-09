@@ -6,6 +6,6 @@
 //        jcenter() // Warning: this repository is going to shut down soon
 //    }
 //}
-rootProject.name = "ALibx"
+rootProject.name = "alibx"
 include ':app'
 include ':alibx'

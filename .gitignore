@@ -17,4 +17,4 @@ local.properties
 node_modules
 package-lock.json
 package.json
-# 自动发布jitpack脚本.js
+# autojitpack.js
