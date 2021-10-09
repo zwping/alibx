@@ -5,4 +5,3 @@
 > kt的扩展属性和顶层属性
 2. js配合jitpack一键发版
 > 自动发布jitpack脚本.js
-
