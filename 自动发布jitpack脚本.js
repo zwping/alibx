@@ -65,6 +65,9 @@ if (remotev.startsWith('git@')) {
     cfg.artifactId = remotev.split('/')[1].replace('.git', '')
 }
 
+// echo(getDomainName())
+// return
+
 var status = shell.exec('git status')
 // echo(status)
 if (status.indexOf('nothing to commit') !== -1 && 
@@ -133,7 +136,7 @@ echo(`cfg对象 ${JSON.stringify(cfg)}`)
 
 var errNum = 0
 function get_builds() {
-    var url = `https://jitpack.io/api/builds/${getDomainName}/${cfg.artifactId}/${cfg.newVName}`
+    var url = `https://jitpack.io/api/builds/${getDomainName()}/${cfg.artifactId}/${cfg.newVName}`
     echo(`${getCusBuildTag()}正在查询jitpack build结果`)
     axios.get(url)
         .then(r => {
@@ -166,7 +169,7 @@ function get_builds() {
 }
 
 function get_downs() {
-    var url = `${getCusBuildTag()}https://jitpack.io/api/downloads/${getDomainName}/${cfg.artifactId}`
+    var url = `https://jitpack.io/api/downloads/${getDomainName()}/${cfg.artifactId}`
     echo(`${getCusBuildTag()}正在查询用户使用情况`)
     axios.get(url)
     .then(r => {
@@ -181,7 +184,7 @@ function get_downs() {
 var refsNum = 0
 function get_refs() {
     echo(`${getCusBuildTag()}正在同步 jitpack from github`)
-    var url = `${getCusBuildTag()}https://jitpack.io/api/refs/${getDomainName}/${cfg.artifactId}`
+    var url = `https://jitpack.io/api/refs/${getDomainName()}/${cfg.artifactId}`
     axios.get(url)
         .then(r => {
             // echo(JSON.stringify(r.data))
