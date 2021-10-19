@@ -1,5 +1,6 @@
 package com.zwping.alibx
 
+import androidx.viewbinding.ViewBinding
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -23,7 +24,7 @@ abstract class IJson(obj: JSONObject? = null) {
     }
 
     /*** 手动解析数组 ***/
-    fun <T : IJson> JSONObject.optJSONArrayOrNull(key: String, lis: (JSONObject) -> T): MutableList<T>? {
+    fun <T : ViewBinding> JSONObject.optJSONArrayOrNull(key: String, lis: (JSONObject) -> T): MutableList<T>? {
         var data: MutableList<T>? = null
         optJSONArray(key)?.apply {
             data = mutableListOf()
