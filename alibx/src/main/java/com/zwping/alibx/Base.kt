@@ -70,7 +70,6 @@ interface BaseFmInterface<VB: ViewBinding> {
 
 /**
  * ac基类
- * <p>
  *      原始FindViewById写法
  *      class MainActivity: BaseAc<ViewBinding>(R.layout.activity_main) {
  *          fun onCreate(bundle) {
@@ -91,7 +90,6 @@ interface BaseFmInterface<VB: ViewBinding> {
  *              ...
  *          }
  *      }
- * </p>
  */
 open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
 
@@ -168,7 +166,6 @@ open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
 
 /**
  * fm基类
- * <p>
  *     原始FindViewById写法
  *     class HomeFragment: BaseFm<ViewBinding>(R.layout.fragment_home) {
  *          fun onViewCreated(view, bundle) {
@@ -195,7 +192,6 @@ open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
  *              ...
  *          }
  *     }
- * </p>
  */
 open class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
 
