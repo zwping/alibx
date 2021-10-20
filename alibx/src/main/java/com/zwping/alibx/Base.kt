@@ -70,7 +70,8 @@ interface BaseFmInterface<VB: ViewBinding> {
 
 /**
  * ac基类
- * <pre>
+ * <p>
+ *      原始FindViewById写法
  *      class MainActivity: BaseAc<ViewBinding>(R.layout.activity_main) {
  *          fun onCreate(bundle) {
  *              showLoading(..)
@@ -78,6 +79,7 @@ interface BaseFmInterface<VB: ViewBinding> {
  *              ...
  *          }
  *      }
+ *      ViewBinding写法
  *      class MainActivity: BaseAc<ActivityMainBinding>() {
  *          fun onCreateVB(inflater) {
  *              return ActivityMainBinding.inflater(inflater)
@@ -89,7 +91,7 @@ interface BaseFmInterface<VB: ViewBinding> {
  *              ...
  *          }
  *      }
- * </pre>
+ * </p>
  */
 open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
 
@@ -166,7 +168,8 @@ open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
 
 /**
  * fm基类
- * <pre>
+ * <p>
+ *     原始FindViewById写法
  *     class HomeFragment: BaseFm<ViewBinding>(R.layout.fragment_home) {
  *          fun onViewCreated(view, bundle) {
  *              showLoading(..)
@@ -177,6 +180,7 @@ open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
  *              ...
  *          }
  *     }
+ *     ViewBinding写法
  *     class HomeFragment: BaseFm<FragmentHomeBinding>() {
  *          fun onCreateVB(inflater, parent, attachToParent) {
  *              return FragmentHomeBinding.inflater(inflater, parent, attachToParent)
@@ -191,7 +195,7 @@ open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
  *              ...
  *          }
  *     }
- * </pre>
+ * </p>
  */
 open class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
 
