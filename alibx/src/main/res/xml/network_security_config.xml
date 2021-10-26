@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+    <!-- 指定域名使用http -->
+    <!--
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">api.example.com</domain>
+    </domain-config>
+    -->
+</network-security-config>
+<!-- 解9.0(P)TLS限制, 支持http -->

@@ -50,7 +50,7 @@ interface BaseFmInterface<VB: ViewBinding> {
 
     // 快捷
     fun onViewCreated2() { }
-    fun onLazyResume() { }
+    fun onResumeLazy() { }
 
     // base 联动
     fun baseAc() = if (ac is BaseAc<*>) ac as BaseAc<ViewBinding> else null
@@ -68,29 +68,29 @@ interface BaseFmInterface<VB: ViewBinding> {
 }
 
 
-/**
- * ac基类
- *      原始FindViewById写法
- *      class MainActivity: BaseAc<ViewBinding>(R.layout.activity_main) {
- *          fun onCreate(bundle) {
- *              showLoading(..)
- *              hideLoading()
- *              ...
- *          }
- *      }
- *      ViewBinding写法
- *      class MainActivity: BaseAc<ActivityMainBinding>() {
- *          fun onCreateVB(inflater) {
- *              return ActivityMainBinding.inflater(inflater)
- *          }
- *          fun onCreate2() {
- *              vb.toolbar...
- *              showLoading(..)
- *              hideLoading()
- *              ...
- *          }
- *      }
+/* 原始FindViewById写法
+class MainActivity: BaseAc<ViewBinding>(R.layout.activity_main) {
+    fun onCreate(bundle) {
+        showLoading(..)
+        hideLoading()
+        ...
+    }
+}
  */
+/* ViewBinding写法
+class MainActivity: BaseAc<ActivityMainBinding>() {
+    fun onCreateVB(inflater) {
+        return ActivityMainBinding.inflater(inflater)
+    }
+    fun onCreate2() {
+        vb.toolbar...
+        showLoading(..)
+        hideLoading()
+        ...
+    }
+}
+ */
+/*** ac基类 ***/
 open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
 
     constructor()
@@ -164,35 +164,36 @@ open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
     }
 }
 
-/**
- * fm基类
- *     原始FindViewById写法
- *     class HomeFragment: BaseFm<ViewBinding>(R.layout.fragment_home) {
- *          fun onViewCreated(view, bundle) {
- *              showLoading(..)
- *              hideLoading()
- *              ...
- *          }
- *          fun onLazyResume() {
- *              ...
- *          }
- *     }
- *     ViewBinding写法
- *     class HomeFragment: BaseFm<FragmentHomeBinding>() {
- *          fun onCreateVB(inflater, parent, attachToParent) {
- *              return FragmentHomeBinding.inflater(inflater, parent, attachToParent)
- *          }
- *          fun onViewCreated2() {
- *              vb.tvTitle....
- *              showLoading(..)
- *              hideLoading()
- *              ...
- *          }
- *          fun onLazyResume() {
- *              ...
- *          }
- *     }
+/* 原始FindViewById写法
+ class HomeFragment: BaseFm<ViewBinding>(R.layout.fragment_home) {
+      fun onViewCreated(view, bundle) {
+          showLoading(..)
+          hideLoading()
+          ...
+      }
+      fun onLazyResume() {
+          ...
+      }
+ }
  */
+/* ViewBinding写法
+ class HomeFragment: BaseFm<FragmentHomeBinding>() {
+      fun onCreateVB(inflater, parent, attachToParent) {
+          return FragmentHomeBinding.inflater(inflater, parent, attachToParent)
+      }
+      fun onViewCreated2() {
+          vb.tvTitle....
+          showLoading(..)
+          hideLoading()
+          ...
+      }
+      fun onLazyResume() {
+          ...
+      }
+ }
+ */
+
+/*** fm基类 ***/
 open class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
 
     constructor()
@@ -214,11 +215,11 @@ open class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
         onViewCreated2()
     }
 
+    protected var _lazy = true
     override fun onResume() {
         super.onResume()
-        if (_lazy) { _lazy=false; onLazyResume() }
+        if (_lazy) { _lazy=false; onResumeLazy() }
     }
-    protected var _lazy = true
 
     override fun onDestroy() {
         hideLoading()
