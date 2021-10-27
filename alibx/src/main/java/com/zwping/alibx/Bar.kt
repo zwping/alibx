@@ -93,6 +93,8 @@ interface BarInterface {
     fun Activity.getContentView(): View?
     fun View?.addMarginBottomNavBarHeight()
     fun View?.subtractMarginBottomNavBarHeight()
+    fun View?.addMarginTopStatusBarHeight()
+    fun View?.subtractMarginTopStatusBarHeight()
 }
 
 
@@ -219,20 +221,35 @@ object Bar : BarInterface {
         attributes = attributes.also { it.layoutInDisplayCutoutMode = cutoutMode }
     }
 
+
     override fun Activity.getContentView(): View? { return findViewById<ViewGroup>(android.R.id.content).getChildAt(0) }
     override fun View?.addMarginBottomNavBarHeight() {
         this ?: return
         val lp = layoutParams as ViewGroup.MarginLayoutParams
         val navh = context.getNavBarHeight()
-        val bottom = if (lp.bottomMargin >= navh) lp.bottomMargin else lp.bottomMargin+navh
-        lp.setMargins(lp.leftMargin, lp.topMargin, lp.rightMargin, bottom)
+        lp.bottomMargin = if (lp.bottomMargin >= navh) lp.bottomMargin else lp.bottomMargin+navh
+        layoutParams = lp
     }
     override fun View?.subtractMarginBottomNavBarHeight() {
         this ?: return
         val lp = layoutParams as ViewGroup.MarginLayoutParams
         val navh = context.getNavBarHeight()
-        val bottom = if (lp.bottomMargin < navh) navh else lp.bottomMargin-navh
-        lp.setMargins(lp.leftMargin, lp.topMargin, lp.rightMargin, bottom)
+        lp.bottomMargin = if (lp.bottomMargin < navh) navh else lp.bottomMargin-navh
+        layoutParams = lp
+    }
+    override fun View?.addMarginTopStatusBarHeight() {
+        this ?: return
+        val lp = layoutParams as ViewGroup.MarginLayoutParams
+        val statusH = context.getStatusBarHeight()
+        lp.topMargin = if (lp.topMargin >= statusH) lp.topMargin else lp.topMargin+statusH
+        layoutParams = lp
+    }
+    override fun View?.subtractMarginTopStatusBarHeight() {
+        this ?: return
+        val lp = layoutParams as ViewGroup.MarginLayoutParams
+        val statusH = context.getStatusBarHeight()
+        lp.topMargin = if (lp.topMargin < statusH) statusH else lp.topMargin-statusH
+        layoutParams = lp
     }
 
 }

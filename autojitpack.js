@@ -148,7 +148,7 @@ function get_builds() {
                 echo(`${getCusBuildTag()}恭喜您, 自动发布jitpack成功 /撒花`)
                 echo(`${getCusBuildTag()}maven { url 'https://jitpack.io' }`)
                 var multi = r.data.modules.length>0 ? `:[${r.data.modules}]` : '' // 多lib
-                echo(`${getCusBuildTag()}implementation '${getDomainName()}.${cfg.artifactId}${multi}:${cfg.newVName}'`)
+                echo(`${getCusBuildTag()}implementation '${getDomainName()}:${cfg.artifactId}${multi}:${cfg.newVName}'`)
                 get_downs()
                 if (cfg.cusGroupId) {
                     errNum=0; cfg.cusGroupId = ''; get_refs(); // 第二轮同步编译
