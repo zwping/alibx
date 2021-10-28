@@ -54,6 +54,8 @@ Toolbar布局: [ navigationIcon - logoIcon - title/subTitle - (childView) - menu
  * @return AppCompatTextView
  */
 fun Toolbar.setTitleOfCenter(title: CharSequence?): AppCompatTextView {
+    // setSupportActionBar(toolbar) // 不建议设置为ActionBar
+    // supportActionBar?.setDisplayShowTitleEnabled(false)
     setTitle("") // 置空默认标题
     contentInsetStartWithNavigation = 0
     for (i in 0 until childCount) {
