@@ -19,7 +19,10 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.*
 import androidx.fragment.app.Fragment
 
-
+/**
+ * 状态栏、导航栏常用功能平铺
+ * @lastTime 2021年11月01日17:18:22
+ */
 interface BarInterface {
 
     /*** android 11 flags大量废弃 ***/
@@ -64,6 +67,11 @@ interface BarInterface {
     fun Activity.setNavBarDarkMode(darkMode: Boolean=false)
     fun Fragment.setNavBarDarkMode(darkMode: Boolean=false)
 
+    /**
+     * 设置状态栏隐藏/显示
+     * @param behavior 隐藏后bar显示的行为
+     * @param cutoutMode 异形屏兼容模式
+     */
     fun Activity.setStatusBarHide(hide: Boolean=true,
                                   behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
                                   cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES)
@@ -73,6 +81,9 @@ interface BarInterface {
     fun Activity.setNavBarHide(hide: Boolean=true, behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE)
     fun Fragment.setNavBarHide(hide: Boolean=true, behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE)
 
+    /**
+     * 设置状态栏颜色
+     */
     fun Activity.setStatusBarColor(@ColorInt color: Int)
     fun Fragment.setStatusBarColor(@ColorInt color: Int)
     fun Activity.setNavBarColor(@ColorInt color: Int)
@@ -81,6 +92,9 @@ interface BarInterface {
 
     fun AppCompatActivity.setActionBarColor(@ColorInt color: Int)
 
+    /**
+     * 获取状态栏高度/px
+     */
     fun Context?.getStatusBarHeight(): Int
     fun Context?.getNavBarHeight(): Int
     fun Context?.getActionBarHeight(): Int
@@ -90,6 +104,9 @@ interface BarInterface {
     @RequiresApi(Build.VERSION_CODES.P)
     fun Window.setCutoutMode(cutoutMode: Int)
 
+    /**
+     * 手动补偿沉浸式后bar的空缺高度
+     */
     fun Activity.getContentView(): View?
     fun View?.addMarginBottomNavBarHeight()
     fun View?.subtractMarginBottomNavBarHeight()

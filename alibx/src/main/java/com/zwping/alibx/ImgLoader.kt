@@ -25,9 +25,10 @@ import java.security.MessageDigest
 import kotlin.math.max
 
 /**
- * 图片加载: [ImgLoaderInterface]
- * 图片加载过程中图片操作: [ImgLoaderOptInterface]
+ * 图片加载常用功能平铺: [ImgLoaderInterface]
+ * 图片加载过程中图片常用操作功能平铺: [ImgLoaderOptInterface]
  * zwping @ 2021/10/28
+ * @lastTime 2021年11月01日17:18:22
  */
 interface ImgLoaderInterface {
 
@@ -81,14 +82,10 @@ interface ImgLoaderOptInterface {
     // 对图片的转码类型
     enum class TranscodeType { Drawable, Bitmap, Gif, File }
     var transcodeType: TranscodeType
-    fun asDrawable() { transcodeType = TranscodeType.Drawable
-    }
-    fun asBitmap() { transcodeType = TranscodeType.Bitmap
-    }
-    fun asGif() { transcodeType = TranscodeType.Gif
-    }
-    fun asFile() { transcodeType = TranscodeType.File
-    }
+    fun asDrawable() { transcodeType = TranscodeType.Drawable }
+    fun asBitmap() { transcodeType = TranscodeType.Bitmap }
+    fun asGif() { transcodeType = TranscodeType.Gif }
+    fun asFile() { transcodeType = TranscodeType.File }
 
     // 图片展示类型, 使用ImageView.ScaleType管理
     var scaleType: ImageView.ScaleType
@@ -96,10 +93,8 @@ interface ImgLoaderOptInterface {
     // 图片形状 支持圆形 & 正方形
     enum class ShapeType{ Default, Circle, Square }
     var shapeType: ShapeType
-    fun circleCrop() { shapeType = ShapeType.Circle
-    }
-    fun squareCrop() { shapeType = ShapeType.Square
-    }
+    fun circleCrop() { shapeType = ShapeType.Circle }
+    fun squareCrop() { shapeType = ShapeType.Square }
 
     // 图片边框
     data class Stroke(val wDp: Float, @ColorInt val color: Int)
@@ -118,12 +113,9 @@ interface ImgLoaderOptInterface {
     // 缓存
     enum class CacheType{ All, Memory, Disk, None }
     var cacheType: CacheType
-    fun skipMemoryCache() { cacheType = CacheType.Disk
-    }
-    fun skipDiskCache() { cacheType = CacheType.Memory
-    }
-    fun skipCache() { cacheType = CacheType.None
-    }
+    fun skipMemoryCache() { cacheType = CacheType.Disk }
+    fun skipDiskCache() { cacheType = CacheType.Memory }
+    fun skipCache() { cacheType = CacheType.None }
 
     // 本地模式, 只读取缓存图片
     var onlyReadCache: Boolean

@@ -29,7 +29,7 @@ import kotlin.random.Random
  * 简易封装okhttp
  *   - 满足restful api / down file / upload file / coroutine
  * zwping @ 5/24/21
- * lastime: 2021年08月26日11:00:08
+ * @lastTime: 2021年08月26日11:00:08
  */
 object Requests {
 

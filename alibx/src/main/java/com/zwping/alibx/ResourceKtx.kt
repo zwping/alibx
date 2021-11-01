@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
  *  - [ColorStateList2] 代码创建view不同状态[States]的Color
  *
  * zwping @ 12/29/20
+ * @lastTime: 2021年08月26日11:00:08
  */
 val density by lazy { Resources.getSystem().displayMetrics.density }
 inline fun Float.dpToPx(): Float = 0.5f + this * density

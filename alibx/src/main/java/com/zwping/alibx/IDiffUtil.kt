@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.DiffUtil
  * @param areItemsTheSame
  * @param areContentsTheSame
  * @param getChangePayload
+ *
+ * @lastTime 2021年11月01日17:18:22
  */
 class IDiffUtil<B>(
         private val areItemsTheSame: (od: B?, nd: B?) -> Boolean,

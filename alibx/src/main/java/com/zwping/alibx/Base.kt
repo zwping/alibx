@@ -25,14 +25,15 @@ import androidx.viewbinding.ViewBinding
 /**
  * 紧凑的封装
  * zwping @ 2021/10/18
+ * @lastTime 2021年11月01日17:18:22
  */
 interface BaseAcInterface<VB: ViewBinding> {
 
     // 快捷
-    fun onCreate2() { }
+    fun initView()
 
     // ViewBinding功能提供
-    fun onCreateVB(inflater: LayoutInflater): VB? { return null }       // 实现
+    fun initVB(inflater: LayoutInflater): VB? { return null }       // 实现
     val _binding: VB?
     val vb: VB get() = _binding!!                                       // 使用
 
@@ -42,14 +43,14 @@ interface BaseAcInterface<VB: ViewBinding> {
     fun showLoading(txt: CharSequence?=null, delayed: Boolean=true)
     fun hideLoading()
 
-    // 辅助
+    // 辅助方法
     val handler: Handler
     fun dpToPx(dp: Float): Float { return 0.5F+dp*Resources.getSystem().displayMetrics.density }
 }
 interface BaseFmInterface<VB: ViewBinding> {
 
     // 快捷
-    fun onViewCreated2() { }
+    fun initView()
     fun onResumeLazy() { }
 
     // base 联动
@@ -57,7 +58,7 @@ interface BaseFmInterface<VB: ViewBinding> {
     val ac: FragmentActivity?
 
     // ViewBinding功能提供
-    fun onCreateVB(inflater: LayoutInflater, parent: ViewGroup?, attachToParent: Boolean=false): VB? { return null }    // 实现, ide快捷输出
+    fun initVB(inflater: LayoutInflater, parent: ViewGroup?, attachToParent: Boolean=false): VB? { return null }    // 实现, ide快捷输出
     val _binding: VB?
     val vb: VB get() = _binding!!       // 使用
 
@@ -91,18 +92,18 @@ class MainActivity: BaseAc<ActivityMainBinding>() {
 }
  */
 /*** ac基类 ***/
-open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
+abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
 
     constructor()
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
-    override val _binding: VB? by lazy { onCreateVB(layoutInflater) }
+    override val _binding: VB? by lazy { initVB(layoutInflater) }
     override val _loading: Dialog by lazy { _initDialog() }
     override val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding?.also { setContentView(vb.root) }
-        onCreate2()
+        initView()
     }
 
     override fun onDestroy() {
@@ -194,11 +195,11 @@ open class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
  */
 
 /*** fm基类 ***/
-open class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
+abstract class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
 
     constructor()
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
-    override val _binding: VB? by lazy { onCreateVB(_inf!!, _cont, false) }
+    override val _binding: VB? by lazy { initVB(_inf!!, _cont, false) }
 
     override val ac: FragmentActivity? by lazy { activity }
 
@@ -212,7 +213,7 @@ open class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        onViewCreated2()
+        initView()
     }
 
     protected var _lazy = true

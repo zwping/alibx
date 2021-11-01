@@ -13,7 +13,7 @@ import androidx.viewbinding.ViewBinding
 /**
  * ViewBinding的成熟推动了原生Adapter实用
  * zwping @ 5/10/21
- * lasttime: 2021年09月13日14:10:41
+ * @lastTime: 2021年09月13日14:10:41
  */
 class RecyclerViewKtx
 

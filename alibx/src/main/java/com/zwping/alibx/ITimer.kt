@@ -9,7 +9,7 @@ import androidx.lifecycle.LifecycleOwner
 import java.util.*
 
 /**
- * 定时器扩展
+ * 定时器扩展类
  *  - Timer类封装[ITimer], 执行[schedule]具有生命周期感知, 当[period]=0时为单次计划执行, 可获取执行次数[count], 同时可主动取消[count]
  *
  * @param action
@@ -17,6 +17,7 @@ import java.util.*
  * @param period milliseconds 周期时间; =0 =单次倒计时任务
  *
  * zwping @ 12/24/20
+ * @lastTime 2021年11月01日17:18:22
  */
 class ITimer(private val action: (ITimer) -> Unit, private val delay: Long, private val period: Long = 0): LifecycleEventObserver {
     /*** 执行次数 ***/

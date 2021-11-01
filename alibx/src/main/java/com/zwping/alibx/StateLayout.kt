@@ -21,7 +21,7 @@ import androidx.appcompat.widget.AppCompatTextView
 
 /**
  * 状态布局切换 (loading / empty / error|netError / content)
- * lasttime: 2021年08月26日11:34:40
+ * @lastTime: 2021年08月26日11:34:40
  */
 class StateLayout @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0

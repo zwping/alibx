@@ -1,6 +1,7 @@
 package com.zwping.alibx;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -74,7 +75,9 @@ import static android.graphics.BlurMaskFilter.Blur;
  */
 public final class SpanUtils {
 
-    public static Context getApp() { return null; }  // 每次引用都需要重写返回值
+    private static Application app;
+    public static void setAppContext(Application app) { SpanUtils.app = app; }
+    private static Context getApp() { return app; }  // 每次引用都需要重写返回值
 
     private static final int COLOR_DEFAULT = 0xFEFFFFFF;
 
