@@ -88,7 +88,7 @@ interface ImgLoaderOptInterface {
     fun asFile() { transcodeType = TranscodeType.File }
 
     // 图片展示类型, 使用ImageView.ScaleType管理
-    var scaleType: ImageView.ScaleType
+    var scaleType: ImageView.ScaleType?
 
     // 图片形状 支持圆形 & 正方形
     enum class ShapeType{ Default, Circle, Square }
@@ -143,7 +143,7 @@ class ImgLoaderOpt: ImgLoaderOptInterface {
     override var error: Int?=null
         get() = field ?: ImageLoader.globalError
     override var transcodeType = ImgLoaderOptInterface.TranscodeType.Drawable
-    override var scaleType = ImageView.ScaleType.FIT_CENTER
+    override var scaleType: ImageView.ScaleType? = null
     override var shapeType = ImgLoaderOptInterface.ShapeType.Default
     override var stroke: ImgLoaderOptInterface.Stroke?=null
     override var radii: FloatArray?=null
@@ -241,7 +241,7 @@ object ImageLoader: ImgLoaderInterface {
         if (opt.errorDrw != null) reqBuilder.error(opt.errorDrw)
         else if (opt.error != null) reqBuilder.error(opt.error!!)
 
-        if (iv?.scaleType != opt.scaleType) iv?.scaleType = opt.scaleType
+        if (opt.scaleType != null) iv?.scaleType = opt.scaleType
 
         if (opt.shapeType != ImgLoaderOptInterface.ShapeType.Default || opt.radii != null || opt.stroke != null) {
             reqBuilder.transform(
