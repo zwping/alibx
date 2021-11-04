@@ -16,6 +16,7 @@ abstract class IJson(obj: JSONObject? = null) {
         @JvmStatic fun JSONArray.forEach(lis: (ob: JSONObject?) -> Unit) { for (i in 0 until length()) { lis.invoke(optJSONObject(i)) } }
         @JvmStatic fun JSONArray.forEachIndexed(lis: (index: Int, ob: JSONObject?) -> Unit) { for (i in 0 until length()) { lis.invoke(i, optJSONObject(i)) } }
 
+
         /*
         [
             '',
@@ -44,6 +45,12 @@ abstract class IJson(obj: JSONObject? = null) {
             val data = mutableListOf<T>()
             for(i in 0 until length()) { optJSONObject(i)?.also { data.add(lis(it)) } }
             return data
+        }
+
+        @JvmStatic fun <T> JSONObject?.optJSONObjectOrNull(lis: (JSONObject) -> T): T? {
+            this ?: return null
+            if (this.length() == 0) return null
+            return lis(this)
         }
 
     }
