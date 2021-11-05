@@ -15,31 +15,7 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
         return ActivityMainBinding.inflate(inflater)
     }
 
-    private var isLastPage = false
-    private var isDargPage = false
-
     override fun initView() {
-        vb.viewPager2.setBannerMultiItem(6F.dp2px(), 15F.dp2px())
-        vb.viewPager2.initBannerOfVB<String, TestBinding>(
-            {TestBinding.inflate(LayoutInflater.from(it.context), it, false)},
-            {vb, data, position ->
-                vb.tvTest.text = "${data[position]}"
-            }, opt= {
-                hasLoop = false
-                onPageScrolled = {position, offset, offsetPixels ->
-                    if (isLastPage && isDargPage && offsetPixels==0) {
-                        println("=====")
-                    }
-                }
-                onPageSelected = {position, count, data ->
-                    isLastPage = position==count-1
-                }
-                onPageScrollStateChanged = {state ->
-                    isDargPage = state==1
-                }
-            })
-
-        vb.viewPager2.setBannerData(mutableListOf("11", "22", "33"), false)
     }
 
 }

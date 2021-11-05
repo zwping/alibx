@@ -3,6 +3,7 @@ package com.zwping.alibx
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.LayoutTransition
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.res.ColorStateList
@@ -55,10 +56,10 @@ class StateLayout @JvmOverloads constructor(
             var DefaultEmptyIconResId: Int? = null,
             var DefaultErrorIconResId: Int? = null,
             var DefaultNetErrorIconResId: Int? = null,
-            var DefaultLoadingTxt: String = "加载中...",
-            var DefaultEmptyTxt: String = "暂无数据",
-            var DefaultErrorTxt: String = "加载失败\n轻触屏幕重新加载",
-            var DefaultNetErrorTxt: String = "无网络连接\n轻触屏幕重新加载",
+            var DefaultLoadingTxt: CharSequence = "加载中...",
+            var DefaultEmptyTxt: CharSequence = "暂无数据",
+            var DefaultErrorTxt: CharSequence = "加载失败\n轻触屏幕重新加载",
+            var DefaultNetErrorTxt: CharSequence = "无网络连接\n轻触屏幕重新加载",
             var DefaultRemindTxtColor: Int = Color.parseColor("#8a8a8a"),
             var DefaultRemindTxtSize: Float = 15F, // dp
             var DefaultIconWidth: Float = 85F, // dp
@@ -110,6 +111,7 @@ class StateLayout @JvmOverloads constructor(
         }.also { it.visibility = INVISIBLE; addView(it) }
     }
 
+    @SuppressLint("MissingPermission")
     private fun showView(state: State, txt: CharSequence? = null, iconResId: Int? = null) {
         if (curState == state) return
         if (state == State.ERROR && curState == State.CONTENT) return
