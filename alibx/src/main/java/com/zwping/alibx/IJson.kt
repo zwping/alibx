@@ -13,7 +13,7 @@ import java.lang.reflect.ParameterizedType
  * @param autoReflexParse 自动解析简单对象
  *                        混淆必须加 { -keepclassmembers public class * extends com.zwping.alibx.IJson { *; } }
  *                        alibx库已加混淆规则
- * @lastTime 2021年11月06日23:49:04
+ * @lastTime 2021年11月08日10:57:38
  */
 abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
 

@@ -13,7 +13,7 @@ import androidx.viewbinding.ViewBinding
 /**
  * ViewBinding的成熟推动了原生Adapter实用
  * zwping @ 5/10/21
- * @lastTime: 2021年09月13日14:10:41
+ * @lastTime: 2021年11月08日11:00:43
  */
 class RecyclerViewKtx
 
@@ -52,12 +52,11 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseVH<E, ViewBinding>>() {
     }
     fun addDataOrNull(data: MutableList<E>?) { if (!data.isNullOrEmpty()) addData(data) }
     fun addData(data: MutableList<E>) {
-        datas.addAll(data); notifyItemRangeChanged(datas.size-data.size, datas.size)
+        datas.addAll(data); notifyItemRangeChanged(datas.size-data.size-1, datas.size) // -1=更新lastPositionUI
         pag.curPage += 1
         pag.curTotal = datas.size
         datasStateCallback?.noMoreData(pag.hasEnd())
         datasStateCallback?.loadMoreState(true)
-        // datasStateCallback?.loadMoreEnabled(!pag.hasEnd())
     }
     fun setDataErr(hasRefresh: Boolean) {
         datasStateCallback?.apply {
@@ -89,10 +88,11 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseVH<E, ViewBinding>>() {
 
 open class BaseVH<E, out VB : ViewBinding>(val vb: VB, private val bindViewHolder: BaseVH<*, *>.(vb: VB, entity: E) -> Unit) : RecyclerView.ViewHolder(vb.root) {
     var entity: E? = null
-    private lateinit var _datas: MutableList<E>
-    fun bind(datas: MutableList<E>, position: Int) { _datas = datas; this.entity = datas[position]; bindViewHolder(this, vb, entity!!) }
+    private var _datas: MutableList<E>? = null
+    fun bind(datas: MutableList<E>, position: Int) { _datas = datas; bind(datas[position]) }
+    fun bind(entity: E) { this.entity=entity; bindViewHolder(this, vb, entity) }
 
-    fun isLastPosition() = _datas.size-1 == adapterPosition
+    fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
 }
 
 interface DiffCallback<E> {
