@@ -1,23 +1,32 @@
 package com.zwping.a
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.zwping.a.databinding.ActivityMainBinding
 import com.zwping.a.databinding.Test1Binding
-import com.zwping.alibx.BaseAc
-import com.zwping.alibx.BaseAdapterQuick
-import com.zwping.alibx.BaseVH
-import com.zwping.alibx.getLayoutInflater
+import com.zwping.alibx.*
 
 class MainActivity : BaseAc<ActivityMainBinding>() {
 
     private val adp by lazy {
-        object: BaseAdapterQuick<String>({ BaseVH(Test1Binding.inflate(it.getLayoutInflater(), it, false),
-            { vb, entity ->
-                vb.tv.text = "${entity}"
-                vb.v.visibility = if (isLastPosition()) View.GONE else View.VISIBLE
-            }) }) {}
+        object: BaseAdapter<String>() {
+            override fun getItemViewType(position: Int): Int {
+                return position
+            }
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<String, View> {
+                return when(viewType) {
+                    // 0 -> BaseViewHolder(TextView(parent.context).apply { layoutParams = parent.layoutParams }, { view, entity ->  view.setBackgroundColor(Color.RED); view.text = entity})
+                    0 -> BaseViewHolder(parent.getLayoutInflater(R.layout.test1), { view, entity ->  view.setBackgroundColor(Color.RED); view.findViewById<TextView>(R.id.tv).text = entity})
+                    else -> BaseViewHolderVB(Test1Binding.inflate(parent.getLayoutInflater(), parent, false),
+                        {vb, entity -> vb.tv.text = entity })
+                }
+            }
+
+        }
     }
 
     override fun initVB(inflater: LayoutInflater): ActivityMainBinding? {

@@ -2,7 +2,9 @@ package com.zwping.alibx
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,12 +21,12 @@ class RecyclerViewKtx
 
 /* ====================== */
 
-open class BaseAdapterQuick<E>(val vh: (ViewGroup) -> BaseVH<E, ViewBinding>): BaseAdapter<E>(){
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseVH<E, ViewBinding> {
-        return vh(parent)
+open class BaseAdapterQuick<E>(val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>): BaseAdapter<E>(){
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
+        return createViewHolder(parent)
     }
 }
-abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseVH<E, ViewBinding>>() {
+abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() {
 
     var datas = mutableListOf<E>()
         private set(value) {
@@ -68,7 +70,7 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseVH<E, ViewBinding>>() {
     }
 
     // override fun getItemViewType(position: Int): Int { } // 多布局实现
-    override fun onBindViewHolder(holder: BaseVH<E, ViewBinding>, position: Int) { holder.bind(datas, position) }
+    override fun onBindViewHolder(holder: BaseViewHolder<E, View>, position: Int) { holder.bind(datas, position) }
 
     override fun getItemCount(): Int = datas.size
 
@@ -86,14 +88,21 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseVH<E, ViewBinding>>() {
     }
 }
 
-open class BaseVH<E, out VB : ViewBinding>(val vb: VB, private val bindViewHolder: BaseVH<*, *>.(vb: VB, entity: E) -> Unit) : RecyclerView.ViewHolder(vb.root) {
-    var entity: E? = null
-    private var _datas: MutableList<E>? = null
-    fun bind(datas: MutableList<E>, position: Int) { _datas = datas; bind(datas[position]) }
-    fun bind(entity: E) { this.entity=entity; bindViewHolder(this, vb, entity) }
+open class BaseViewHolder<E, out V: View>(
+            val view: V,
+            private val bindViewHolder: BaseViewHolder<E, V>.(view: V, entity: E) -> Unit):
+        RecyclerView.ViewHolder(view) {
+    var entity: E?=null
+    private var _datas: MutableList<E>?=null
+    fun bind(datas: MutableList<E>, position: Int) { _datas=datas; bind(datas[position]) }
+    fun bind(entity: E) { this.entity=entity; bindViewHolder(this, view, entity) }
 
     fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
 }
+open class BaseViewHolderVB<E, out VB: ViewBinding>(
+    val vb: VB,
+    private val bindViewHolder: BaseViewHolderVB<E, VB>.(vb: VB, entity: E) -> Unit) :
+    BaseViewHolder<E, View>(vb.root, {_, entity -> bindViewHolder(this as BaseViewHolderVB<E, VB>, vb, entity) })
 
 interface DiffCallback<E> {
     fun areItemsTheSame(od: E, nd: E): Boolean
@@ -107,6 +116,7 @@ interface DatasStataCallback {
 }
 
 fun ViewGroup.getLayoutInflater(): LayoutInflater { return LayoutInflater.from(context) }
+fun ViewGroup.getLayoutInflater(@LayoutRes id: Int): View = getLayoutInflater().inflate(id, this, false)
 
 inline fun RecyclerView.removeFocus() { isFocusableInTouchMode = false; requestFocus() }
 inline fun RecyclerView.setLinearLayoutManager(
@@ -177,3 +187,14 @@ open class GridLayoutManager2(context: Context?, spanCount: Int, orientation: In
         catch (e: Exception) { }
     }
 }
+
+
+// ========= 过时方法 ==========
+/**
+ * @deprecated [BaseViewHolderVB]
+ */
+@Deprecated("规范命名 BaseViewHolder")
+open class BaseVH<E, out VB : ViewBinding>(
+    val vb: VB,
+    private val bindViewHolder: BaseVH<E, VB>.(vb: VB, entity: E) -> Unit) :
+    BaseViewHolder<E, View>(vb.root, {_, entity -> bindViewHolder(this as BaseVH<E, VB>, vb, entity) })
