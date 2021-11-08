@@ -15,9 +15,9 @@ import java.lang.reflect.ParameterizedType
  *                        alibx库已加混淆规则
  * @lastTime 2021年11月08日10:57:38
  */
-abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
+abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false): ItemViewType {
 
-    var itemViewType = -1 // RecyclerViewItemViewType
+    override var itemViewType: Int = -1  // Support RecyclerView ItemViewType
 
     var _log = StringBuilder() // 调试使用, 也许下个版本就找不到它了
 
@@ -138,3 +138,4 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
         }
     }
 }
+interface ItemViewType { var itemViewType: Int }  // Support RecyclerView ItemViewType

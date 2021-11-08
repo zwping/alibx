@@ -29,11 +29,16 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
         }
     }
 
+    class b :IJson() {
+    }
+
     override fun initVB(inflater: LayoutInflater): ActivityMainBinding? {
         return ActivityMainBinding.inflate(inflater)
     }
 
     override fun initView() {
+        println(b().itemViewType)
+
         vb.recyclerView.layoutManager = LinearLayoutManager(this)
         vb.recyclerView.adapter = adp
 
