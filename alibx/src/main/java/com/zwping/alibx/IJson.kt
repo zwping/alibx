@@ -17,6 +17,8 @@ import java.lang.reflect.ParameterizedType
  */
 abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
 
+    var itemViewType = -1 // RecyclerViewItemViewType
+
     var _log = StringBuilder() // 调试使用, 也许下个版本就找不到它了
 
     init {
