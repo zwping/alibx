@@ -20,11 +20,22 @@ import androidx.viewbinding.ViewBinding
 class RecyclerViewKtx
 
 /* ====================== */
-
+/*** 一行代码代码实现Adapter ***/
 open class BaseAdapterQuick<E>(val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>): BaseAdapter<E>(){
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
+    final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
         return createViewHolder(parent)
     }
+}
+interface ItemViewType { var itemViewType: Enum<*> }  // Support RecyclerView ItemViewType
+/*** 借助enum类特征实现多布局 ***/
+abstract class BaseAdapterMulti<E: ItemViewType, ENUM: Enum<*>>(private val enums: Array<ENUM>): BaseAdapter<E>() {
+    final override fun getItemViewType(position: Int): Int {
+        return datas[position].itemViewType.ordinal
+    }
+    final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
+        return onCreateViewHolder(parent, enums[viewType])  // 穷举ItemViewType
+    }
+    abstract fun onCreateViewHolder(parent: ViewGroup, enum: ENUM): BaseViewHolder<E, View>
 }
 abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() {
 
@@ -100,9 +111,9 @@ open class BaseViewHolder<E, out V: View>(
     fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
 }
 open class BaseViewHolderVB<E, out VB: ViewBinding>(
-    val vb: VB,
-    private val bindViewHolder: BaseViewHolderVB<E, VB>.(vb: VB, entity: E) -> Unit) :
-    BaseViewHolder<E, View>(vb.root, {_, entity -> bindViewHolder(this as BaseViewHolderVB<E, VB>, vb, entity) })
+            val vb: VB,
+            private val bindViewHolder: BaseViewHolderVB<E, VB>.(vb: VB, entity: E) -> Unit) :
+        BaseViewHolder<E, View>(vb.root, {_, entity -> bindViewHolder(this as BaseViewHolderVB<E, VB>, vb, entity) })
 
 interface DiffCallback<E> {
     fun areItemsTheSame(od: E, nd: E): Boolean
