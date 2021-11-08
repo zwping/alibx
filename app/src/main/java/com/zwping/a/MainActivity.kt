@@ -10,12 +10,14 @@ import com.zwping.a.MainActivity.Style.*
 import com.zwping.a.databinding.ActivityMainBinding
 import com.zwping.a.databinding.Test1Binding
 import com.zwping.alibx.*
+import org.json.JSONObject
 
 class MainActivity : BaseAc<ActivityMainBinding>() {
 
     enum class Style {
         title, content
     }
+    interface  Test {}
 
     class Title:IJson(), ItemViewType{
         override var itemViewType: Enum<*> = Style.title
@@ -24,6 +26,25 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
     class Content:IJson(), ItemViewType{
         override var itemViewType: Enum<*> = Style.content
         var content = "content"
+    }
+    companion object {
+    }
+    class Items(ob:JSONObject?): Test, IJson(ob, true){
+        var item: String?=null
+        override fun toString(): String {
+            return "Items(item=$item)"
+        }
+    }
+    class Bean(ob:JSONObject?): Test, IJson(ob, true){
+        var title: String?=null
+        var items: MutableList<Items>?=null
+      var item: Items?=null
+        override fun toString(): String {
+            return "Bean(title=$title, items=$items, item=$item)"
+        }
+        init {
+            println(_log)
+        }
     }
 
     private val adp by lazy {
@@ -35,27 +56,13 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
                             view.findViewById<TextView>(R.id.tv).text = (entity as Title).title})
                     content -> BaseViewHolderVB(Test1Binding.inflate(parent.getLayoutInflater(), parent, false),
                         {vb, entity ->
-                            println("$this")
+                            println("${this.vb}")
                             entity as Content
                             vb.tv.text = entity.content
                         })
                 }
             }
         }
-//        object: BaseAdapter<String>() {
-//            override fun getItemViewType(position: Int): Int {
-//                return position
-//            }
-//            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<String, View> {
-//                return when(viewType) {
-//                    // 0 -> BaseViewHolder(TextView(parent.context).apply { layoutParams = parent.layoutParams }, { view, entity ->  view.setBackgroundColor(Color.RED); view.text = entity})
-//                    0 -> BaseViewHolder(parent.getLayoutInflater(R.layout.test1), { view, entity ->  view.setBackgroundColor(Color.RED); view.findViewById<TextView>(R.id.tv).text = entity})
-//                    else -> BaseViewHolderVB(Test1Binding.inflate(parent.getLayoutInflater(), parent, false),
-//                        {vb, entity -> vb.tv.text = entity })
-//                }
-//            }
-//
-//        }
     }
 
     override fun initVB(inflater: LayoutInflater): ActivityMainBinding? {
@@ -67,6 +74,7 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
     }
 
     override fun initView() {
+        println(Bean(JSONObject("{'title':111; 'item':{'item':444}; 'items':[{'item':222}, {'item':333}]}")))
 
         vb.recyclerView.layoutManager = LinearLayoutManager(this)
         vb.recyclerView.adapter = adp
