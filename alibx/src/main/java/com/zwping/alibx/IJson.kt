@@ -10,7 +10,9 @@ import java.lang.reflect.ParameterizedType
  *
  * zwping @ 2020/9/25
  * @param obj 解析对象
- * @param autoReflexParse 自动解析简单对象, 混淆必须加 { -keepclassmembers public class * extends com.zwping.alibx.IJson { *; } }
+ * @param autoReflexParse 自动解析简单对象
+ *                        混淆必须加 { -keepclassmembers public class * extends com.zwping.alibx.IJson { *; } }
+ *                        alibx库已加混淆规则
  * @lastTime 2021年11月06日23:49:04
  */
 abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
@@ -85,7 +87,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
         }
     }
 
-    private companion object {
+    companion object {
 
         @JvmStatic fun JSONArray.forEach(lis: (ob: JSONObject?) -> Unit) { for (i in 0 until length()) { lis.invoke(optJSONObject(i)) } }
         @JvmStatic fun JSONArray.forEachIndexed(lis: (index: Int, ob: JSONObject?) -> Unit) { for (i in 0 until length()) { lis.invoke(i, optJSONObject(i)) } }
