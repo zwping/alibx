@@ -36,7 +36,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                 3、只能自动解析一级派生类,
                     如果仅依靠该自动解析方法, 那需要创建更多零散的Entity, 无疑会增加代码复杂度
                     但你的Entity是否更加耦合及更容易维护
-                4、反射意味无法完全混淆, 安全度再次降低, 在这只保留:IJson类
+                4、反射意味无法完全混淆, 安全度降低, 在这只保留:IJson类
                     -keep public class * extends com.zwping.alibx.IJson { *; }
              */
             try {
@@ -136,7 +136,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
             this ?: return null
             val ob = optJSONObject(key) ?: return null
             if (ob.length() == 0) return null
-            return lis(this)
+            return lis(ob)
         }
     }
 }

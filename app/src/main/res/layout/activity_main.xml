@@ -7,15 +7,12 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn"
+        android:text="123"
+        android:textColor="#0f0"
+        android:padding="0dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:id="@+id/iv" />
-
+        android:layout_height="50dp" />
 
 </LinearLayout>

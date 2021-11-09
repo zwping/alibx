@@ -98,6 +98,7 @@ class StateLayout @JvmOverloads constructor(
     fun init(lis: () -> Unit) { showLoadingView(); this.retryClickListener = lis }
     fun showContentView() { showView(State.CONTENT) }
     fun showLoadingView(txt: CharSequence? = null) { showView(State.LOADING, txt) }
+    fun showLoadingViewDelayed(delayed: Long, txt: CharSequence? = null) { showView(State.LOADING, txt) }
     fun showEmptyView(txt: CharSequence? = null, iconResId: Int? = null) { showView(State.EMPTY, txt, iconResId) }
     fun showErrorView(txt: CharSequence? = null, iconResId: Int? = null) { showView(State.ERROR, txt, iconResId) }
     fun showEmptyView(txt: CharSequence? = null) { showEmptyView(null, null) }
