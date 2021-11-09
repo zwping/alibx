@@ -20,23 +20,6 @@ import androidx.viewbinding.ViewBinding
 class RecyclerViewKtx
 
 /* ====================== */
-/*** 一行代码代码实现Adapter ***/
-open class BaseAdapterQuick<E>(val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>): BaseAdapter<E>(){
-    final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
-        return createViewHolder(parent)
-    }
-}
-interface ItemViewType { var itemViewType: Enum<*> }  // Support RecyclerView ItemViewType
-/*** 借助enum类特征实现多布局 ***/
-abstract class BaseAdapterMulti<E: ItemViewType, ENUM: Enum<*>>(private val enums: Array<ENUM>): BaseAdapter<E>() {
-    final override fun getItemViewType(position: Int): Int {
-        return datas[position].itemViewType.ordinal
-    }
-    final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
-        return onCreateViewHolder(parent, enums[viewType])  // 穷举ItemViewType
-    }
-    abstract fun onCreateViewHolder(parent: ViewGroup, enum: ENUM): BaseViewHolder<E, View>
-}
 abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() {
 
     var datas = mutableListOf<E>()
@@ -98,6 +81,23 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() 
         }
     }
 }
+/*** 一行代码代码实现Adapter ***/
+open class BaseAdapterQuick<E>(val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>): BaseAdapter<E>(){
+    final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
+        return createViewHolder(parent)
+    }
+}
+interface ItemViewType { var itemViewType: Enum<*> }  // Support RecyclerView ItemViewType
+/*** 借助enum类特征实现多布局 ***/
+abstract class BaseAdapterMulti<ENUM: Enum<*>>(private val enums: Array<ENUM>): BaseAdapter<ItemViewType>() {
+    final override fun getItemViewType(position: Int): Int {
+        return datas[position].itemViewType.ordinal
+    }
+    final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<ItemViewType, View> {
+        return onCreateViewHolder(parent, enums[viewType])  // 穷举ItemViewType
+    }
+    abstract fun onCreateViewHolder(parent: ViewGroup, enum: ENUM): BaseViewHolder<ItemViewType, View>
+}
 
 open class BaseViewHolder<E, out V: View>(
             val view: V,
@@ -110,6 +110,7 @@ open class BaseViewHolder<E, out V: View>(
 
     fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
 }
+/*** ViewHolder ViewBinding支持 ***/
 open class BaseViewHolderVB<E, out VB: ViewBinding>(
             val vb: VB,
             private val bindViewHolder: BaseViewHolderVB<E, VB>.(vb: VB, entity: E) -> Unit) :
@@ -204,7 +205,7 @@ open class GridLayoutManager2(context: Context?, spanCount: Int, orientation: In
 /**
  * @deprecated [BaseViewHolderVB]
  */
-@Deprecated("规范命名 BaseViewHolder")
+@Deprecated("规范命名 BaseViewHolderVB")
 open class BaseVH<E, out VB : ViewBinding>(
     val vb: VB,
     private val bindViewHolder: BaseVH<E, VB>.(vb: VB, entity: E) -> Unit) :

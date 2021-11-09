@@ -42,7 +42,7 @@ interface ImgLoaderInterface {
      * @param opt 加载图片过程中的配置项 [ImgLoaderOptInterface]
      */
     fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {})
-    fun ImageView?.glide(url: String?, ctx: Context?, opt: ImgLoaderOpt.()->Unit = {})
+    fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {})
 
     /**
      * 清理图片缓存 disk & memory

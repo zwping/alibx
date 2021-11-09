@@ -10,6 +10,7 @@ import com.zwping.a.MainActivity.Style.*
 import com.zwping.a.databinding.ActivityMainBinding
 import com.zwping.a.databinding.Test1Binding
 import com.zwping.alibx.*
+import com.zwping.alibx.ImageLoader.glide
 import org.json.JSONObject
 
 class MainActivity : BaseAc<ActivityMainBinding>() {
@@ -48,7 +49,7 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
     }
 
     private val adp by lazy {
-        object: BaseAdapterMulti<ItemViewType, Style>(values()){
+        object: BaseAdapterMulti<Style>(Style.values()){
             override fun onCreateViewHolder(parent: ViewGroup, enum: Style): BaseViewHolder<ItemViewType, View> {
                 return when(enum){
                     Style.title -> BaseViewHolder(parent.getLayoutInflater(R.layout.test1),
@@ -68,11 +69,6 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
     override fun initVB(inflater: LayoutInflater): ActivityMainBinding? {
         return ActivityMainBinding.inflate(inflater)
     }
-
-    class Entity: IJson(), ItemViewType{
-        override var itemViewType: Enum<*> = title
-    }
-
     override fun initView() {
         println(Bean(JSONObject("{'title':111; 'item':{'item':444}; 'items':[{'item':222}, {'item':333}]}")))
 

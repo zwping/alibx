@@ -11,7 +11,7 @@ import java.lang.reflect.ParameterizedType
  * zwping @ 2020/9/25
  * @param obj 解析对象
  * @param autoReflexParse 自动解析简单对象
- *                        混淆必须加 { -keepclassmembers public class * extends com.zwping.alibx.IJson { *; } }
+ *                        混淆必须加 { -keep public class * extends com.zwping.alibx.IJson { *; } }
  *                        alibx库已加混淆规则
  * @lastTime 2021年11月08日10:57:38
  */
@@ -66,7 +66,8 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                                         else -> {
                                             if (gtCls.superclass == IJson::class.java) { // 需要遵循IJson构造函数的传值
                                                 _log.append("发现list<:IJson> $gtCls\n")
-                                                val cons = gtCls.getConstructor(JSONObject::class.java) // 获取构造函数
+                                                gtCls.declaredConstructors.forEach { _log.append("构造函数参数:$it\n") }
+                                                val cons = gtCls.getDeclaredConstructor(JSONObject::class.java) // 获取构造函数
                                                 f.set(this, arr.optJSONArrayOrNull { cons.newInstance(it) })
                                             }
                                         }
@@ -76,7 +77,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                             else -> {
                                 if (f.type.superclass == IJson::class.java) { // 需要遵循IJson构造函数的传值
                                     _log.append("发现(:IJson) ${f.type}\n")
-                                    val cons = f.type.getConstructor(JSONObject::class.java) // 获取构造函数
+                                    val cons = f.type.getDeclaredConstructor(JSONObject::class.java) // 获取构造函数
                                     f.set(this, cons.newInstance(obj.optJSONObject(f.name)))
                                 } else _log.append("未知参数 ${f.name}\n")
                             }
