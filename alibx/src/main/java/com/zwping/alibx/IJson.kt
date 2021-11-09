@@ -66,8 +66,10 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                                         else -> {
                                             if (gtCls.superclass == IJson::class.java) { // 需要遵循IJson构造函数的传值
                                                 _log.append("发现list<:IJson> $gtCls\n")
-                                                gtCls.declaredConstructors.forEach { _log.append("构造函数参数:$it\n") }
+                                                // IJson不能为内部类
+                                                gtCls.declaredConstructors.forEach { _log.append("构造函数参数:$it\n") } // IJson派生类为内部类时构参为
                                                 val cons = gtCls.getDeclaredConstructor(JSONObject::class.java) // 获取构造函数
+                                                cons.isAccessible = true
                                                 f.set(this, arr.optJSONArrayOrNull { cons.newInstance(it) })
                                             }
                                         }
@@ -78,6 +80,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                                 if (f.type.superclass == IJson::class.java) { // 需要遵循IJson构造函数的传值
                                     _log.append("发现(:IJson) ${f.type}\n")
                                     val cons = f.type.getDeclaredConstructor(JSONObject::class.java) // 获取构造函数
+                                    cons.isAccessible = true
                                     f.set(this, cons.newInstance(obj.optJSONObject(f.name)))
                                 } else _log.append("未知参数 ${f.name}\n")
                             }
