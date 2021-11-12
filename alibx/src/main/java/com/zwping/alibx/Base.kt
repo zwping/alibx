@@ -54,18 +54,18 @@ interface BaseFmInterface<VB: ViewBinding> {
     fun onResumeLazy() { }
 
     // base 联动
-    fun baseAc() = if (ac is BaseAc<*>) ac as BaseAc<ViewBinding> else null
+    val baseAc: BaseAc<*>?
     val ac: FragmentActivity?
 
     // ViewBinding功能提供
     fun initVB(inflater: LayoutInflater, parent: ViewGroup?, attachToParent: Boolean=false): VB? { return null }    // 实现, ide快捷输出
-    val _binding: VB?
+    var _binding: VB?
     val vb: VB get() = _binding!!       // 使用
 
     // LoadingDialog功能提供
     fun showLoading() { showLoading(null, true) }
-    fun showLoading(txt: CharSequence?=null, delayed: Boolean=true) { baseAc()?.showLoading(txt, delayed) }
-    fun hideLoading() { baseAc()?.hideLoading() }
+    fun showLoading(txt: CharSequence?=null, delayed: Boolean=true) { baseAc?.showLoading(txt, delayed) }
+    fun hideLoading() { baseAc?.hideLoading() }
 }
 
 
@@ -199,15 +199,13 @@ abstract class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
 
     constructor()
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
-    override val _binding: VB? by lazy { initVB(_inf!!, _cont, false) }
+    override var _binding: VB?=null
 
+    override val baseAc: BaseAc<*>? by lazy { if (ac is BaseAc<*>) ac as BaseAc<*> else null }
     override val ac: FragmentActivity? by lazy { activity }
 
-    private var _inf: LayoutInflater? = null
-    private var _cont: ViewGroup? = null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        _inf = inflater; _cont = container
-        if (_binding != null) { return vb.root }
+        initVB(inflater, container, false)?.also { _binding=it; return vb.root }
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -225,5 +223,6 @@ abstract class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
     override fun onDestroy() {
         hideLoading()
         super.onDestroy()
+        _binding = null
     }
 }

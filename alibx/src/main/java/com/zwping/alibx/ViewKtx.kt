@@ -11,6 +11,7 @@ import com.google.android.material.button.MaterialButton
 
 /**
  * View相关辅助操作
+ * @lastTime 2021年11月10日01:03:00
  */
 interface ViewKtxInterface{
     /*** 左右抖动 ***/
@@ -51,7 +52,7 @@ object ViewKtx : ViewKtxInterface{
     }
     override fun MaterialButton?.hideLoading(enabled: Boolean?) {
         this ?: return
-        enabled?.also { isEnabled = it }; icon = null
+        enabled?.also { isEnabled=it }; icon = null
     }
 }
 
