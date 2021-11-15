@@ -4,12 +4,17 @@ import android.view.LayoutInflater
 import com.zwping.a.databinding.ActivityMainBinding
 import com.zwping.alibx.BaseAc
 import com.zwping.alibx.IJson
+import com.zwping.alibx.ItemViewType
 import org.json.JSONObject
 
 
 class MainActivity : BaseAc<ActivityMainBinding>() {
 
-    class Bean(ob: JSONObject?): IJson(ob, true) {
+    enum class Style { title }
+
+    private class Bean(ob: JSONObject?): IJson(ob, true), ItemViewType {
+        override var itemViewType: Enum<*> = Style.title
+
         var title: String?=null
         var bean: Bean?=null
         var beans: MutableList<Bean>?=null
