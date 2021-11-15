@@ -16,7 +16,6 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
         override fun toString(): String {
             return "Bean(bean=$bean, beans=$beans, title=$title)"
         }
-
     }
 
     override fun initVB(inflater: LayoutInflater): ActivityMainBinding? {
