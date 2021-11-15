@@ -98,7 +98,7 @@ function autoAddLibVersion() {
                     code1 = line.replace(cfg.vcode, cfg.newVCode)
                     continue
                 }
-                if (line.indexOf('versionName') !== -1) {
+                if (line.indexOf('versionName "') !== -1) {
                     cfg.vname = line.replace('versionName', '').replace(/\"/g, '').trim()
                     var n = cfg.vname.split('.')
                     n = (n[0]*100 + n[1]*10 + n[2]*1)*1 + 1
