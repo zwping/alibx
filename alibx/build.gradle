@@ -10,8 +10,8 @@ android {
     defaultConfig {
         minSdk 21
         targetSdk 30
-        versionCode 48
-        versionName "0.4.7"
+        versionCode 49
+        versionName "0.4.8"
     }
     buildTypes {
         debug {
