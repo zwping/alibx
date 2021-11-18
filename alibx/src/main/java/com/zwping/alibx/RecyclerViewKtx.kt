@@ -46,9 +46,12 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() 
         DiffUtil.calculateDiff(_diffCallBack, detectMoves).dispatchUpdatesTo(this)
         datas = data
     }
-    fun addDataOrNull(data: MutableList<E>?) { if (!data.isNullOrEmpty()) addData(data) }
-    fun addData(data: MutableList<E>) {
-        datas.addAll(data); notifyItemRangeChanged(datas.size-data.size-1, datas.size) // -1=更新lastPositionUI
+    fun addDataOrNull(data: MutableList<E>?) { if (!data.isNullOrEmpty()) addData(data, false) }
+    fun addDataOrNull(data: MutableList<E>?, refreshLastPosition: Boolean=false) { if (!data.isNullOrEmpty()) addData(data, refreshLastPosition) }
+    fun addData(data: MutableList<E>) { addData(data, false) }
+    fun addData(data: MutableList<E>, refreshLastPosition: Boolean=false) {
+        datas.addAll(data);
+        notifyItemRangeChanged(datas.size-data.size-(if (refreshLastPosition) 1 else 0), datas.size) // -1=更新lastPositionUI
         pag.curPage += 1
         pag.curTotal = datas.size
         datasStateCallback?.noMoreData(pag.hasEnd())

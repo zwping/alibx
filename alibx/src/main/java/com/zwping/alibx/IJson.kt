@@ -40,6 +40,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                     -keep public class * extends com.zwping.alibx.IJson { *; }
                 5、不支持变量默认值 (⊙︿⊙)
                     在new的过程中完成了解析, 默认值会在new完成后赋值
+                    在init中赋予默认值
              */
             try {
                 javaClass.declaredFields.forEach { f -> // 当前类(最终的派生类)的所有变量
