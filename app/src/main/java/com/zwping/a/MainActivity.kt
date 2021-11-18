@@ -10,18 +10,6 @@ import org.json.JSONObject
 
 class MainActivity : BaseAc<ActivityMainBinding>() {
 
-    enum class Style { title }
-
-    private class Bean(ob: JSONObject?): IJson(ob, true), ItemViewType {
-        override var itemViewType: Enum<*> = Style.title
-
-        var title: String?=null
-        var bean: Bean?=null
-        var beans: MutableList<Bean>?=null
-        override fun toString(): String {
-            return "Bean(bean=$bean, beans=$beans, title=$title)"
-        }
-    }
 
     override fun initVB(inflater: LayoutInflater): ActivityMainBinding? {
         return ActivityMainBinding.inflate(inflater)
@@ -30,6 +18,7 @@ class MainActivity : BaseAc<ActivityMainBinding>() {
         val fmHome = FmHome()
         supportFragmentManager.beginTransaction().add(R.id.fragment_container, fmHome).show(fmHome).commitAllowingStateLoss()
 
-        println("${Bean(JSONObject("{}"))} ==")
+        println("${Test.Bean(JSONObject("{'type': 2, 'title': 'name'}"))} ==")
     }
+
 }

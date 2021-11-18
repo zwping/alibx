@@ -16,10 +16,20 @@ import org.json.JSONObject;
 public class Test {
 
     public static class Bean extends IJson{
-        public String title;
+        int type = -1;
 
         public Bean(@Nullable JSONObject obj) {
+
             super(obj, true);
+
+            System.out.println(type +"---" + get_log());
+        }
+
+        @Override
+        public String toString() {
+            return "Bean{" +
+                    "type=" + type +
+                    '}';
         }
     }
 

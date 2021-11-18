@@ -38,6 +38,8 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                     但你的Entity是否更加耦合及更容易维护
                 4、反射意味无法完全混淆, 安全度降低, 在这只保留:IJson类
                     -keep public class * extends com.zwping.alibx.IJson { *; }
+                5、不支持变量默认值 (⊙︿⊙)
+                    在new的过程中完成了解析, 默认值会在new完成后赋值
              */
             try {
                 javaClass.declaredFields.forEach { f -> // 当前类(最终的派生类)的所有变量
