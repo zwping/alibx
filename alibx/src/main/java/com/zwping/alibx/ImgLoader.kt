@@ -9,13 +9,16 @@ import android.widget.ImageView
 import androidx.annotation.ColorInt
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.TransformationUtils
+import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.FutureTarget
+import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.transition.Transition
@@ -35,7 +38,7 @@ interface ImgLoaderInterface {
     // 全局配置 级别最低
     var globalPlaceHolder: Int?
     var globalError: Int?
-    var globalAnimType: ImgLoaderOptInterface.AnimType?
+    var globalAnimType: AnimType?
 
     /**
      * 加载图片
@@ -80,7 +83,6 @@ interface ImgLoaderOptInterface {
     var error: Int?
 
     // 对图片的转码类型
-    enum class TranscodeType { Drawable, Bitmap, Gif, File }
     var transcodeType: TranscodeType
     fun asDrawable() { transcodeType = TranscodeType.Drawable }
     fun asBitmap() { transcodeType = TranscodeType.Bitmap }
@@ -91,7 +93,6 @@ interface ImgLoaderOptInterface {
     var scaleType: ImageView.ScaleType?
 
     // 图片形状 支持圆形 & 正方形
-    enum class ShapeType{ Default, Circle, Square }
     var shapeType: ShapeType
     fun circleCrop() { shapeType = ShapeType.Circle }
     fun squareCrop() { shapeType = ShapeType.Square }
@@ -107,11 +108,9 @@ interface ImgLoaderOptInterface {
     fun setRadius(tl: Float=0F, tr: Float=0F, br: Float=0F, bl: Float=0F) { radii = floatArrayOf(tl,tl, tr,tr, br,br, bl,bl) }
 
     // 过渡动画
-    enum class AnimType{ WithCrossFade }
     var animType: AnimType?
 
     // 缓存
-    enum class CacheType{ All, Memory, Disk, None }
     var cacheType: CacheType
     fun skipMemoryCache() { cacheType = CacheType.Disk }
     fun skipDiskCache() { cacheType = CacheType.Memory }
@@ -130,10 +129,21 @@ interface ImgLoaderOptInterface {
 
     // 监听
     var lis: ((readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)?
+    /**
+     * 资源加载监听, 可控制资源渲染过程
+     *  - 当resource为[GifDrawable]时
+     *   - [GifDrawable.setLoopCount]可控制gif播放次数
+     *   - [GifDrawable.registerAnimationCallback]可监听gif播放过程[播放结束]
+     */
+    fun setOnLoaderListener(lis: (readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)
 
     // gif只播放一次
     var gifOncePlay: Boolean
 }
+enum class AnimType{ WithCrossFade }
+enum class ShapeType{ Default, Circle, Square }
+enum class TranscodeType { Drawable, Bitmap, Gif, File }
+enum class CacheType{ All, Memory, Disk, None }
 
 class ImgLoaderOpt: ImgLoaderOptInterface {
     override var placeHolderDrw: Drawable?=null
@@ -142,20 +152,23 @@ class ImgLoaderOpt: ImgLoaderOptInterface {
         get() = field ?: ImageLoader.globalPlaceHolder
     override var error: Int?=null
         get() = field ?: ImageLoader.globalError
-    override var transcodeType = ImgLoaderOptInterface.TranscodeType.Drawable
+    override var transcodeType = TranscodeType.Drawable
     override var scaleType: ImageView.ScaleType? = null
-    override var shapeType = ImgLoaderOptInterface.ShapeType.Default
+    override var shapeType = ShapeType.Default
     override var stroke: ImgLoaderOptInterface.Stroke?=null
     override var radii: FloatArray?=null
-    override var animType: ImgLoaderOptInterface.AnimType?=null
+    override var animType: AnimType?=null
         get() = field ?: ImageLoader.globalAnimType
-    override var cacheType = ImgLoaderOptInterface.CacheType.All
+    override var cacheType = CacheType.All
     override var onlyReadCache: Boolean=false
     override var thumbnailUrl: String?=null
     override var targetWidth: Float?=null
     override var targetHeight: Float?=null
-    override var lis: ((readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)?=null
     override var gifOncePlay: Boolean=false
+    override var lis: ((readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)?=null
+    override fun setOnLoaderListener(lis: (readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit) {
+        this.lis = lis
+    }
 }
 
 /**
@@ -164,7 +177,7 @@ class ImgLoaderOpt: ImgLoaderOptInterface {
 object ImageLoader: ImgLoaderInterface {
     override var globalPlaceHolder: Int? = null
     override var globalError: Int? = null
-    override var globalAnimType: ImgLoaderOptInterface.AnimType? = null
+    override var globalAnimType: AnimType? = null
 
     override fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit) { glide(url, null, opt) }
     override fun ImageView?.glide(url: String?, ctx: Context?, opt: ImgLoaderOpt.()->Unit) { this?.also { builder(it, url, ctx, opt)?.into(it) } }
@@ -230,10 +243,10 @@ object ImageLoader: ImgLoaderInterface {
         val reqManager = Glide.with(ctx ?: iv!!.context)
 
         val reqBuilder = when(opt.transcodeType){
-            ImgLoaderOptInterface.TranscodeType.Drawable -> reqManager.asDrawable()
-            ImgLoaderOptInterface.TranscodeType.Bitmap -> reqManager.asBitmap()
-            ImgLoaderOptInterface.TranscodeType.Gif -> reqManager.asGif()
-            ImgLoaderOptInterface.TranscodeType.File -> reqManager.asFile()
+            TranscodeType.Drawable -> reqManager.asDrawable()
+            TranscodeType.Bitmap -> reqManager.asBitmap()
+            TranscodeType.Gif -> reqManager.asGif()
+            TranscodeType.File -> reqManager.asFile()
         }
 
         if (opt.placeHolderDrw != null) reqBuilder.placeholder(opt.placeHolderDrw)
@@ -243,25 +256,43 @@ object ImageLoader: ImgLoaderInterface {
 
         if (opt.scaleType != null) iv?.scaleType = opt.scaleType
 
-        if (opt.shapeType != ImgLoaderOptInterface.ShapeType.Default || opt.radii != null || opt.stroke != null) {
+        if (opt.shapeType != ShapeType.Default || opt.radii != null || opt.stroke != null) {
             reqBuilder.transform(
                 RoundTransformation(
-                opt.radii ?: floatArrayOf(0F,0F, 0F,0F, 0F,0F, 0F,0F),
-                opt.stroke?.color, opt.stroke?.wDp,
-                opt.shapeType == ImgLoaderOptInterface.ShapeType.Circle,
-                opt.shapeType == ImgLoaderOptInterface.ShapeType.Square
-            )
+                    opt.radii ?: floatArrayOf(0F,0F, 0F,0F, 0F,0F, 0F,0F),
+                    opt.stroke?.color,
+                    opt.stroke?.wDp,
+                    opt.shapeType == ShapeType.Circle,
+                    opt.shapeType == ShapeType.Square
+                )
             )
         }
 
-        if (opt.cacheType == ImgLoaderOptInterface.CacheType.None || opt.cacheType == ImgLoaderOptInterface.CacheType.Memory)
+        if (opt.cacheType == CacheType.None || opt.cacheType == CacheType.Memory)
             reqBuilder.diskCacheStrategy(DiskCacheStrategy.NONE)
-        if (opt.cacheType == ImgLoaderOptInterface.CacheType.None || opt.cacheType == ImgLoaderOptInterface.CacheType.Disk)
+        if (opt.cacheType == CacheType.None || opt.cacheType == CacheType.Disk)
             reqBuilder.skipMemoryCache(true)
 
         if (opt.onlyReadCache) reqBuilder.onlyRetrieveFromCache(true)
 
+        when(opt.transcodeType){
+            TranscodeType.Drawable -> listener(reqBuilder as RequestBuilder<Drawable>, opt.lis)
+            TranscodeType.Bitmap -> listener(reqBuilder as RequestBuilder<Bitmap>, opt.lis)
+            TranscodeType.Gif -> listener(reqBuilder as RequestBuilder<GifDrawable>, opt.lis)
+            TranscodeType.File -> listener(reqBuilder as RequestBuilder<File>, opt.lis)
+        }
         return reqBuilder.load(url)
+    }
+
+    private fun <T> listener(req: RequestBuilder<T>, lis: ((readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)?) {
+        req.listener(object :RequestListener<T>{
+            override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<T>?, isFirstResource: Boolean): Boolean {
+                lis?.invoke(false, null, e); return false
+            }
+            override fun onResourceReady(resource: T, model: Any?, target: Target<T>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                lis?.invoke(true, resource, null); return false
+            }
+        })
     }
 
     /**

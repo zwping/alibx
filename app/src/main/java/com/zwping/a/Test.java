@@ -1,8 +1,14 @@
 package com.zwping.a;
 
+import android.app.ActivityOptions;
+import android.util.Pair;
+import android.view.View;
+import android.widget.ImageView;
+
 import androidx.annotation.Nullable;
 
 import com.google.android.material.button.MaterialButton;
+import com.zwping.alibx.Bus;
 import com.zwping.alibx.IJson;
 import com.zwping.alibx.ItemViewType;
 import com.zwping.alibx.ViewKtx;
@@ -10,20 +16,24 @@ import com.zwping.alibx.ViewKtxKt;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+
 /**
  * zwping @ 2021/11/10
  */
 public class Test {
 
-    public static class Bean extends IJson{
-        int type = -1;
+    public static void ss() {
+    }
 
-        public Bean(@Nullable JSONObject obj) {
+    public static class Bean{
+        public int type;
 
-            super(obj, true);
-
-            System.out.println(type +"---" + get_log());
-        }
+        public Bean(@Nullable JSONObject obj) { }
 
         @Override
         public String toString() {

@@ -35,13 +35,13 @@ interface BaseAcInterface<VB: ViewBinding> {
     // ViewBinding功能提供
     fun initVB(inflater: LayoutInflater): VB? { return null }       // 实现
     val _binding: VB?
-    val vb: VB get() = _binding!!                                       // 使用
+    val vb: VB? get() = _binding                                    // 使用
 
     // LoadingDialog功能提供
     val _loading: Dialog
     fun showLoading() { showLoading(null, true) }
     fun showLoading(txt: CharSequence?=null, delayed: Boolean=true)
-    fun hideLoading()
+    fun hideLoading(delayed: Boolean)
 
     // 辅助方法
     val handler: Handler
@@ -60,12 +60,12 @@ interface BaseFmInterface<VB: ViewBinding> {
     // ViewBinding功能提供
     fun initVB(inflater: LayoutInflater, parent: ViewGroup?, attachToParent: Boolean=false): VB? { return null }    // 实现, ide快捷输出
     var _binding: VB?
-    val vb: VB get() = _binding!!       // 使用
+    val vb: VB? get() = _binding       // 使用
 
     // LoadingDialog功能提供
     fun showLoading() { showLoading(null, true) }
     fun showLoading(txt: CharSequence?=null, delayed: Boolean=true) { baseAc?.showLoading(txt, delayed) }
-    fun hideLoading() { baseAc?.hideLoading() }
+    fun hideLoading(delayed: Boolean) { baseAc?.hideLoading(delayed) }
 }
 
 
@@ -102,12 +102,12 @@ abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _binding?.also { setContentView(vb.root) }
+        _binding?.also { setContentView(vb!!.root) }
         initView()
     }
 
     override fun onDestroy() {
-        hideLoading()
+        hideLoading(false)
         super.onDestroy()
     }
 
@@ -125,9 +125,10 @@ abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> 
         handler.postDelayed(_showRunnable, if (delayed) 300 else 0) // 300ms后再展示
     }
     @Synchronized
-    override fun hideLoading() {
+    override fun hideLoading(delayed: Boolean) {
         handler.removeCallbacks(_showRunnable)
         handler.removeCallbacks(_hideRunnable)
+        if (!delayed) { _loading.dismiss(); return }
         val t = (System.currentTimeMillis() - _leastShowTime).also { if (it < 300) 300 - it else 0L } // 最少展示300ms, 避免闪烁
         handler.postDelayed(_hideRunnable, t)
     }
@@ -205,7 +206,7 @@ abstract class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
     override val ac: FragmentActivity? by lazy { activity }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        initVB(inflater, container, false)?.also { _binding=it; return vb.root }
+        initVB(inflater, container, false)?.also { _binding=it; return vb!!.root }
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -221,7 +222,7 @@ abstract class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
     }
 
     override fun onDestroy() {
-        hideLoading()
+        hideLoading(false)
         super.onDestroy()
         _binding = null
     }

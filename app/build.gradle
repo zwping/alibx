@@ -18,7 +18,7 @@ android {
 
     buildTypes {
         debug {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         release {
@@ -48,6 +48,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
+    debugImplementation 'cat.ereza:customactivityoncrash:2.3.0'
+    debugImplementation 'com.blankj:utilcodex:1.30.6'
 
 //    implementation 'com.zwping:alibx:0.4.6'
     implementation project(':alibx')
