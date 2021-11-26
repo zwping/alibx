@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import com.zwping.a.databinding.AcMainBinding
 import com.zwping.alibx.BaseAc
 import com.zwping.alibx.LauncherMode
-import com.zwping.alibx.Scheme.startAcScheme
+import com.zwping.alibx.Scheme.open
 
 /**
  *
@@ -17,10 +17,10 @@ class AcThree: BaseAc<AcMainBinding>() {
         return AcMainBinding.inflate(layoutInflater)
     }
     override fun initView() {
-        vb.lyRoot.setBackgroundColor(Color.DKGRAY)
+        vb?.lyRoot?.setBackgroundColor(Color.DKGRAY)
 
-        vb.lyRoot.setOnClickListener {
-            startAcScheme(AcSecond::class.java) {
+        vb?.lyRoot?.setOnClickListener {
+            open(AcSecond::class.java) {
                 launcherMode = LauncherMode.SingleTask
             }
         }

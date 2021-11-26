@@ -1,26 +1,19 @@
 package com.zwping.a
 
 import android.Manifest
-import android.app.ActivityOptions
-import android.content.Intent
 import android.graphics.Color
-import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Build
-import android.os.Bundle
-import android.util.Pair
 import android.view.LayoutInflater
 import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.vectordrawable.graphics.drawable.Animatable2Compat
-import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.zwping.a.databinding.AcMainBinding
 import com.zwping.a.fm.FmHome
-import com.zwping.alibx.*
+import com.zwping.alibx.BaseAc
 import com.zwping.alibx.ImageLoader.glide
-import com.zwping.alibx.Scheme.startAcScheme
+import com.zwping.alibx.Scheme.open
 
 
 class AcMain : BaseAc<AcMainBinding>() {
@@ -40,11 +33,7 @@ class AcMain : BaseAc<AcMainBinding>() {
             circleCrop()
             setStroke(3F, Color.RED)
         }
-        supportFragmentManager.beginTransaction().add(R.id.fragment_container, fmHome).show(fmHome).commitAllowingStateLoss()
         vb?.lyRoot?.setOnClickListener {
-            println(fmHome.vb)
-            supportFragmentManager.beginTransaction().remove(fmHome).commitAllowingStateLoss()
-            println(fmHome.vb)
             println(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA))
             println(shouldShowRequestPermissionRationale(Manifest.permission.CAMERA))
             reqPermission.launch(Manifest.permission.CAMERA)
@@ -52,6 +41,10 @@ class AcMain : BaseAc<AcMainBinding>() {
 //                extra { putString("url", url1) }
 //                setSharedTransitionAnim(vb.iv)
 //            }
+            open(AcSecond::class.java)
+        }
+        Uri.parse("yikao://host/path?title=1233").also {
+            println(it.scheme)
         }
     }
 

@@ -1,9 +1,11 @@
 package com.zwping.alibx
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.view.View
 import android.widget.ImageView
 import androidx.annotation.ColorInt
@@ -73,6 +75,12 @@ interface ImgLoaderInterface {
     /*** 获取磁盘缓存大小 ***/
     fun getDiskCacheSize(ctx: Context?): Long
     suspend fun clearDiskCache(ctx: Context?) // 建议MemoryCache交由系统完成
+
+    fun Context?.isDestroy(): Boolean {
+        this ?: return true
+        if (this is Activity) return isFinishing || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed)
+        return false
+    }
 }
 
 interface ImgLoaderOptInterface {
@@ -238,9 +246,11 @@ object ImageLoader: ImgLoaderInterface {
                        ctx: Context?=null,
                        option: ImgLoaderOpt.()->Unit={ }): RequestBuilder<*>? {
         if (iv == null && ctx == null) return null
+        val context = ctx ?: iv!!.context
+        if (context.isDestroy()) return null // 避免 You cannot start a load for a destroyed activity com.bumptech.glide.i.l.a(RequestManagerRetriever.java:2)
         val opt = ImgLoaderOpt()
         option.invoke(opt)
-        val reqManager = Glide.with(ctx ?: iv!!.context)
+        val reqManager = Glide.with(context)
 
         val reqBuilder = when(opt.transcodeType){
             TranscodeType.Drawable -> reqManager.asDrawable()

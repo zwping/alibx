@@ -21,15 +21,15 @@ class FmHome: BaseFm<Test1Binding>() {
     }
 
     override fun initView() {
-        vb.tv.text = "-------="
+        vb?.tv?.text = "-------="
 //        showLoading()
 
 
-        Bus.subscribe(this, "tag") { vb.tv.text = "$it" }
+        Bus.subscribe(this, "tag") { vb?.tv?.text = "$it" }
 
         Thread({
 //            Bus.post("tag", "3333")
-            vb.tv.text = "1111"
+            vb?.tv?.text = "1111"
         }).start()
 
     }
