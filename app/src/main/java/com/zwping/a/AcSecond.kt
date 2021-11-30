@@ -21,30 +21,14 @@ class AcSecond: BaseAc<AcMainBinding>() {
         return AcMainBinding.inflate(inflater)
     }
     override fun initView() {
-        val s = System.currentTimeMillis()
-//        postponeEnterTransition()
-        vb?.iv?.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = 100F.dp2px() }
-        vb?.iv?.glide(intent.getStringExtra("url")) {
-            scaleType = ImageView.ScaleType.CENTER_CROP
-        }
-//        vb.lyRoot.setBackgroundColor(Color.YELLOW)
-        vb?.lyRoot?.setOnClickListener {
-//            finish()
-            // finishAfterTransition()
-            open(AcThree::class.java)
-        }
-
-        println("---${intent.data}")
     }
 
     override fun onBackPressed() {
         super.onBackPressed()
-
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-
         println("onnewintent")
     }
 

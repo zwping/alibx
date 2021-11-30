@@ -32,9 +32,9 @@ class ITimer(private val action: (ITimer) -> Unit, private val delay: Long, priv
     /**
      * 执行
      * @param owner
-     * @param lifecycle 0 onDestroy / 1 onStop / 2 onPause
+     * @param lifecycle 0 onDestroy / 1 onStop / 2 onPause / 3 onResume
      */
-    fun schedule(owner: LifecycleOwner?, @IntRange(from = 0, to = 2) lifecycle: Int = 0): ITimer {
+    fun schedule(owner: LifecycleOwner?, @IntRange(from = 0, to = 3) lifecycle: Int = 0): ITimer {
         uEvent = lifecycle
         owner?.also { it.lifecycle.removeObserver(this); it.lifecycle.addObserver(this) }
         cancel()
@@ -71,7 +71,7 @@ class ITimer(private val action: (ITimer) -> Unit, private val delay: Long, priv
         when(event) {
             // Lifecycle.Event.ON_CREATE ->
             // Lifecycle.Event.ON_START ->
-            // Lifecycle.Event.ON_RESUME ->
+             Lifecycle.Event.ON_RESUME -> { if (3 == uEvent) { cancel() } }
             Lifecycle.Event.ON_PAUSE -> { if (2 == uEvent) { cancel() } }
             Lifecycle.Event.ON_STOP -> { if (1 == uEvent) { cancel() } }
             Lifecycle.Event.ON_DESTROY -> { if (0 == uEvent) { cancel() } }

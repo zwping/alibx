@@ -10,29 +10,132 @@ import android.os.Bundle
 import android.util.Pair
 import android.view.View
 import android.widget.Toast
-import com.zwping.alibx.LauncherMode.*
+import com.zwping.alibx.LauncherMode.SingleTask
+import com.zwping.alibx.LauncherMode.SingleTop
 import com.zwping.alibx.OPTAnim.*
-import java.util.ArrayList
+import com.zwping.alibx.Scheme.open
+import java.util.*
 
 /**
- * schemeUri路由
+ * schemeUri简单路由 [Scheme.open]
  * zwping @ 2021/11/18
  */
-interface SchemeInterface {
+object Scheme {
+
+    var ErrMsg1 = "scheme url is empty!!"
+    var ErrMsg2 = "scheme url error!"
+    var ErrMsg3 = "scheme list not init!"
 
     fun init(app: Application,
-             schemeConfigList: SchemeConfigListInterface,
-             warningToast: ((ctx: Context, msg: String)->Unit)? = null)
+             schemeList: SchemeListInterface,
+             warningToast: ((ctx: Context, msg: String) -> Unit)?=null) {
+        this.schemeList = schemeList
+        this.warningToast = warningToast
+    }
+    fun Context?.open(schemeURL: String?, option: SchemeIntentOption.() -> Unit={}) {
+        this ?: return
+        if (schemeURL.isNullOrBlank()) { showToast(this, ErrMsg1); return }
+        try { open(scheme = schemeURL.scheme(), null, SchemeIntentOption(this).also(option)) }
+        catch (e: Exception) { e.printStackTrace(); showToast(this, "$ErrMsg2 $schemeURL"); return }
+    }
+    fun Context?.open(clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit={}) {
+        this ?: return
+        open(null, clazz = clazz, SchemeIntentOption(this).also(option))
+    }
 
-    var schemeConfigList: SchemeConfigListInterface?
-    var warningToast: ((ctx: Context, msg: String)->Unit)?
+    /* ---------------------- */
 
-    @Deprecated("例子 scheme://host/path?query or http://xxx.com/path?query")
-    fun Context?.open(scheme: String, host: String, path: String, query: String?)
-    fun Context?.open(schemeURL: String?, option: SchemeOption.() -> Unit = {})
-    fun Context?.open(clazz: Class<out Activity>, option: SchemeOption.() -> Unit = {})
+    /*** scheme配置列表 ***/
+    private var schemeList: SchemeListInterface? = null
+    /*** scheme跳转错误toast [可选/默认系统Toast] ***/
+    private var warningToast: ((ctx: Context, msg: String) -> Unit)? = null
+
+    private fun Context.open(scheme: SchemeStandard?, clazz: Class<out Activity>?, opt: SchemeIntentOption){
+        if (scheme == null && clazz == null) return
+        var cls = clazz
+        if (scheme != null) { // scheme优先级高于clazz
+            if (schemeList == null) {
+                showToast(this, ErrMsg3); return
+            }
+            if (scheme.uri?.scheme?.startsWith("http")==true || scheme.uri?.scheme?.startsWith("https")==true) {
+                if (schemeList?.webBrowser == null) { // 未定制内部WebView则使用系统浏览器打开
+                    startActivity(Intent(Intent.ACTION_VIEW, scheme.uri)); return
+                }
+                cls = schemeList?.webBrowser
+            }
+            schemeList?.dataFunc?.filter { it.key.equals(scheme) }?.forEach {
+                it.value.invoke(this, scheme.extra)
+                return  // dataFunc优先级高于data
+            }
+            schemeList?.data?.filter { it.key.equals(scheme) }?.forEach {
+                cls = it.value
+            }
+        }
+        startActivity(Intent(this, cls).also { i ->
+            if (scheme != null) i.data = scheme.uri // 携带过去
+            scheme?.extra?.also { i.putExtras(it) }
+            opt.extra?.also { i.putExtras(it) }
+            when(opt.launcherMode) {
+                SingleTop -> i.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+                SingleTask -> i.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+        }, opt.options)
+
+        if (opt.transitionAnimEnterResId != null && opt.transitionAnimExitResId != null) {
+            if (this is Activity) overridePendingTransition(opt.transitionAnimEnterResId!!, opt.transitionAnimExitResId!!)
+        } else {
+            opt.transitionAnim?.also { if (this is Activity) overridePendingTransition(it) }
+        }
+    }
+
+    private fun showToast(ctx: Context, msg: String) {
+        warningToast?.also { it(ctx, msg); return }
+        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+    }
 }
-interface SchemeOptionInterface {
+
+fun String.scheme() = SchemeStandard(this)
+/**
+ * 标准的SchemeUri
+ */
+class SchemeStandard {
+    var uri: Uri? = null
+    constructor(uri: Uri) { this.uri = uri }
+    constructor(schemeUrl: String?) { uri = Uri.parse(schemeUrl) }
+    constructor(scheme: String?, host: String?, path: String?, query: String?=null) {
+        uri = Uri.parse("$scheme://$host/$path${if(query.isNullOrBlank()) "" else "?$query"}")
+    }
+    override fun toString(): String {
+        return "$uri"
+    }
+    fun equals(other: SchemeStandard): Boolean {
+        return uri?.scheme == other.uri?.scheme && uri?.host == other.uri?.host && uri?.path == other.uri?.path
+    }
+    val params: HashMap<String, String?>?
+        get() {
+            uri ?: return null
+            uri?.query ?: return null
+            return hashMapOf<String, String?>().also {
+                uri?.queryParameterNames?.forEach { k -> it[k] = uri?.getQueryParameter(k) }
+            }
+        }
+    val extra: Bundle?
+        get() {
+            val params = params ?: return null
+            return Bundle().also { params.forEach { p -> it.putString(p.key, p.value) } }
+        }
+}
+
+/**
+ * scheme list 配置接口
+ */
+interface SchemeListInterface{
+    val data: HashMap<SchemeStandard, Class<out Activity>>
+    val dataFunc: HashMap<SchemeStandard, (ctx: Context, extra: Bundle?)->Unit>
+    val webBrowser: Class<out Activity>? // 如果未设置内部webViewActivity, 默认跳转系统浏览器
+}
+
+interface SchemeIntentOptionInterface {
     // extra
     var extra: Bundle?
     fun extra(putBlock: Bundle.()->Unit)
@@ -53,74 +156,11 @@ interface SchemeOptionInterface {
     fun setSharedTransitionAnim(vararg views: View?)
     var options: Bundle?
 }
-interface SchemeConfigListInterface{
-    val data: HashMap<String, Class<out Activity>>
-    val dataFunc: HashMap<String, (ctx: Context, extra: Bundle?)->Unit>
-    val webBrowser: Class<out Activity>? // 如果未设置内部webViewActivity, 默认跳转系统浏览器
-}
 
-object Scheme: SchemeInterface {
-    override fun init(app: Application,
-                      schemeConfigList: SchemeConfigListInterface,
-                      warningToast: ((ctx: Context, msg: String) -> Unit)?) {
-        this.schemeConfigList = schemeConfigList
-        this.warningToast = warningToast
-    }
-
-    override var schemeConfigList: SchemeConfigListInterface? = null
-    override var warningToast: ((ctx: Context, msg: String) -> Unit)? = null
-
-    override fun Context?.open(scheme: String, host: String, path: String, query: String?) {}
-    override fun Context?.open(clazz: Class<out Activity>, option: SchemeOption.() -> Unit) {
-        this ?: return; open(null, clazz = clazz, SchemeOption(this).also(option))
-    }
-    override fun Context?.open(schemeURL: String?, option: SchemeOption.() -> Unit) {
-        this ?: return
-        if (schemeURL.isNullOrBlank()) { showToast(this, ErrMsg1); return }
-        try { open(Uri.parse(schemeURL), null, SchemeOption(this).also(option)) }
-        catch (e: Exception) { e.printStackTrace(); showToast(this, "$ErrMsg2 $schemeURL"); return }
-    }
-
-    private fun Context.open(uri: Uri?, clazz: Class<out Activity>?, opt: SchemeOption){
-        if (uri == null && clazz == null) return
-        var cls = clazz
-        uri?.also uri@{
-            if (it.scheme?.startsWith("http")==true || it.scheme?.startsWith("https")==true) {
-                schemeConfigList?.webBrowser?.also { web ->
-                    cls = web; return@uri
-                }
-                startActivity(Intent(Intent.ACTION_VIEW, it)); return // 没有则使用系统浏览器打开
-            }
-            schemeConfigList?.also { config ->
-
-            }
-        }
-        startActivity(Intent(this, cls).also { i ->
-            if (uri != null) i.data = uri // 携带过去
-            opt.extra?.also { i.putExtras(it) }
-            when(opt.launcherMode) {
-                SingleTop -> i.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-                SingleTask -> i.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-        }, opt.options)
-
-        if (opt.transitionAnimEnterResId != null && opt.transitionAnimExitResId != null) {
-            if (this is Activity) overridePendingTransition(opt.transitionAnimEnterResId!!, opt.transitionAnimExitResId!!)
-        } else {
-            opt.transitionAnim?.also { if (this is Activity) overridePendingTransition(it) }
-        }
-    }
-    private fun showToast(ctx: Context, msg: String) {
-        warningToast?.also { it(ctx, msg); return }
-        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
-    }
-
-    var ErrMsg1 = "scheme url is empty!!"
-    var ErrMsg2 = "scheme url error!"
-}
-
-
-class SchemeOption(private val ctx: Context?): SchemeOptionInterface {
+/**
+ * scheme跳转意图配置项
+ */
+class SchemeIntentOption(private val ctx: Context?): SchemeIntentOptionInterface {
 
     override var launcherMode: LauncherMode? = null
 
@@ -140,7 +180,13 @@ class SchemeOption(private val ctx: Context?): SchemeOptionInterface {
         extra?.also { it.putBlock(); return }
         Bundle().also { extra = it }.putBlock()
     }
+
     override var options: Bundle? = null
+
+
+    override fun toString(): String {
+        return "SchemeIntentOption(ctx=$ctx, launcherMode=$launcherMode, transitionAnim=$transitionAnim, transitionAnimEnterResId=$transitionAnimEnterResId, transitionAnimExitResId=$transitionAnimExitResId, extra=$extra, options=$options)"
+    }
 }
 fun Activity?.overridePendingTransition(enum: OPTAnim) {
     this ?: return

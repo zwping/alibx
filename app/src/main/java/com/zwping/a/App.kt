@@ -4,8 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
-import com.zwping.alibx.Scheme
-import com.zwping.alibx.SchemeConfigListInterface
+import com.zwping.alibx.*
 
 /**
  *
@@ -16,14 +15,15 @@ class App : Application() {
         val acs = mutableListOf<Activity>()
     }
 
-    class SchemeList: SchemeConfigListInterface {
-        override val data: HashMap<String, Class<out Activity>> = hashMapOf(
-            "" to AcMain::class.java,
-
+    class SchemeList: SchemeListInterface {
+        override val data: HashMap<SchemeStandard, Class<out Activity>> = hashMapOf(
+            "alibx://ac/second".scheme() to AcSecond::class.java,
+            "alibx://ac/main".scheme() to AcMain::class.java,
             )
-        override val dataFunc: HashMap<String, (ctx: Context, extra: Bundle?) -> Unit> = hashMapOf(
-            "" to { ctx, extra ->
-
+        override val dataFunc: HashMap<SchemeStandard, (ctx: Context, extra: Bundle?) -> Unit> = hashMapOf(
+            "alibx://ac/second".scheme() to { ctx, extra ->
+                if (ctx is BaseAc<*>) ctx.showLoading()
+                println(extra)
             }
         )
         override val webBrowser: Class<out Activity>? = null
