@@ -23,27 +23,30 @@ import androidx.viewbinding.ViewBinding
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.imageview.ShapeableImageView
+import com.zwping.alibx.ViewPager2.initBanner
+import com.zwping.alibx.ViewPager2.setBannerData
 import java.lang.ref.WeakReference
 
 /**
  *
  * zwping @ 2021/11/2
  */
+/*** 针对ImageView的便捷调用, 后续接口返回数据调用[setBannerData] ***/
+fun <T> ViewPager2.initBannerOfImg(bindView: (shapeableImageView: ShapeableImageView, data: MutableList<T>, position: Int)->Unit,
+                                   autoStart: LifecycleOwner?=null,
+                                   opt: ViewPager2Opt<T>.()->Unit={}): BannerAdapter<T> {
+    val imageView = { parent: ViewGroup -> ShapeableImageView(parent.context).also {
+        it.layoutParams = parent.layoutParams; it.scaleType=ImageView.ScaleType.CENTER_CROP
+        // it.shapeAppearanceModel = ShapeAppearanceModel.Builder().setAllCornerSizes(50F).build() // 圆角
+        // it.strokeWidth = 5F; it.strokeColor = ColorStateList.valueOf((0xffff0000).toInt()) // 边框
+    } }
+    return initBanner(imageView,
+        { view, data, position -> bindView(view as ShapeableImageView, data, position) },
+        autoStart, opt)
+}
 object ViewPager2 {
 
-    /*** 针对ImageView的便捷调用, 后续接口返回数据调用[setBannerData] ***/
-    fun <T> ViewPager2.initBannerOfImg(bindView: (shapeableImageView: ShapeableImageView, data: MutableList<T>, position: Int)->Unit,
-                                       autoStart: LifecycleOwner?=null,
-                                       opt: ViewPager2Opt<T>.()->Unit={}): BannerAdapter<T> {
-        val imageView = { parent: ViewGroup -> ShapeableImageView(parent.context).also {
-            it.layoutParams = parent.layoutParams; it.scaleType=ImageView.ScaleType.CENTER_CROP
-            // it.shapeAppearanceModel = ShapeAppearanceModel.Builder().setAllCornerSizes(50F).build() // 圆角
-            // it.strokeWidth = 5F; it.strokeColor = ColorStateList.valueOf((0xffff0000).toInt()) // 边框
-        } }
-        return initBanner(imageView,
-            { view, data, position -> bindView(view as ShapeableImageView, data, position) },
-            autoStart, opt)
-    }
+
 
     /*** ViewPager2标准实现banner, 支持ViewBinding, 后续接口返回数据调用[setBannerData] ***/
     fun <T, VB: ViewBinding> ViewPager2.initBannerOfVB(createHolderView: (parent: ViewGroup)->VB,
