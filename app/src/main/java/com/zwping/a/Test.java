@@ -1,6 +1,7 @@
 package com.zwping.a;
 
 import android.app.ActivityOptions;
+import android.content.Context;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
@@ -9,6 +10,7 @@ import androidx.annotation.Nullable;
 
 import com.google.android.material.button.MaterialButton;
 import com.zwping.alibx.Bus;
+import com.zwping.alibx.DataStoreKt;
 import com.zwping.alibx.IJson;
 import com.zwping.alibx.ItemViewType;
 import com.zwping.alibx.ViewKtx;
@@ -27,7 +29,7 @@ import kotlin.jvm.functions.Function1;
  */
 public class Test {
 
-    public static void ss() {
+    public static void ss(Context ctx) {
     }
 
     public static class Bean{

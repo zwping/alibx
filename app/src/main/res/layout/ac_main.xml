@@ -8,4 +8,9 @@
     android:id="@+id/ly_root"
     tools:context=".AcMain">
 
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
 </LinearLayout>

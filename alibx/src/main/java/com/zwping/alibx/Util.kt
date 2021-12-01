@@ -15,7 +15,7 @@ object Util {
     fun logd(vararg msgs: Any?) {
         var element : StackTraceElement? = null
         Thread.currentThread().stackTrace.also { if (it.size >= 4) { element = it[3]; return@also } }
-        Log.d("System.out", "(${element?.fileName}:${element?.lineNumber})-> ${msgs.map { "$it" }.toString().let { it.substring(1, it.length-1) }}")
+        Log.d("System.out", "${element}-> ${msgs.map { "$it" }.toString().let { it.substring(1, it.length-1) }}")
     }
 
     /**
