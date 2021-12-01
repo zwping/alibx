@@ -1,6 +1,7 @@
 package com.zwping.alibx
 
 import android.animation.LayoutTransition
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
 import android.content.res.Resources
@@ -100,12 +101,14 @@ abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> 
     override val _loading: Dialog by lazy { _initDialog() }
     override val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
+    @SuppressLint("MissingSuperCall")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding?.also { setContentView(vb!!.root) }
         initView()
     }
 
+    @SuppressLint("MissingSuperCall")
     override fun onDestroy() {
         hideLoading(false)
         super.onDestroy()
