@@ -23,14 +23,13 @@ import androidx.viewbinding.ViewBinding
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.imageview.ShapeableImageView
-import com.zwping.alibx.ViewPager2.initBanner
-import com.zwping.alibx.ViewPager2.setBannerData
 import java.lang.ref.WeakReference
 
 /**
  *
  * zwping @ 2021/11/2
  */
+class ViewPager2{ }
 /*** 针对ImageView的便捷调用, 后续接口返回数据调用[setBannerData] ***/
 fun <T> ViewPager2.initBannerOfImg(bindView: (shapeableImageView: ShapeableImageView, data: MutableList<T>, position: Int)->Unit,
                                    autoStart: LifecycleOwner?=null,
@@ -44,126 +43,130 @@ fun <T> ViewPager2.initBannerOfImg(bindView: (shapeableImageView: ShapeableImage
         { view, data, position -> bindView(view as ShapeableImageView, data, position) },
         autoStart, opt)
 }
-object ViewPager2 {
 
-
-
-    /*** ViewPager2标准实现banner, 支持ViewBinding, 后续接口返回数据调用[setBannerData] ***/
-    fun <T, VB: ViewBinding> ViewPager2.initBannerOfVB(createHolderView: (parent: ViewGroup)->VB,
-                                                       bindView: (vb: VB, data: MutableList<T>, position: Int)->Unit,
-                                                       autoStart: LifecycleOwner?=null,
-                                                       opt: ViewPager2Opt<T>.()->Unit={}): BannerAdapter<T> {
-        val option = ViewPager2Opt<T>().also(opt)
-        var touchOccupy: ((occupy: Boolean)->Unit)? = null
-        if (option.hasLoop) {
-            autoStart?.also { option.owner = it; option.autoStart = true } // 方法直接传入则自动轮播
-            val autoLoop = BannerAutoLoopMange(WeakReference(this), option.autoLoopInterval, option.owner)
-            touchOccupy = { occupy: Boolean -> if (occupy) autoLoop.pause() else autoLoop.start() }
-        }
-        var vb: VB? = null
-        val holder = { parent: ViewGroup -> BannerHolder(createHolderView(parent).also { vb=it }.root, touchOccupy) }
-        val adp = BannerAdapter<T>(option.hasLoop, holder, {_, data, position -> bindView(vb!!, data, position) })
-        _commInit(adp, option)
-        return adp
+/*** ViewPager2标准实现banner, 支持ViewBinding, 后续接口返回数据调用[setBannerData] ***/
+fun <T, VB: ViewBinding> ViewPager2.initBannerOfVB(createHolderView: (parent: ViewGroup)->VB,
+                                                   bindView: (vb: VB, data: MutableList<T>, position: Int)->Unit,
+                                                   autoStart: LifecycleOwner?=null,
+                                                   opt: ViewPager2Opt<T>.()->Unit={}): BannerAdapter<T> {
+    val option = ViewPager2Opt<T>().also(opt)
+    var touchOccupy: ((occupy: Boolean)->Unit)? = null
+    if (option.hasLoop) {
+        autoStart?.also { option.owner = it; option.autoStart = true } // 方法直接传入则自动轮播
+        val autoLoop = BannerAutoLoopMange(WeakReference(this), option.autoLoopInterval, option.owner)
+        touchOccupy = { occupy: Boolean -> if (occupy) autoLoop.pause() else autoLoop.start() }
     }
+    var vb: VB? = null
+    val holder = { parent: ViewGroup -> BannerHolder(createHolderView(parent).also { vb=it }.root, touchOccupy) }
+    val adp = BannerAdapter<T>(option.hasLoop, holder, {_, data, position -> bindView(vb!!, data, position) })
+    _commInit(adp, option)
+    return adp
+}
 
-
-    /**
-     * ViewPager2标准实现banner, 后续接口返回数据调用[setBannerData]
-     * @param createHolderView 自定义HolderView
-     * @param bindView 数据绑定至view
-     * @param autoStart 非空传入则自动开始轮播
-     * @param opt ViewPager2相关配置 & 回调
-     */
-    fun <T> ViewPager2.initBanner(createHolderView: (parent: ViewGroup)->View,
-                                  bindView: (view: View, data: MutableList<T>, position: Int)->Unit,
-                                  autoStart: LifecycleOwner?=null,
-                                  opt: ViewPager2Opt<T>.()->Unit={}): BannerAdapter<T> {
-        val option = ViewPager2Opt<T>().also(opt)
-        var touchOccupy: ((occupy: Boolean)->Unit)? = null
-        if (option.hasLoop) {
-            autoStart?.also { option.owner=it; option.autoStart=true } // 方法直接传入则自动轮播
-            val autoLoop = BannerAutoLoopMange(WeakReference(this), option.autoLoopInterval, option.owner)
-            touchOccupy = { occupy: Boolean -> if (occupy) autoLoop.pause() else autoLoop.start() }
-        }
-        val holder = { parent: ViewGroup -> BannerHolder(createHolderView(parent), touchOccupy) }
-        val adp = BannerAdapter(option.hasLoop, holder, bindView)
-        _commInit(adp, option)
-        return adp
+/**
+ * ViewPager2标准实现banner, 后续接口返回数据调用[setBannerData]
+ * @param createHolderView 自定义HolderView
+ * @param bindView 数据绑定至view
+ * @param autoStart 非空传入则自动开始轮播
+ * @param opt ViewPager2相关配置 & 回调
+ */
+fun <T> ViewPager2.initBanner(createHolderView: (parent: ViewGroup)->View,
+                              bindView: (view: View, data: MutableList<T>, position: Int)->Unit,
+                              autoStart: LifecycleOwner?=null,
+                              opt: ViewPager2Opt<T>.()->Unit={}): BannerAdapter<T> {
+    val option = ViewPager2Opt<T>().also(opt)
+    var touchOccupy: ((occupy: Boolean)->Unit)? = null
+    if (option.hasLoop) {
+        autoStart?.also { option.owner=it; option.autoStart=true } // 方法直接传入则自动轮播
+        val autoLoop = BannerAutoLoopMange(WeakReference(this), option.autoLoopInterval, option.owner)
+        touchOccupy = { occupy: Boolean -> if (occupy) autoLoop.pause() else autoLoop.start() } // 失灵 2021年12月01日
+        getChildAt(0).setOnTouchListener { _, event -> // 同时监听RecyclerView触摸事件
+            when(event.action){
+                MotionEvent.ACTION_DOWN -> autoLoop.pause()
+                MotionEvent.ACTION_OUTSIDE,
+                MotionEvent.ACTION_CANCEL,
+                MotionEvent.ACTION_UP -> autoLoop.start()
+            }
+            false}
     }
+    val holder = { parent: ViewGroup -> BannerHolder(createHolderView(parent), touchOccupy) }
+    val adp = BannerAdapter(option.hasLoop, holder, bindView)
+    _commInit(adp, option)
+    return adp
+}
 
-    private fun <T> ViewPager2._commInit(adp: BannerAdapter<T>, option: ViewPager2Opt<T>) {
-        adapter = adp
-        offscreenPageLimit = 3
-        var selectedLock = -1 // 防止setCurrentItem多次触发
-        registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback() {
-            override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
-                option.onPageScrolled(position, positionOffset, positionOffsetPixels)
-                option.indicator?.onPageScrolled(position, positionOffset, currentItem, adp.realPosition(currentItem), adp.dataSize)
-            }
-            override fun onPageSelected(position: Int) {
-                val realPosition = adp.realPosition(position)
-                if (selectedLock == realPosition) return
-                selectedLock = realPosition
-                val size = adp.dataSize
-                option.onPageSelected(realPosition, size, adp.data?.get(realPosition))
-                option.indicator?.onPageSelected(realPosition, size)
-            }
-            override fun onPageScrollStateChanged(state: Int) {
-                option.onPageScrollStateChanged(state)
-                if (!option.hasLoop) return
-                when(state) {
-                    ViewPager2.SCROLL_STATE_DRAGGING -> { // 滑动衔接
-                        when(currentItem) { // 左右各加2个预留位
-                            0 -> setCurrentItem(3, false)
-                            1 -> setCurrentItem(4, false)
-                            adp.dataSize+4-2 -> setCurrentItem(2, false)
-                            adp.dataSize+4-1 -> setCurrentItem(3, false)
-                        }
-                    }
-                    ViewPager2.SCROLL_STATE_IDLE -> { // 定时器衔接
-                        if (currentItem == adp.dataSize+2) setCurrentItem(2, false)
+private fun <T> ViewPager2._commInit(adp: BannerAdapter<T>, option: ViewPager2Opt<T>) {
+    adapter = adp
+    offscreenPageLimit = 3
+    var selectedLock = -1 // 防止setCurrentItem多次触发
+    registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback() {
+        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+            option.onPageScrolled(position, positionOffset, positionOffsetPixels)
+            option.indicator?.onPageScrolled(position, positionOffset, currentItem, adp.realPosition(currentItem), adp.dataSize)
+        }
+        override fun onPageSelected(position: Int) {
+            val realPosition = adp.realPosition(position)
+            if (selectedLock == realPosition) return
+            selectedLock = realPosition
+            val size = adp.dataSize
+            option.onPageSelected(realPosition, size, adp.data?.get(realPosition))
+            option.indicator?.onPageSelected(realPosition, size)
+        }
+        override fun onPageScrollStateChanged(state: Int) {
+            option.onPageScrollStateChanged(state)
+            if (!option.hasLoop) return
+            when(state) {
+                ViewPager2.SCROLL_STATE_DRAGGING -> { // 滑动衔接
+                    when(currentItem) { // 左右各加2个预留位
+                        0 -> setCurrentItem(3, false)
+                        1 -> setCurrentItem(4, false)
+                        adp.dataSize+4-2 -> setCurrentItem(2, false)
+                        adp.dataSize+4-1 -> setCurrentItem(3, false)
                     }
                 }
+                ViewPager2.SCROLL_STATE_IDLE -> { // 定时器衔接
+                    if (currentItem == adp.dataSize+2) setCurrentItem(2, false)
+                }
             }
-        })
-    }
-
-    /**
-     * 设置banner数据
-     * @param hasLoop 是否支持循环滚动 -> setCurrentItem(2, false)
-     */
-    fun <T> ViewPager2?.setBannerData(data: MutableList<T>?, hasLoop: Boolean=true) {
-        this ?: return
-        getBannerAdp<T>()?.data = data
-        if (hasLoop && data != null) setCurrentItem(2, false) // data+4 兼容multiView一屏多Item视觉效果
-    }
-
-    fun <T> ViewPager2?.getBannerAdp(): BannerAdapter<T>? {
-        this ?: return null
-        if (adapter is BannerAdapter<*>) return adapter as BannerAdapter<T>
-        return null
-    }
-
-    /**
-     * 设置banner一页多屏
-     * @param itemMargin item之间的间隔
-     * @param vp2Padding viewPager2内RecyclerView内部排挤值
-     */
-    fun ViewPager2?.setBannerMultiItem(itemMargin: Int, vp2Padding: Int) {
-        this ?: return
-        setPageTransformer(MarginPageTransformer(itemMargin))
-        with(getChildAt(0) as RecyclerView) {
-            setPadding(vp2Padding, 0, vp2Padding, 0)
-            clipToPadding = false
         }
+    })
+}
+
+/**
+ * 设置banner数据
+ * @param hasLoop 是否支持循环滚动 -> setCurrentItem(2, false)
+ */
+fun <T> ViewPager2?.setBannerData(data: MutableList<T>?, hasLoop: Boolean=true) {
+    this ?: return
+    getBannerAdp<T>()?.data = data
+    if (hasLoop && data != null) setCurrentItem(2, false) // data+4 兼容multiView一屏多Item视觉效果
+}
+
+fun <T> ViewPager2?.getBannerAdp(): BannerAdapter<T>? {
+    this ?: return null
+    if (adapter is BannerAdapter<*>) return adapter as BannerAdapter<T>
+    return null
+}
+
+/**
+ * 设置banner一页多屏
+ * @param itemMargin item之间的间隔
+ * @param vp2Padding viewPager2内RecyclerView内部排挤值
+ */
+fun ViewPager2?.setBannerMultiItem(itemMargin: Int, vp2Padding: Int) {
+    this ?: return
+    setPageTransformer(MarginPageTransformer(itemMargin))
+    with(getChildAt(0) as RecyclerView) {
+        setPadding(vp2Padding, 0, vp2Padding, 0)
+        clipToPadding = false
     }
 }
+
 interface ViewPager2OptInterface<T> {
     /*** 支持循环滚动 ***/
     var hasLoop: Boolean
     /*** 关联指示器, 提供一类通用指示器[BannerIndicator] ***/
-    val indicator: BannerIndicator?
+    var indicator: BannerIndicator?
     /*** 声明周期感知 ***/
     var owner: LifecycleOwner?
     /*** 轮播时间间隔 ***/
@@ -179,7 +182,7 @@ interface ViewPager2OptInterface<T> {
 }
 class ViewPager2Opt<T>: ViewPager2OptInterface<T> {
     override var hasLoop: Boolean = true // 默认支持轮播
-    override val indicator: BannerIndicator? = null
+    override var indicator: BannerIndicator? = null
     override var owner: LifecycleOwner? = null
         set(value) { if (value != null) field = value }
     override var autoLoopInterval: Long = 3000L
@@ -303,7 +306,7 @@ class BannerIndicator @JvmOverloads constructor(
     private var lastPosition = -1
     fun onPageSelected(realPosition: Int, dataSize: Int) {
         if(lastPosition == realPosition) return
-        if (dataSize != total) { total=dataSize; updateLayoutParams {  width=w*total+interval*(total-1) }; addBg() }
+        if (dataSize != total) { total=dataSize; updateLayoutParams { width=w*total+interval*(total-1) }; addBg() }
         selPoint.updateLayoutParams<MarginLayoutParams> { leftMargin = (w+interval)*realPosition }
         selPoint.animate().cancel()
         if (realPosition == 0 && (lastPosition==dataSize-1)) { // 首尾衔接动画

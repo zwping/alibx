@@ -7,9 +7,11 @@ import android.view.View;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.button.MaterialButton;
 import com.zwping.alibx.Bus;
+import com.zwping.alibx.DataStore;
 import com.zwping.alibx.DataStoreKt;
 import com.zwping.alibx.IJson;
 import com.zwping.alibx.ItemViewType;
@@ -30,6 +32,7 @@ import kotlin.jvm.functions.Function1;
 public class Test {
 
     public static void ss(Context ctx) {
+        DataStore.INSTANCE.get(ctx, "title");
     }
 
     public static class Bean{

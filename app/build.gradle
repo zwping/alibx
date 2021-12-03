@@ -50,6 +50,7 @@ dependencies {
 
     debugImplementation 'cat.ereza:customactivityoncrash:2.3.0'
     debugImplementation 'com.blankj:utilcodex:1.30.6'
+    debugImplementation 'com.github.getActivity:ToastUtils:10.0'
 
 //    implementation 'com.zwping:alibx:0.4.6'
     implementation project(':alibx')

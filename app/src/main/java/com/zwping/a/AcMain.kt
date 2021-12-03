@@ -1,34 +1,26 @@
 package com.zwping.a
 
-import android.Manifest
-import android.graphics.Color
+import android.app.PendingIntent
+import android.content.Intent
+import android.graphics.*
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.ImageView
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
+import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
-import androidx.viewbinding.ViewBinding
-import com.blankj.utilcode.util.LogUtils
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
+import com.blankj.utilcode.util.NotificationUtils
+import com.blankj.utilcode.util.SnackbarUtils
+import com.blankj.utilcode.util.ToastUtils
 import com.zwping.a.databinding.AcMainBinding
 import com.zwping.a.databinding.Test1Binding
 import com.zwping.a.fm.FmHome
 import com.zwping.alibx.*
-import com.zwping.alibx.ImageLoader.glide
-import com.zwping.alibx.Scheme.open
-import com.zwping.alibx.ViewPager2.initBanner
-import com.zwping.alibx.ViewPager2.initBannerOfVB
-import com.zwping.alibx.ViewPager2.setBannerData
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class AcMain : BaseAc<AcMainBinding>() {
@@ -37,18 +29,41 @@ class AcMain : BaseAc<AcMainBinding>() {
         return AcMainBinding.inflate(inflater)
     }
 
+    private var toast: Toast? = null
+
     private val fmHome by lazy { FmHome() }
     override fun initView() {
-        dataStore.put("title", true)
-        Util.logd(dataStore.get("title"))
-
-        vb?.viewPager2?.initBannerOfImg<String>({shapeableImageView, data, position ->
-            shapeableImageView.glide(data[position])
+        val id = 0x01
+        NotificationUtils.notify(id, {param ->
+            intent.putExtra("id", id);
+            param.setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("title")
+                .setContentText("content text: $id")
+                .setContentIntent(PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT))
+                .setAutoCancel(true)
         })
-        val url1 = "http://img.daimg.com/uploads/allimg/211027/1-21102G22404.jpg"
-        val url2 = "http://img.daimg.com/uploads/allimg/211020/1-211020143249.jpg"
-        val url3 = "http://img.daimg.com/uploads/allimg/211026/1-2110261K108.jpg"
-        vb?.viewPager2?.setBannerData(mutableListOf(url1, url2, url3))
+        lifecycleScope.launch(Dispatchers.IO) {
+//            com.hjq.toast.ToastUtils.show("1111")
+            ToastUtil.show("1111")
+            // Toast.makeText(this@AcMain, "2222", Toast.LENGTH_SHORT).show()
+
+            vb?.btn1?.setOnClickListener {
+                ToastUtil.show("1111")
+//                com.hjq.toast.ToastUtils.show("1111")
+            }
+            vb?.btn2?.setOnClickListener {
+                Toast.makeText(it.context, "2222", Toast.LENGTH_SHORT).show()
+            }
+            vb?.btn3?.setOnClickListener {
+                val intent = Intent()
+                intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                intent.data = Uri.fromParts("package", packageName, null)
+                startActivity(intent)
+            }
+            vb?.btn4?.setOnClickListener {
+                handler.postDelayed({ ToastUtil.show("3333") }, 3000)
+            }
+        }
     }
 
 

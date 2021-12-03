@@ -1,9 +1,13 @@
 package com.zwping.alibx
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.ColorInt
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
@@ -17,9 +21,6 @@ import androidx.viewbinding.ViewBinding
  * zwping @ 5/10/21
  * @lastTime: 2021年11月08日11:00:43
  */
-class RecyclerViewKtx
-
-/* ====================== */
 abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() {
 
     var datas = mutableListOf<E>()
@@ -160,6 +161,40 @@ inline fun RecyclerView.setGradLayoutManager(
             return if (noScrollH) false else super.canScrollHorizontally()
         }
     }
+}
+
+/**
+ * recyclerView分割线 及 最后一个item底部偏移量
+ */
+inline fun RecyclerView.addItemDecorationLine(@ColorInt color: Int,
+                                              dividerHeight: Int,
+                                              dividerMargin: Int=0,
+                                              dividerMarginLeft: Int?=null,
+                                              dividerMarginRight: Int?=null,
+                                              lastPositionOffset: Int=0,
+                                              adp: BaseAdapter<*>?=null) {
+    addItemDecoration(object: RecyclerView.ItemDecoration() {
+        val paint = Paint().also { it.isAntiAlias = true; it.color = color }
+        override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+            super.getItemOffsets(outRect, view, parent, state)
+            val index = parent.getChildAdapterPosition(view)
+            if (index != 0) outRect.top = dividerHeight
+            if (lastPositionOffset > 0 && index == (adp?.datas?.size ?: 0) - 1) outRect.bottom = lastPositionOffset
+        }
+        override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+            super.onDraw(c, parent, state)
+            repeat(parent.childCount) {
+                val view = parent.getChildAt(it)
+                val index = parent.getChildAdapterPosition(view)
+                if (index == 0) return@repeat
+                val t = view.top.toFloat() - dividerHeight
+                val b = view.top.toFloat()
+                val l = parent.paddingLeft.toFloat() + (dividerMarginLeft ?: dividerMargin)
+                val r = parent.width.toFloat() - parent.paddingRight - (dividerMarginRight ?: dividerMargin)
+                c.drawRect(l, t, r, b, paint)
+            }
+        }
+    })
 }
 
 /*** 管理分页信息  */

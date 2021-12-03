@@ -1,10 +1,7 @@
 package com.zwping.alibx
 
-import android.app.Activity
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
@@ -52,8 +49,6 @@ interface BusInterface {
 }
 
 object Bus : BusInterface {
-
-    private const val TAG = "com.zwping.alibx.Bus"
 
     private val buses by lazy { ConcurrentHashMap<BusInterface.TagKey, ((msg: Any?) -> Unit)>() }
     @Synchronized private fun busFilter(filter: BusInterface.TagKey.() -> Boolean) = buses.filter { it.key.filter() }

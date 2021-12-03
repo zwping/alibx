@@ -12,9 +12,10 @@ object Util {
     /**
      * 以System.out通用TAG打印日志, 记录logd方法调用位置
      */
-    fun logd(vararg msgs: Any?) {
+    fun logd(vararg msgs: Any?) { _logd(*msgs, stackOffset = 1) }
+    internal fun _logd(vararg msgs: Any?, stackOffset: Int=0) {
         var element : StackTraceElement? = null
-        Thread.currentThread().stackTrace.also { if (it.size >= 4) { element = it[3]; return@also } }
+        Thread.currentThread().stackTrace.also { if (it.size >= (4+stackOffset)) { element = it[3+stackOffset]; return@also } }
         Log.d("System.out", "${element}-> ${msgs.map { "$it" }.toString().let { it.substring(1, it.length-1) }}")
     }
 
@@ -48,3 +49,7 @@ object Util {
     }
 
 }
+
+/* ----------KTX----------- */
+
+fun logd(vararg msg: Any?) { Util._logd(*msg, stackOffset = 1) }

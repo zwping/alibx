@@ -3,7 +3,12 @@ package com.zwping.a
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
+import android.widget.TextView
+import com.hjq.toast.ToastUtils
+import com.hjq.toast.config.IToastStrategy
+import com.hjq.toast.config.IToastStyle
 import com.zwping.alibx.*
 
 /**
@@ -15,24 +20,21 @@ class App : Application() {
         val acs = mutableListOf<Activity>()
     }
 
-    class SchemeList: SchemeListInterface {
-        override val data: HashMap<SchemeStandard, Class<out Activity>> = hashMapOf(
-            "alibx://ac/second".scheme() to AcSecond::class.java,
-            "alibx://ac/main".scheme() to AcMain::class.java,
-            )
-        override val dataFunc: HashMap<SchemeStandard, (ctx: Context, extra: Bundle?) -> Unit> = hashMapOf(
-            "alibx://ac/second".scheme() to { ctx, extra ->
-                if (ctx is BaseAc<*>) ctx.showLoading()
-                println(extra)
-            }
-        )
-        override val webBrowser: Class<out Activity>? = null
-    }
-
     override fun onCreate() {
         super.onCreate()
 
-        Scheme.init(this, SchemeList())
+        Scheme.init(SchemeList())
+        ToastUtils.init(this, object: IToastStyle<TextView> {
+            override fun createView(context: Context?): TextView {
+                return TextView(context).also {
+                    it.setBackgroundColor(Color.RED)
+                }
+            }
+
+        })
+        ToastUtil.init(this, option={
+            it.msgColor = Color.RED
+        })
 
         registerActivityLifecycleCallbacks(object: ActivityLifecycleCallbacks{
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
@@ -65,6 +67,20 @@ class App : Application() {
             }
 
         })
+    }
+
+    class SchemeList: SchemeListInterface {
+        override val data: HashMap<SchemeStandard, Class<out Activity>> = hashMapOf(
+            "alibx://ac/second".scheme() to AcSecond::class.java,
+            "alibx://ac/main".scheme() to AcMain::class.java,
+        )
+        override val dataFunc: HashMap<SchemeStandard, (ctx: Context, extra: Bundle?) -> Unit> = hashMapOf(
+            "alibx://ac/second".scheme() to { ctx, extra ->
+                if (ctx is BaseAc<*>) ctx.showLoading()
+                println(extra)
+            }
+        )
+        override val webBrowser: Class<out Activity>? = null
     }
 
 }

@@ -1,8 +1,6 @@
 package com.zwping.alibx;
 
 import android.annotation.SuppressLint;
-import android.app.Application;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BlurMaskFilter;
@@ -69,15 +67,9 @@ import static android.graphics.BlurMaskFilter.Blur;
  *     blog  : http://blankj.com
  *     time  : 16/12/13
  *     desc  : utils about span
- *     lasttime: Latest commit 28f24fa on 22 Feb
- *     https://github.com/Blankj/AndroidUtilCode/blob/master/lib/utilcode/src/main/java/com/blankj/utilcode/util/SpanUtils.java
  * </pre>
  */
 public final class SpanUtils {
-
-    private static Application app;
-    public static void setAppContext(Application app) { SpanUtils.app = app; }
-    private static Context getApp() { return app; }  // 每次引用都需要重写返回值
 
     private static final int COLOR_DEFAULT = 0xFEFFFFFF;
 
@@ -97,8 +89,8 @@ public final class SpanUtils {
         return new SpanUtils(textView);
     }
 
-    private TextView mTextView;
-    private CharSequence mText;
+    private TextView      mTextView;
+    private CharSequence  mText;
     private int           flag;
     private int           foregroundColor;
     private int           backgroundColor;
@@ -123,24 +115,24 @@ public final class SpanUtils {
     private boolean       isBold;
     private boolean       isItalic;
     private boolean       isBoldItalic;
-    private String fontFamily;
-    private Typeface typeface;
-    private Alignment alignment;
+    private String        fontFamily;
+    private Typeface      typeface;
+    private Alignment     alignment;
     private int           verticalAlign;
     private ClickableSpan clickSpan;
-    private String url;
+    private String        url;
     private float         blurRadius;
-    private Blur style;
-    private Shader shader;
+    private Blur          style;
+    private Shader        shader;
     private float         shadowRadius;
     private float         shadowDx;
     private float         shadowDy;
     private int           shadowColor;
     private Object[]      spans;
 
-    private Bitmap imageBitmap;
+    private Bitmap   imageBitmap;
     private Drawable imageDrawable;
-    private Uri imageUri;
+    private Uri      imageUri;
     private int      imageResourceId;
     private int      alignImage;
 
@@ -266,7 +258,7 @@ public final class SpanUtils {
      * @return the single {@link SpanUtils} instance
      */
     public SpanUtils setLineHeight(@IntRange(from = 0) final int lineHeight,
-                                                             @Align final int align) {
+                                   @Align final int align) {
         this.lineHeight = lineHeight;
         this.alignLine = align;
         return this;
@@ -291,8 +283,8 @@ public final class SpanUtils {
      * @return the single {@link SpanUtils} instance
      */
     public SpanUtils setQuoteColor(@ColorInt final int color,
-                                                             @IntRange(from = 1) final int stripeWidth,
-                                                             @IntRange(from = 0) final int gapWidth) {
+                                   @IntRange(from = 1) final int stripeWidth,
+                                   @IntRange(from = 0) final int gapWidth) {
         this.quoteColor = color;
         this.stripeWidth = stripeWidth;
         this.quoteGapWidth = gapWidth;
@@ -307,7 +299,7 @@ public final class SpanUtils {
      * @return the single {@link SpanUtils} instance
      */
     public SpanUtils setLeadingMargin(@IntRange(from = 0) final int first,
-                                                                @IntRange(from = 0) final int rest) {
+                                      @IntRange(from = 0) final int rest) {
         this.first = first;
         this.rest = rest;
         return this;
@@ -332,8 +324,8 @@ public final class SpanUtils {
      * @return the single {@link SpanUtils} instance
      */
     public SpanUtils setBullet(@ColorInt final int color,
-                                                         @IntRange(from = 0) final int radius,
-                                                         @IntRange(from = 0) final int gapWidth) {
+                               @IntRange(from = 0) final int radius,
+                               @IntRange(from = 0) final int gapWidth) {
         this.bulletColor = color;
         this.bulletRadius = radius;
         this.bulletGapWidth = gapWidth;
@@ -538,8 +530,8 @@ public final class SpanUtils {
      * @return the single {@link SpanUtils} instance
      */
     public SpanUtils setClickSpan(@ColorInt final int color,
-                                                            final boolean underlineText,
-                                                            final View.OnClickListener listener) {
+                                  final boolean underlineText,
+                                  final View.OnClickListener listener) {
         setMovementMethodIfNeed();
         this.clickSpan = new ClickableSpan() {
 
@@ -592,7 +584,7 @@ public final class SpanUtils {
      * @return the single {@link SpanUtils} instance
      */
     public SpanUtils setBlur(@FloatRange(from = 0, fromInclusive = false) final float radius,
-                                                       final Blur style) {
+                             final Blur style) {
         this.blurRadius = radius;
         this.style = style;
         return this;
@@ -619,9 +611,9 @@ public final class SpanUtils {
      * @return the single {@link SpanUtils} instance
      */
     public SpanUtils setShadow(@FloatRange(from = 0, fromInclusive = false) final float radius,
-                                                         final float dx,
-                                                         final float dy,
-                                                         final int shadowColor) {
+                               final float dx,
+                               final float dy,
+                               final int shadowColor) {
         this.shadowRadius = radius;
         this.shadowDx = dx;
         this.shadowDy = dy;
@@ -851,7 +843,7 @@ public final class SpanUtils {
         if (mType == mTypeCharSequence) {
             updateCharCharSequence();
         } else if (mType == mTypeImage) {
-            updateImage();
+//            updateImage();
         } else if (mType == mTypeSpace) {
             updateSpace();
         }
@@ -971,21 +963,21 @@ public final class SpanUtils {
         }
     }
 
-    private void updateImage() {
-        int start = mBuilder.length();
-        mText = "<img>";
-        updateCharCharSequence();
-        int end = mBuilder.length();
-        if (imageBitmap != null) {
-            mBuilder.setSpan(new CustomImageSpan(imageBitmap, alignImage), start, end, flag);
-        } else if (imageDrawable != null) {
-            mBuilder.setSpan(new CustomImageSpan(imageDrawable, alignImage), start, end, flag);
-        } else if (imageUri != null) {
-            mBuilder.setSpan(new CustomImageSpan(imageUri, alignImage), start, end, flag);
-        } else if (imageResourceId != -1) {
-            mBuilder.setSpan(new CustomImageSpan(imageResourceId, alignImage), start, end, flag);
-        }
-    }
+//    private void updateImage() {
+//        int start = mBuilder.length();
+//        mText = "<img>";
+//        updateCharCharSequence();
+//        int end = mBuilder.length();
+//        if (imageBitmap != null) {
+//            mBuilder.setSpan(new CustomImageSpan(imageBitmap, alignImage), start, end, flag);
+//        } else if (imageDrawable != null) {
+//            mBuilder.setSpan(new CustomImageSpan(imageDrawable, alignImage), start, end, flag);
+//        } else if (imageUri != null) {
+//            mBuilder.setSpan(new CustomImageSpan(imageUri, alignImage), start, end, flag);
+//        } else if (imageResourceId != -1) {
+//            mBuilder.setSpan(new CustomImageSpan(imageResourceId, alignImage), start, end, flag);
+//        }
+//    }
 
     private void updateSpace() {
         int start = mBuilder.length();
@@ -1264,71 +1256,71 @@ public final class SpanUtils {
         }
     }
 
-    static class CustomImageSpan extends CustomDynamicDrawableSpan {
-        private Drawable mDrawable;
-        private Uri mContentUri;
-        private int      mResourceId;
-
-        private CustomImageSpan(final Bitmap b, final int verticalAlignment) {
-            super(verticalAlignment);
-            mDrawable = new BitmapDrawable(getApp().getResources(), b);
-            mDrawable.setBounds(
-                    0, 0, mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight()
-            );
-        }
-
-        private CustomImageSpan(final Drawable d, final int verticalAlignment) {
-            super(verticalAlignment);
-            mDrawable = d;
-            mDrawable.setBounds(
-                    0, 0, mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight()
-            );
-        }
-
-        private CustomImageSpan(final Uri uri, final int verticalAlignment) {
-            super(verticalAlignment);
-            mContentUri = uri;
-        }
-
-        private CustomImageSpan(@DrawableRes final int resourceId, final int verticalAlignment) {
-            super(verticalAlignment);
-            mResourceId = resourceId;
-        }
-
-        @Override
-        public Drawable getDrawable() {
-            Drawable drawable = null;
-            if (mDrawable != null) {
-                drawable = mDrawable;
-            } else if (mContentUri != null) {
-                Bitmap bitmap;
-                try {
-                    InputStream is =
-                            getApp().getContentResolver().openInputStream(mContentUri);
-                    bitmap = BitmapFactory.decodeStream(is);
-                    drawable = new BitmapDrawable(getApp().getResources(), bitmap);
-                    drawable.setBounds(
-                            0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight()
-                    );
-                    if (is != null) {
-                        is.close();
-                    }
-                } catch (Exception e) {
-                    Log.e("sms", "Failed to loaded content " + mContentUri, e);
-                }
-            } else {
-                try {
-                    drawable = ContextCompat.getDrawable(getApp(), mResourceId);
-                    drawable.setBounds(
-                            0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight()
-                    );
-                } catch (Exception e) {
-                    Log.e("sms", "Unable to find resource: " + mResourceId);
-                }
-            }
-            return drawable;
-        }
-    }
+//    static class CustomImageSpan extends CustomDynamicDrawableSpan {
+//        private Drawable mDrawable;
+//        private Uri      mContentUri;
+//        private int      mResourceId;
+//
+//        private CustomImageSpan(final Bitmap b, final int verticalAlignment) {
+//            super(verticalAlignment);
+//            mDrawable = new BitmapDrawable(Utils.getApp().getResources(), b);
+//            mDrawable.setBounds(
+//                    0, 0, mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight()
+//            );
+//        }
+//
+//        private CustomImageSpan(final Drawable d, final int verticalAlignment) {
+//            super(verticalAlignment);
+//            mDrawable = d;
+//            mDrawable.setBounds(
+//                    0, 0, mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight()
+//            );
+//        }
+//
+//        private CustomImageSpan(final Uri uri, final int verticalAlignment) {
+//            super(verticalAlignment);
+//            mContentUri = uri;
+//        }
+//
+//        private CustomImageSpan(@DrawableRes final int resourceId, final int verticalAlignment) {
+//            super(verticalAlignment);
+//            mResourceId = resourceId;
+//        }
+//
+//        @Override
+//        public Drawable getDrawable() {
+//            Drawable drawable = null;
+//            if (mDrawable != null) {
+//                drawable = mDrawable;
+//            } else if (mContentUri != null) {
+//                Bitmap bitmap;
+//                try {
+//                    InputStream is =
+//                            Utils.getApp().getContentResolver().openInputStream(mContentUri);
+//                    bitmap = BitmapFactory.decodeStream(is);
+//                    drawable = new BitmapDrawable(Utils.getApp().getResources(), bitmap);
+//                    drawable.setBounds(
+//                            0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight()
+//                    );
+//                    if (is != null) {
+//                        is.close();
+//                    }
+//                } catch (Exception e) {
+//                    Log.e("sms", "Failed to loaded content " + mContentUri, e);
+//                }
+//            } else {
+//                try {
+//                    drawable = ContextCompat.getDrawable(Utils.getApp(), mResourceId);
+//                    drawable.setBounds(
+//                            0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight()
+//                    );
+//                } catch (Exception e) {
+//                    Log.e("sms", "Unable to find resource: " + mResourceId);
+//                }
+//            }
+//            return drawable;
+//        }
+//    }
 
     static abstract class CustomDynamicDrawableSpan extends ReplacementSpan {
 

@@ -1,11 +1,8 @@
 package com.zwping.alibx
 
 import android.animation.LayoutTransition
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.Dialog
 import android.content.res.Resources
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Handler
@@ -14,19 +11,16 @@ import android.view.*
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.annotation.ContentView
 import androidx.annotation.LayoutRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewbinding.ViewBinding
 
 /**
- * 紧凑的封装
+ * 紧凑的封装[BaseAc] [BaseFm]
  * zwping @ 2021/10/18
- * @lastTime 2021年11月01日17:18:22
+ * @lastTime 2021年12月01日13:58:41
  */
 interface BaseAcInterface<VB: ViewBinding> {
 
@@ -40,7 +34,6 @@ interface BaseAcInterface<VB: ViewBinding> {
 
     // LoadingDialog功能提供
     val _loading: Dialog
-    fun showLoading() { showLoading(null, true) }
     fun showLoading(txt: CharSequence?=null, delayed: Boolean=true)
     fun hideLoading(delayed: Boolean)
 
@@ -64,7 +57,6 @@ interface BaseFmInterface<VB: ViewBinding> {
     val vb: VB? get() = _binding       // 使用
 
     // LoadingDialog功能提供
-    fun showLoading() { showLoading(null, true) }
     fun showLoading(txt: CharSequence?=null, delayed: Boolean=true) { baseAc?.showLoading(txt, delayed) }
     fun hideLoading(delayed: Boolean) { baseAc?.hideLoading(delayed) }
 }
@@ -101,14 +93,12 @@ abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> 
     override val _loading: Dialog by lazy { _initDialog() }
     override val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
-    @SuppressLint("MissingSuperCall")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding?.also { setContentView(vb!!.root) }
         initView()
     }
 
-    @SuppressLint("MissingSuperCall")
     override fun onDestroy() {
         hideLoading(false)
         super.onDestroy()

@@ -17,8 +17,7 @@ import androidx.recyclerview.widget.DiffUtil
 class IDiffUtil<B>(
         private val areItemsTheSame: (od: B?, nd: B?) -> Boolean,
         private val areContentsTheSame: (od: B?, nd: B?) -> Boolean = { _, _ -> true },
-        private val getChangePayload: ((od: B?, nd: B?) -> Any?)? = { _, _ -> null }
-) {
+        private val getChangePayload: ((od: B?, nd: B?) -> Any?)? = { _, _ -> null }) {
 
     var oldData: List<B>? = null // 老数据
     private var dataDiffListener: (IDiffUtil<B>.(List<B>?) -> Unit)? = null
@@ -71,7 +70,6 @@ class IDiffUtil<B>(
             return result ?: true
         }
 
-
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
             val result = areContentsTheSame(oldData?.get(oldItemPosition), newData?.get(newItemPosition))
             if (result == false) { invoke() }
@@ -81,8 +79,6 @@ class IDiffUtil<B>(
         override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
             return getChangePayload?.invoke(oldData?.get(oldItemPosition), newData?.get(newItemPosition))
         }
-
-
 
         private fun invoke() {
             if (oneResponse) { dataDiffListener.invoke(newData); oneResponse = false }

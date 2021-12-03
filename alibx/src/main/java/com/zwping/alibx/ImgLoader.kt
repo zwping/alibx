@@ -46,8 +46,8 @@ interface ImgLoaderInterface {
      * 加载图片
      * @param opt 加载图片过程中的配置项 [ImgLoaderOptInterface]
      */
-    fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {})
-    fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {})
+    fun glide(iv: ImageView?, url: String?, opt: ImgLoaderOpt.()->Unit = {})
+    fun glide(iv: ImageView?, url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {})
 
     /**
      * 清理图片缓存 disk & memory
@@ -76,9 +76,9 @@ interface ImgLoaderInterface {
     fun getDiskCacheSize(ctx: Context?): Long
     suspend fun clearDiskCache(ctx: Context?) // 建议MemoryCache交由系统完成
 
-    fun Context?.isDestroy(): Boolean {
-        this ?: return true
-        if (this is Activity) return isFinishing || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed)
+    fun isDestroy(ctx: Context?): Boolean {
+        ctx ?: return true
+        if (ctx is Activity) return ctx.isFinishing || ctx.isDestroyed
         return false
     }
 }
@@ -187,8 +187,8 @@ object ImageLoader: ImgLoaderInterface {
     override var globalError: Int? = null
     override var globalAnimType: AnimType? = null
 
-    override fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit) { glide(url, null, opt) }
-    override fun ImageView?.glide(url: String?, ctx: Context?, opt: ImgLoaderOpt.()->Unit) { this?.also { builder(it, url, ctx, opt)?.into(it) } }
+    override fun glide(iv: ImageView?, url: String?, opt: ImgLoaderOpt.()->Unit) { glide(iv, url, null, opt) }
+    override fun glide(iv: ImageView?, url: String?, ctx: Context?, opt: ImgLoaderOpt.()->Unit) { iv?.also { builder(it, url, ctx, opt)?.into(it) } }
 
     override fun <T> down(url: String?, ctx: Context?,
                           sucLis: (Bitmap) -> Unit, errLis: () -> Unit,
@@ -247,7 +247,7 @@ object ImageLoader: ImgLoaderInterface {
                        option: ImgLoaderOpt.()->Unit={ }): RequestBuilder<*>? {
         if (iv == null && ctx == null) return null
         val context = ctx ?: iv!!.context
-        if (context.isDestroy()) return null // 避免 You cannot start a load for a destroyed activity com.bumptech.glide.i.l.a(RequestManagerRetriever.java:2)
+        if (isDestroy(context)) return null // 避免 You cannot start a load for a destroyed activity com.bumptech.glide.i.l.a(RequestManagerRetriever.java:2)
         val opt = ImgLoaderOpt()
         option.invoke(opt)
         val reqManager = Glide.with(context)
@@ -358,5 +358,14 @@ object ImageLoader: ImgLoaderInterface {
         override fun updateDiskCacheKey(messageDigest: MessageDigest) { messageDigest.update(ID_BYTES) }
 
     }
-
 }
+/* ----------KTX----------- */
+/**
+ * 加载图片
+ * @param opt 加载图片过程中的配置项 [ImgLoaderOptInterface]
+ */
+fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {}) { glide(url, null, opt) }
+fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {}) {
+    ImageLoader.glide(this, url, ctx, opt)
+}
+fun Context?.isDestroy(): Boolean = ImageLoader.isDestroy(this)

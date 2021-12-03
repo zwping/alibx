@@ -1,6 +1,5 @@
 package com.zwping.alibx
 
-import android.R
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Resources
@@ -21,58 +20,60 @@ import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.tabs.TabLayout
 
 /**
- *
+ * tabLayout扩展
  * zwping @ 2021/10/28
  */
 interface TabLayoutInterface {
     /**
      * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
      */
-    fun TabLayout.initBottomNavigationView(tabSize: Int, block: TabLayoutCustomView.(index: Int) -> Unit)
-    fun TabLayout?.getTabLayoutCustomView(index: Int): TabLayoutCustomView?
+    fun initBottomNavigationView(tabLayout: TabLayout?, tabSize: Int, block: TabLayoutCustomView.(index: Int) -> Unit)
+    fun getTabLayoutCustomView(tabLayout: TabLayout?, index: Int): TabLayoutCustomView?
 
     /**
      * 增加小红点
      * @param index
      * @param num null -> 小红点
      */
-    fun TabLayout?.setBadge(index: Int, num: Int?=null)
-    fun TabLayout?.removeBadge(index: Int)
+    fun setBadge(tabLayout: TabLayout?, index: Int, num: Int?=null)
+    fun removeBadge(tabLayout: TabLayout?, index: Int)
 }
 object TabLayout: TabLayoutInterface {
 
-    override fun TabLayout.initBottomNavigationView(tabSize: Int,
-                                                    block: TabLayoutCustomView.(index: Int) -> Unit) {
-        setSelectedTabIndicatorHeight(0) // 去掉indicator
+    override fun initBottomNavigationView(tabLayout: TabLayout?,
+                                          tabSize: Int,
+                                          block: TabLayoutCustomView.(index: Int) -> Unit) {
+        tabLayout ?: return
+        tabLayout.setSelectedTabIndicatorHeight(0) // 去掉indicator
         for(index in 0 until tabSize) {
-            val tab = newTab()
-            val cus = TabLayoutCustomView(context)
+            val tab = tabLayout.newTab()
+            val cus = TabLayoutCustomView(tabLayout.context)
             tab.customView = cus
             block.invoke(cus, index)
-            addTab(tab)
+            tabLayout.addTab(tab)
             ViewCompat.setPaddingRelative(tab.view, 0, 0, 0, 0) // 重置padding
         }
     }
 
-    override fun TabLayout?.getTabLayoutCustomView(index: Int): TabLayoutCustomView? {
-        this ?: return null
-        val cus = getTabAt(index)?.customView
+    override fun getTabLayoutCustomView(tabLayout: TabLayout?, index: Int): TabLayoutCustomView? {
+        tabLayout ?: return null
+        val cus = tabLayout.getTabAt(index)?.customView
         if (cus is TabLayoutCustomView) return cus
         return null
     }
 
-    override fun TabLayout?.setBadge(index: Int, num: Int?) {
-        this ?: return
-        getTabLayoutCustomView(index)?.also { it.setBadge(num); return }
-        getTabAt(index)?.also {
+    override fun setBadge(tabLayout: TabLayout?, index: Int, num: Int?) {
+        tabLayout ?: return
+        getTabLayoutCustomView(tabLayout, index)?.also { it.setBadge(num); return }
+        tabLayout.getTabAt(index)?.also {
             it.orCreateBadge.also { if (num != null) it.number = num }
         }
     }
 
-    override fun TabLayout?.removeBadge(index: Int) {
-        this ?: return
-        getTabLayoutCustomView(index)?.also { it.removeBadge(); return }
-        getTabAt(index)?.also {
+    override fun removeBadge(tabLayout: TabLayout?, index: Int) {
+        tabLayout ?: return
+        getTabLayoutCustomView(tabLayout, index)?.also { it.removeBadge(); return }
+        tabLayout.getTabAt(index)?.also {
             it.removeBadge()
         }
     }
@@ -106,14 +107,14 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
                   iconWHDp: Float=24F, norIconColor: Int?=null, selIconColor: Int?=null) {
         titleTv.textSize = tvSizeSp
         titleTv.setTextColor(
-            ColorStateList(arrayOf(intArrayOf(R.attr.state_selected), intArrayOf()),
+            ColorStateList(arrayOf(intArrayOf(android.R.attr.state_selected), intArrayOf()),
                 intArrayOf(selTitleColor, norTitleColor))
         )
         titleTv.updateLayoutParams<MarginLayoutParams> { topMargin = tvMarginTopDp.dp2Px() }
         iconIv.updateLayoutParams { iconWHDp.dp2Px().also { width = it; height =it } }
         if (norIconColor != null && selIconColor != null) {
             ImageViewCompat.setImageTintList(iconIv, ColorStateList(
-                arrayOf(intArrayOf(R.attr.state_selected), intArrayOf()),
+                arrayOf(intArrayOf(android.R.attr.state_selected), intArrayOf()),
                 intArrayOf(selIconColor, norIconColor)))
         }
     }
@@ -166,3 +167,23 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
     }
     private fun Float.dp2Px() = (0.5F+this*Resources.getSystem().displayMetrics.density).toInt()
 }
+
+/* ----------KTX----------- */
+
+/**
+ * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
+ */
+fun TabLayout?.initBottomNavigationView(tabSize: Int, block: TabLayoutCustomView.(index: Int) -> Unit) {
+    com.zwping.alibx.TabLayout.initBottomNavigationView(this, tabSize, block)
+}
+fun TabLayout?.getTabLayoutCustomView(index: Int): TabLayoutCustomView? {
+    return com.zwping.alibx.TabLayout.getTabLayoutCustomView(this, index)
+}
+
+/**
+ * 增加小红点
+ * @param index
+ * @param num null -> 小红点
+ */
+fun TabLayout?.setBadge(index: Int, num: Int?=null) { com.zwping.alibx.TabLayout.setBadge(this, index, num) }
+fun TabLayout?.removeBadge(index: Int) { com.zwping.alibx.TabLayout.removeBadge(this, index) }

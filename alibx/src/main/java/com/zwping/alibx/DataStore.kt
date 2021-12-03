@@ -12,19 +12,36 @@ import kotlinx.coroutines.runBlocking
  * zwping @ 1/11/21
  * @lastTime 2021年11月01日17:18:22
  */
+interface DataStoreInterface {
+    fun get(ctx: Context?, key: String): String? // 提供string支持
+    fun put(ctx: Context?, key: String, value: String?)
+}
+object DataStore: DataStoreInterface {
+    override fun get(ctx: Context?, key: String): String? {
+        ctx ?: return null
+        return ctx.dataStore.get(key)
+    }
+    override fun put(ctx: Context?, key: String, value: String?) {
+        ctx ?: return
+        ctx.dataStore.put(key, value)
+    }
+}
 // At the top level of your kotlin file:
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "DataStore")
 inline fun <reified T: Any> DataStore<Preferences>.get(key: String): T? {
     var result: T? = null
+    val preferencesKey = when(T::class) {
+        Boolean::class -> booleanPreferencesKey(key)
+        Int::class -> intPreferencesKey(key)
+        Long::class -> longPreferencesKey(key)
+        Double::class -> doublePreferencesKey(key)
+        Float::class -> floatPreferencesKey(key)
+        else -> stringPreferencesKey(key)
+    }
     runBlocking { data.firstOrNull {
-        result = when(T::class){
-            Boolean::class -> it[booleanPreferencesKey(key)] as T
-            Int::class -> it[intPreferencesKey(key)] as T
-            Long::class -> it[longPreferencesKey(key)] as T
-            Double::class -> it[doublePreferencesKey(key)] as T
-            Float::class -> it[floatPreferencesKey(key)] as T
-            else -> it[stringPreferencesKey(key)] as T
-        }
+        // val res = it[preferencesKey]
+        // if (res == null || res is T) result = res as T
+        result = it[preferencesKey] as T // 类型强转存在crash风险, 但该风险在开发期间会被规避掉??
         true
     } }
     return result

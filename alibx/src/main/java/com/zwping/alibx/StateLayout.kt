@@ -32,7 +32,7 @@ class StateLayout @JvmOverloads constructor(
         var cfg = Cfg()
 
         @JvmStatic
-        fun appInit(cfg: Cfg) { this.cfg = cfg }
+        fun init(cfg: Cfg) { this.cfg = cfg }
 
         // 代码引用
         fun wrap(ac: Activity?): StateLayout = wrap(ac?.findViewById<ViewGroup>(android.R.id.content)?.getChildAt(0))

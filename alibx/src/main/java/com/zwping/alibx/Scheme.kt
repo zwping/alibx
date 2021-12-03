@@ -17,61 +17,74 @@ import com.zwping.alibx.Scheme.open
 import java.util.*
 
 /**
- * schemeUri简单路由 [Scheme.open]
+ * schemeUri简单路由 [open]
  * zwping @ 2021/11/18
  */
-object Scheme {
+interface SchemeInterface {
+
+    /*** scheme配置列表 ***/
+    var schemeList: SchemeListInterface?
+    /*** scheme跳转错误toast [可选/默认系统Toast] ***/
+    var warningToast: ((ctx: Context, msg: String)->Unit)?
+
+    fun init(schemeList: SchemeListInterface,
+             warningToast: ((ctx: Context, msg: String)->Unit)? = null)
+
+
+    fun open(ctx: Context?, schemeURL: String?, option: SchemeIntentOption.() -> Unit = {})
+    fun open(ctx: Context?, clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {})
+}
+object Scheme: SchemeInterface {
 
     var ErrMsg1 = "scheme url is empty!!"
     var ErrMsg2 = "scheme url error!"
     var ErrMsg3 = "scheme list not init!"
 
-    fun init(app: Application,
-             schemeList: SchemeListInterface,
-             warningToast: ((ctx: Context, msg: String) -> Unit)?=null) {
+    override var schemeList: SchemeListInterface? = null
+    override var warningToast: ((ctx: Context, msg: String) -> Unit)? = null
+
+    override fun init(schemeList: SchemeListInterface,
+                      warningToast: ((ctx: Context, msg: String) -> Unit)?) {
         this.schemeList = schemeList
         this.warningToast = warningToast
     }
-    fun Context?.open(schemeURL: String?, option: SchemeIntentOption.() -> Unit={}) {
-        this ?: return
-        if (schemeURL.isNullOrBlank()) { showToast(this, ErrMsg1); return }
-        try { open(scheme = schemeURL.scheme(), null, SchemeIntentOption(this).also(option)) }
-        catch (e: Exception) { e.printStackTrace(); showToast(this, "$ErrMsg2 $schemeURL"); return }
+
+    override fun open(ctx: Context?, schemeURL: String?, option: SchemeIntentOption.() -> Unit) {
+        ctx ?: return
+        if (schemeURL.isNullOrBlank()) { showToast(ctx, ErrMsg1); return }
+        try { open(ctx, scheme = schemeURL.scheme(), null, SchemeIntentOption(ctx).also(option)) }
+        catch (e: Exception) { e.printStackTrace(); showToast(ctx, "$ErrMsg2 $schemeURL"); return }
     }
-    fun Context?.open(clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit={}) {
-        this ?: return
-        open(null, clazz = clazz, SchemeIntentOption(this).also(option))
+    override fun open(ctx: Context?, clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit) {
+        ctx ?: return
+        open(ctx, null, clazz = clazz, SchemeIntentOption(ctx).also(option))
     }
 
     /* ---------------------- */
 
-    /*** scheme配置列表 ***/
-    private var schemeList: SchemeListInterface? = null
-    /*** scheme跳转错误toast [可选/默认系统Toast] ***/
-    private var warningToast: ((ctx: Context, msg: String) -> Unit)? = null
 
-    private fun Context.open(scheme: SchemeStandard?, clazz: Class<out Activity>?, opt: SchemeIntentOption){
+    private fun open(ctx: Context, scheme: SchemeStandard?, clazz: Class<out Activity>?, opt: SchemeIntentOption){
         if (scheme == null && clazz == null) return
         var cls = clazz
         if (scheme != null) { // scheme优先级高于clazz
             if (schemeList == null) {
-                showToast(this, ErrMsg3); return
+                showToast(ctx, ErrMsg3); return
             }
             if (scheme.uri?.scheme?.startsWith("http")==true || scheme.uri?.scheme?.startsWith("https")==true) {
                 if (schemeList?.webBrowser == null) { // 未定制内部WebView则使用系统浏览器打开
-                    startActivity(Intent(Intent.ACTION_VIEW, scheme.uri)); return
+                    ctx.startActivity(Intent(Intent.ACTION_VIEW, scheme.uri)); return
                 }
                 cls = schemeList?.webBrowser
             }
             schemeList?.dataFunc?.filter { it.key.equals(scheme) }?.forEach {
-                it.value.invoke(this, scheme.extra)
+                it.value.invoke(ctx, scheme.extra)
                 return  // dataFunc优先级高于data
             }
             schemeList?.data?.filter { it.key.equals(scheme) }?.forEach {
                 cls = it.value
             }
         }
-        startActivity(Intent(this, cls).also { i ->
+        ctx.startActivity(Intent(ctx, cls).also { i ->
             if (scheme != null) i.data = scheme.uri // 携带过去
             scheme?.extra?.also { i.putExtras(it) }
             opt.extra?.also { i.putExtras(it) }
@@ -82,9 +95,9 @@ object Scheme {
         }, opt.options)
 
         if (opt.transitionAnimEnterResId != null && opt.transitionAnimExitResId != null) {
-            if (this is Activity) overridePendingTransition(opt.transitionAnimEnterResId!!, opt.transitionAnimExitResId!!)
+            if (ctx is Activity) ctx.overridePendingTransition(opt.transitionAnimEnterResId!!, opt.transitionAnimExitResId!!)
         } else {
-            opt.transitionAnim?.also { if (this is Activity) overridePendingTransition(it) }
+            opt.transitionAnim?.also { if (ctx is Activity) ctx.overridePendingTransition(it) }
         }
     }
 
@@ -183,22 +196,8 @@ class SchemeIntentOption(private val ctx: Context?): SchemeIntentOptionInterface
 
     override var options: Bundle? = null
 
-
     override fun toString(): String {
         return "SchemeIntentOption(ctx=$ctx, launcherMode=$launcherMode, transitionAnim=$transitionAnim, transitionAnimEnterResId=$transitionAnimEnterResId, transitionAnimExitResId=$transitionAnimExitResId, extra=$extra, options=$options)"
-    }
-}
-fun Activity?.overridePendingTransition(enum: OPTAnim) {
-    this ?: return
-    when(enum) {
-        None -> overridePendingTransition(0, 0)
-        FadeInOut -> overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-        FadeIn -> overridePendingTransition(android.R.anim.fade_in, com.zwping.alibx.R.anim.opt_hold)
-        FadeOut -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, android.R.anim.fade_out)
-        SlideLeftRight -> overridePendingTransition(com.zwping.alibx.R.anim.slide_left_enter, com.zwping.alibx.R.anim.slide_right_exit)
-        SlideRightLeft -> overridePendingTransition(com.zwping.alibx.R.anim.slide_right_enter, com.zwping.alibx.R.anim.slide_left_exit)
-        SlideToTop -> overridePendingTransition(com.zwping.alibx.R.anim.slide_bottom_enter, com.zwping.alibx.R.anim.opt_hold)
-        SlideToBottom -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, com.zwping.alibx.R.anim.slide_bottom_exit)
     }
 }
 enum class LauncherMode {
@@ -218,3 +217,19 @@ enum class OPTAnim {
     SlideToTop,             // 滑动 底部向上滑动弹出
     SlideToBottom,          // 滑动 弹出后向下滑动关闭
 }
+/* ----------KTX----------- */
+fun Activity?.overridePendingTransition(enum: OPTAnim) {
+    this ?: return
+    when(enum) {
+        None -> overridePendingTransition(0, 0)
+        FadeInOut -> overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        FadeIn -> overridePendingTransition(android.R.anim.fade_in, com.zwping.alibx.R.anim.opt_hold)
+        FadeOut -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, android.R.anim.fade_out)
+        SlideLeftRight -> overridePendingTransition(com.zwping.alibx.R.anim.slide_left_enter, com.zwping.alibx.R.anim.slide_right_exit)
+        SlideRightLeft -> overridePendingTransition(com.zwping.alibx.R.anim.slide_right_enter, com.zwping.alibx.R.anim.slide_left_exit)
+        SlideToTop -> overridePendingTransition(com.zwping.alibx.R.anim.slide_bottom_enter, com.zwping.alibx.R.anim.opt_hold)
+        SlideToBottom -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, com.zwping.alibx.R.anim.slide_bottom_exit)
+    }
+}
+fun Context?.open(schemeURL: String?, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, schemeURL, option) }
+fun Context?.open(clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, clazz, option) }
