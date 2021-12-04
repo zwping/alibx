@@ -29,7 +29,7 @@ private interface IBaseAc<VB: ViewBinding> {
     // ViewBinding功能提供
     fun initVB(inflater: LayoutInflater): VB? { return null }       // 实现
     val _binding: VB?
-    val vb: VB? get() = _binding                                    // 使用
+    val vb: VB get() = _binding!!                                    // 使用
 
     // LoadingDialog功能提供
     val _loading: Dialog
@@ -53,7 +53,7 @@ private interface IBaseFm<VB: ViewBinding> {
     // ViewBinding功能提供
     fun initVB(inflater: LayoutInflater, parent: ViewGroup?, attachToParent: Boolean=false): VB? { return null }    // 实现, ide快捷输出
     var _binding: VB?
-    val vb: VB? get() = _binding       // 使用
+    val vb: VB get() = _binding!!       // 使用
 
     // LoadingDialog功能提供
     fun showLoading(txt: CharSequence?=null, delayed: Boolean=true) { baseAc?.showLoading(txt, delayed) }
@@ -94,7 +94,7 @@ abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, IBaseAc<VB> {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _binding?.also { setContentView(vb!!.root) }
+        _binding?.also { setContentView(vb.root) }
         initView()
     }
 
