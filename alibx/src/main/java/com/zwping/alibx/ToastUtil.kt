@@ -18,9 +18,8 @@ import androidx.core.view.*
 /**
  * toast
  * zwping @ 2021/11/21
- * @lasttime 2021年12月02日11:56:54
  */
-internal interface IToastUtil {
+private interface IToastUtil {
     fun init(app: Application, option: (ToastUtilOption)-> Unit = {})
 
     fun show(msg: Any?)
@@ -123,3 +122,7 @@ class ToastUtilOption {
 
     private fun dpToPx(dp: Float): Float = 0.5F + dp*Resources.getSystem().displayMetrics.density
 }
+
+/* ----------KTX----------- */
+
+fun showToast(msg: Any?, duration: Int=Toast.LENGTH_SHORT) { ToastUtil.show("$msg", duration=duration) }

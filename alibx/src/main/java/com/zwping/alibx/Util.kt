@@ -9,11 +9,14 @@ import androidx.annotation.IntRange
  */
 object Util {
 
+    var DEBUG = true
+
     /**
      * 以System.out通用TAG打印日志, 记录logd方法调用位置
      */
     fun logd(vararg msgs: Any?) { _logd(*msgs, stackOffset = 1) }
     internal fun _logd(vararg msgs: Any?, stackOffset: Int=0) {
+        if (!DEBUG) return
         var element : StackTraceElement? = null
         Thread.currentThread().stackTrace.also { if (it.size >= (4+stackOffset)) { element = it[3+stackOffset]; return@also } }
         Log.d("System.out", "${element}-> ${msgs.map { "$it" }.toString().let { it.substring(1, it.length-1) }}")

@@ -20,9 +20,8 @@ import androidx.viewbinding.ViewBinding
 /**
  * 紧凑的封装[BaseAc] [BaseFm]
  * zwping @ 2021/10/18
- * @lastTime 2021年12月01日13:58:41
  */
-interface BaseAcInterface<VB: ViewBinding> {
+private interface IBaseAc<VB: ViewBinding> {
 
     // 快捷
     fun initView()
@@ -41,7 +40,7 @@ interface BaseAcInterface<VB: ViewBinding> {
     val handler: Handler
     fun dpToPx(dp: Float): Float { return 0.5F+dp*Resources.getSystem().displayMetrics.density }
 }
-interface BaseFmInterface<VB: ViewBinding> {
+private interface IBaseFm<VB: ViewBinding> {
 
     // 快捷
     fun initView()
@@ -85,7 +84,7 @@ class MainActivity: BaseAc<ActivityMainBinding>() {
 }
  */
 /*** ac基类 ***/
-abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> {
+abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, IBaseAc<VB> {
 
     constructor()
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
@@ -189,7 +188,7 @@ abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, BaseAcInterface<VB> 
  */
 
 /*** fm基类 ***/
-abstract class BaseFm<VB: ViewBinding> : Fragment, BaseFmInterface<VB> {
+abstract class BaseFm<VB: ViewBinding> : Fragment, IBaseFm<VB> {
 
     constructor()
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)

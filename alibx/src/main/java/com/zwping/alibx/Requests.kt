@@ -8,6 +8,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.zwping.alibx.Requests.safeName
+import com.zwping.alibx.Requests.toJSONObject
 import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -29,49 +31,97 @@ import kotlin.random.Random
  * 简易封装okhttp
  *   - 满足restful api / down file / upload file / coroutine
  * zwping @ 5/24/21
- * @lastTime: 2021年08月26日11:00:08
  */
-object Requests {
+private interface IRequests {
+    fun init(block: OkHttpClient.Builder.() -> Unit)
+
+    fun get(url: String,
+            params: HashMap<Any, Any?>?=null,
+            kwargs: Optional.() -> Unit={}): Call
+    fun post(url: String,
+             data: HashMap<Any, Any?>?=null,
+             json: JSONObject?=null,
+             kwargs: Optional.() -> Unit={}): Call
+    fun put(url: String,
+            data: HashMap<Any, Any?>?=null,
+            kwargs: Optional.() -> Unit = {}): Call
+    fun delete(url: String,
+               kwargs: Optional.() -> Unit={}): Call
+
+    fun enqueue2(call: Call,
+                 owner: LifecycleOwner?,
+                 onResponse: (Call, Response, String) -> Unit,
+                 onFailure: (Call, msg: String) -> Unit,
+                 onStart: () -> Unit = {},
+                 onEnd: () -> Unit = {})
+    suspend fun execute2(call: Call): Response2
+    fun enqueueDown(call: Call,
+                    owner: LifecycleOwner?,
+                    dir: String,
+                    onFinish: (Call, Response, filePath: String) -> Unit,
+                    onFailure: (Call, msg: String) -> Unit,
+                    onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit={ _, _, _, _ -> },
+                    name: String?=null,
+                    onStart: () -> Unit={},
+                    onEnd: () -> Unit={})
+
+    fun toJSONObject(str: String?): JSONObject?
+    fun toJSONArray(str: String?): JSONArray?
+    fun isSuccessful2Safe(response2: Response2): Boolean
+    fun toJSONObject(requestBody: RequestBody): JSONObject?
+    fun writeFile(response: Response,
+                  file: File,
+                  onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit): Boolean
+
+    fun safeName(str: String): String
+    fun isAppDebug(ctx: Context?): Boolean
+}
+object Requests: IRequests {
 
     private val okHttpClient by lazy { _okHttpBuilder.build() }
     private val _okHttpBuilder by lazy { OkHttpClient.Builder() }
-    private val handler by lazy { Handler(Looper.getMainLooper()) }
+    val handler by lazy { Handler(Looper.getMainLooper()) }
 
-    fun init(block: OkHttpClient.Builder.() -> Unit) {
+    override fun init(block: OkHttpClient.Builder.() -> Unit) {
         // okHttpBuilder.addInterceptor(LogInterceptor(ctx.isAppDebug()))
-        _okHttpBuilder.connectTimeout(30 * 1000, TimeUnit.MILLISECONDS)
-        _okHttpBuilder.readTimeout(30 * 1000, TimeUnit.MILLISECONDS)
-        _okHttpBuilder.writeTimeout(30 * 1000, TimeUnit.MILLISECONDS)
+        _okHttpBuilder.connectTimeout(30L * 1000, TimeUnit.MILLISECONDS)
+        _okHttpBuilder.readTimeout(30L * 1000, TimeUnit.MILLISECONDS)
+        _okHttpBuilder.writeTimeout(30L * 1000, TimeUnit.MILLISECONDS)
         _okHttpBuilder.retryOnConnectionFailure(true)
         block.invoke(_okHttpBuilder)
     }
 
-    fun get(url: String, params: HashMap<Any, Any?>? = null, kwargs: Optional.() -> Unit = {}): Call
+    override fun get(url: String, params: HashMap<Any, Any?>?, kwargs: Optional.() -> Unit): Call
             = okHttpClient.newCall(Request.Builder()._method("GET", url, kwargs, _params = params).build())
 
-    fun post(url: String, data: HashMap<Any, Any?>? = null, json: JSONObject? = null, kwargs: Optional.() -> Unit = {}): Call
+
+    override fun post(
+        url: String,
+        data: HashMap<Any, Any?>?,
+        json: JSONObject?,
+        kwargs: Optional.() -> Unit
+    ): Call
             = okHttpClient.newCall(Request.Builder()._method("POST", url, kwargs, _data = data, _json = json).build())
 
-    fun put(url: String, data: HashMap<Any, Any?>? = null, kwargs: Optional.() -> Unit = {}): Call
+    override fun put(url: String, data: HashMap<Any, Any?>?, kwargs: Optional.() -> Unit): Call
             = okHttpClient.newCall(Request.Builder()._method("PUT", url, kwargs, _data = data).build())
 
-    fun delete(url: String, kwargs: Optional.() -> Unit = {}): Call
+    override fun delete(url: String, kwargs: Optional.() -> Unit): Call
             = okHttpClient.newCall(Request.Builder()._method("DELETE", url, kwargs).build())
 
-    suspend fun Call.execute2(): Response2 = withContext(Dispatchers.Default) { _execute() }
-
-    fun Call.enqueue2(
+    override fun enqueue2(
+        call: Call,
         owner: LifecycleOwner?,
         onResponse: (Call, Response, String) -> Unit,
         onFailure: (Call, msg: String) -> Unit,
-        onStart: () -> Unit = {},
-        onEnd: () -> Unit = {}
+        onStart: () -> Unit,
+        onEnd: () -> Unit
     ) {
         if (owner?.lifecycle?.currentState == Lifecycle.State.DESTROYED) return
         val once = AtomicBoolean()
-        owner?._bindLifecycle(once, onEnd, this)
+        owner?._bindLifecycle(once, onEnd, call)
         onStart.invoke()
-        enqueue(object: Callback{
+        call.enqueue(object: Callback{
             override fun onResponse(call: Call, response: Response) {
                 _onResponse(call, response, once, onResponse, onFailure, onEnd)
             }
@@ -81,21 +131,26 @@ object Requests {
         })
     }
 
-    fun Call.enqueueDown(
+    override suspend fun execute2(call: Call): Response2 {
+        return withContext(Dispatchers.Default) { call._execute() }
+    }
+
+    override fun enqueueDown(
+        call: Call,
         owner: LifecycleOwner?,
         dir: String,
         onFinish: (Call, Response, filePath: String) -> Unit,
         onFailure: (Call, msg: String) -> Unit,
-        onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit = { _, _, _, _ -> },
-        name: String? = null,
-        onStart: () -> Unit = {},
-        onEnd: () -> Unit = {})
-    {
+        onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit,
+        name: String?,
+        onStart: () -> Unit,
+        onEnd: () -> Unit
+    ) {
         if (owner?.lifecycle?.currentState == Lifecycle.State.DESTROYED) return
         val once = AtomicBoolean()
-        owner?._bindLifecycle(once, onEnd, this)
+        owner?._bindLifecycle(once, onEnd, call)
         onStart.invoke()
-        enqueue(object : Callback {
+        call.enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 if (!response.isSuccessful) {
                     handler.post {
@@ -109,7 +164,7 @@ object Requests {
                 val file = File(dir, fileName)
                 if (null != owner) {
                     owner.lifecycleScope.launch(Dispatchers.IO) {
-                        if (response.writeFile(file, onProgress)) {
+                        if (writeFile(response, file, onProgress)) {
                             _onFinish(file, call, response, once, onFinish, onFailure, onEnd)
                         } else {
                             _onFailure(call, null, once, onFailure, onEnd)
@@ -117,7 +172,7 @@ object Requests {
                     }
                     return
                 }
-                if (response.writeFile(file, onProgress)) {
+                if (writeFile(response, file, onProgress)) {
                     _onFinish(file, call, response, once, onFinish, onFailure, onEnd)
                 } else {
                     _onFailure(call, null, once, onFailure, onEnd)
@@ -130,13 +185,17 @@ object Requests {
         })
     }
 
-    fun Response.writeFile(file: File, onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit): Boolean{
-        if (!isSuccessful || body == null) return false
+    override fun writeFile(
+        response: Response,
+        file: File,
+        onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit
+    ): Boolean {
+        if (!response.isSuccessful || response.body == null) return false
         try {
-            val total = body!!.contentLength()
+            val total = response.body!!.contentLength()
             var write = 0L
             var length: Int
-            val ins = body!!.byteStream()
+            val ins = response.body!!.byteStream()
             val ous = FileOutputStream(file)
             val data = ByteArray(1024)
             var progress = -1
@@ -157,112 +216,31 @@ object Requests {
     }
 
 
-    class UploadRequestBody(private val fileName: String, private val file: File, private val onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit) : RequestBody(){
-
-        private val requestBody by lazy {
-            // val mediaType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(file.absolutePath))?.toMediaTypeOrNull()
-            // file.asRequestBody(mediaType)
-            file.asRequestBody("multipart/form-data".toMediaType())
-        }
-
-        private fun Sink(sink: Sink): Sink = object : ForwardingSink(sink) {
-            private var bytesWritten = 0L
-            private var contentLength = 0L
-            private var progress = -1
-            private var progressLock = -1
-
-            override fun write(source: Buffer, byteCount: Long) {
-                super.write(source, byteCount)
-                if (contentLength == 0L) contentLength = contentLength()
-                bytesWritten += byteCount
-                (bytesWritten * 100 / contentLength).toInt().also {
-                    if (progress != it) {
-                        progress = it
-                        handler.post {
-                            if (progressLock == progress) return@post
-                            progressLock = progress
-                            onProgress.invoke(progressLock, bytesWritten, contentLength, fileName)
-                        }
-                    }
-                }
-            }
-        }
-
-        override fun contentType(): MediaType? = requestBody.contentType()
-        override fun contentLength(): Long = requestBody.contentLength()
-
-        override fun writeTo(sink: BufferedSink) {
-            val bufferedSink = Sink(sink).buffer()
-            requestBody.writeTo(bufferedSink)
-            bufferedSink.flush()
-        }
-
+    override fun isSuccessful2Safe(response2: Response2): Boolean {
+        return response2.isSuccessful && !response2.responseStr.isNullOrBlank()
     }
 
-    class Optional(
-        val request: Request.Builder,
-        val params: HashMap<Any, Any?> = hashMapOf(),
-        val data: HashMap<Any, Any?> = hashMapOf(),
-        var json: JSONObject? = null,
-    ) {
-
-        /*
-        params	字典或字节序列，作为参数增加到url中
-        data	字典、字节序列或文件对象，作为Request的内容
-        json	JSON格式的数据，作为Request的内容
-        headers	字典，HTTP定制头
-
-        以下未实现
-        cookies	字典或CookieJar，Request中的cookie
-        auth	元组，支持HTTP认证功能
-        files	字典类型，传输文件
-        timeout	设定超时时间，秒为单位
-        proxies	字典类型，设定访问代理服务器，可以增加登录认证
-        allow_redirects	True/False，默认为True，重定向开关
-        stream	True/False，默认为True，获取内容立即下载开关
-        verify	True/False，默认为True，认证SSL证书开关
-        cert	本地SSL证书路径
-         */
-        var multipartBody: MultipartBody.Builder? = null
-        fun initMultipartBody() { multipartBody = MultipartBody.Builder(); multipartBody!!.setType(MultipartBody.FORM) }
-        fun initMultipartBodyIsFile(name: String, file: File, onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit) {
-            initMultipartBody()
-            addRequestBodyOfFile(name, file, onProgress)
-        }
-        fun addRequestBodyOfFile(name: String, file: File, onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit){
-            val fileName = file.name.safeName()
-            multipartBody?.addFormDataPart(name, fileName, UploadRequestBody(fileName, file, onProgress))
-        }
-
-        fun addParams(key: Any, value: Any?) { params[key] = value }
-        fun removeParams(vararg keys: Any) { keys.forEach { params.remove(it) } }
-
-        fun addData(key: Any, value: Any?) { data[key] = value }
-        fun removeData(vararg keys: Any) { keys.forEach { data.remove(it) } }
-
-        fun addJson(key: String, value: Any?) { if (null == json) { json = JSONObject() }; json?.put(key, value) }
-        fun removeJson(vararg keys: String) { keys.forEach { json?.remove(it) } }
-
-        fun setHeader(name: String, value: String) { request.header(name, value) }
-        fun addHeader(name: String, value: String) { request.addHeader(name, value) }
-        fun removeHeader(vararg names: String) { names.forEach { request.removeHeader(it) } }
-
-        // fun addCookie 使用CookieJar自动管理
+    override fun toJSONObject(str: String?): JSONObject? {
+        str ?: return null
+        return try { JSONObject(str) } catch (e: Exception) { null }
+    }
+    override fun toJSONArray(str: String?): JSONArray? {
+        str ?: return null
+        return try { JSONArray(str) } catch (e: Exception) { null }
+    }
+    override fun toJSONObject(requestBody: RequestBody): JSONObject? {
+        return try {
+            val buffer = Buffer(); requestBody.writeTo(buffer)
+            return JSONObject(buffer.readUtf8())
+        } catch (e: Exception) { null }
     }
 
-    data class Response2(val isSuccessful: Boolean,
-                         val call: Call,
-                         val response: ResponseBody? = null, val responseStr: String? = null, val responseOb: JSONObject? = null,
-                         val msg: String = "数据错误!")
 
-    inline fun Response2.isSuccessful2Safe(): Boolean = isSuccessful && !responseStr.isNullOrBlank()
-
-    inline fun String.toJSONObject(): JSONObject? = try { JSONObject(this) } catch (e: Exception) { null }
-    inline fun String.toJSONArray(): JSONArray? = try { JSONArray(this) } catch (e: Exception) { null }
-    inline fun RequestBody.toJSONObject(): JSONObject? { return try {
-        val copy = this; val buffer = Buffer(); copy.writeTo(buffer)
-        return JSONObject(buffer.readUtf8())
-    } catch (e: Exception) { null }
+    override fun safeName(str: String): String {
+        return try { URLEncoder.encode(str, "UTF-8") } catch (e: Exception) { "${System.currentTimeMillis()}_unName" }
+    }
+    override fun isAppDebug(ctx: Context?): Boolean {
+        return ctx?.applicationInfo?.flags?.and(ApplicationInfo.FLAG_DEBUGGABLE) ?: 1 != 0
     }
 
     /* ================================= */
@@ -275,7 +253,7 @@ object Requests {
                 val response = execute()
                 if (response.isSuccessful) {
                     val str = response.body?.string()
-                    Response2(true, this, response.body, str, str?.toJSONObject())
+                    Response2(true, this, response.body, str, toJSONObject(str))
                 } else {
                     Response2(false, this, msg = "请求失败-${response.code}")
                 }
@@ -376,7 +354,135 @@ object Requests {
         method(method, requestBody)
         return this
     }
-
-    inline fun String.safeName() = try { URLEncoder.encode(this, "UTF-8") } catch (e: Exception) { "${System.currentTimeMillis()}_unName" }
-    inline fun Context?.isAppDebug() = this?.applicationInfo?.flags?.and(ApplicationInfo.FLAG_DEBUGGABLE) ?: 1 != 0
 }
+
+class UploadRequestBody(private val fileName: String, private val file: File, private val onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit) : RequestBody(){
+
+    private val requestBody by lazy {
+        // val mediaType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(file.absolutePath))?.toMediaTypeOrNull()
+        // file.asRequestBody(mediaType)
+        file.asRequestBody("multipart/form-data".toMediaType())
+    }
+
+    private fun Sink(sink: Sink): Sink = object : ForwardingSink(sink) {
+        private var bytesWritten = 0L
+        private var contentLength = 0L
+        private var progress = -1
+        private var progressLock = -1
+
+        override fun write(source: Buffer, byteCount: Long) {
+            super.write(source, byteCount)
+            if (contentLength == 0L) contentLength = contentLength()
+            bytesWritten += byteCount
+            (bytesWritten * 100 / contentLength).toInt().also {
+                if (progress != it) {
+                    progress = it
+                    Requests.handler.post {
+                        if (progressLock == progress) return@post
+                        progressLock = progress
+                        onProgress.invoke(progressLock, bytesWritten, contentLength, fileName)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun contentType(): MediaType? = requestBody.contentType()
+    override fun contentLength(): Long = requestBody.contentLength()
+
+    override fun writeTo(sink: BufferedSink) {
+        val bufferedSink = Sink(sink).buffer()
+        requestBody.writeTo(bufferedSink)
+        bufferedSink.flush()
+    }
+
+}
+
+class Optional(val request: Request.Builder,
+               val params: HashMap<Any, Any?> = hashMapOf(),
+               val data: HashMap<Any, Any?> = hashMapOf(),
+               var json: JSONObject? = null, ) {
+
+    /*
+    params	字典或字节序列，作为参数增加到url中
+    data	字典、字节序列或文件对象，作为Request的内容
+    json	JSON格式的数据，作为Request的内容
+    headers	字典，HTTP定制头
+
+    以下未实现
+    cookies	字典或CookieJar，Request中的cookie
+    auth	元组，支持HTTP认证功能
+    files	字典类型，传输文件
+    timeout	设定超时时间，秒为单位
+    proxies	字典类型，设定访问代理服务器，可以增加登录认证
+    allow_redirects	True/False，默认为True，重定向开关
+    stream	True/False，默认为True，获取内容立即下载开关
+    verify	True/False，默认为True，认证SSL证书开关
+    cert	本地SSL证书路径
+     */
+    var multipartBody: MultipartBody.Builder? = null
+    fun initMultipartBody() { multipartBody = MultipartBody.Builder(); multipartBody!!.setType(MultipartBody.FORM) }
+    fun initMultipartBodyIsFile(name: String, file: File, onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit) {
+        initMultipartBody()
+        addRequestBodyOfFile(name, file, onProgress)
+    }
+    fun addRequestBodyOfFile(name: String, file: File, onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit){
+        val fileName = safeName(file.name)
+        multipartBody?.addFormDataPart(name, fileName, UploadRequestBody(fileName, file, onProgress))
+    }
+
+    fun addParams(key: Any, value: Any?) { params[key] = value }
+    fun removeParams(vararg keys: Any) { keys.forEach { params.remove(it) } }
+
+    fun addData(key: Any, value: Any?) { data[key] = value }
+    fun removeData(vararg keys: Any) { keys.forEach { data.remove(it) } }
+
+    fun addJson(key: String, value: Any?) { if (null == json) { json = JSONObject() }; json?.put(key, value) }
+    fun removeJson(vararg keys: String) { keys.forEach { json?.remove(it) } }
+
+    fun setHeader(name: String, value: String) { request.header(name, value) }
+    fun addHeader(name: String, value: String) { request.addHeader(name, value) }
+    fun removeHeader(vararg names: String) { names.forEach { request.removeHeader(it) } }
+
+    // fun addCookie 使用CookieJar自动管理
+}
+
+data class Response2(val isSuccessful: Boolean,
+                     val call: Call,
+                     val response: ResponseBody? = null,
+                     val responseStr: String? = null,
+                     val responseOb: JSONObject? = null,
+                     val msg: String = "数据错误!")
+
+/* ----------KTX----------- */
+
+fun Call.enqueue2(owner: LifecycleOwner?,
+                  onResponse: (Call, Response, String) -> Unit,
+                  onFailure: (Call, msg: String) -> Unit,
+                  onStart: () -> Unit = {},
+                  onEnd: () -> Unit = {}) {
+    Requests.enqueue2(this, owner, onResponse, onFailure, onStart, onEnd)
+}
+suspend fun Call.execute2(): Response2 = Requests.execute2(this)
+fun Call.enqueueDown(owner: LifecycleOwner?,
+                     dir: String,
+                     onFinish: (Call, Response, filePath: String) -> Unit,
+                     onFailure: (Call, msg: String) -> Unit,
+                     onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit={ _, _, _, _ -> },
+                     name: String?=null,
+                     onStart: () -> Unit={},
+                     onEnd: () -> Unit={}) {
+    Requests.enqueueDown(this, owner, dir, onFinish, onFailure, onProgress, name, onStart, onEnd)
+}
+
+fun String?.toJSONObject(): JSONObject? = Requests.toJSONObject(this)
+fun String?.toJSONArray(): JSONArray? = Requests.toJSONArray(this)
+fun Response2.isSuccessful2Safe(): Boolean = Requests.isSuccessful2Safe(this)
+fun RequestBody.toJSONObject(): JSONObject? = Requests.toJSONObject(this)
+fun Response.writeFile(file: File,
+                       onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit): Boolean {
+    return Requests.writeFile(this, file, onProgress)
+}
+
+fun String.safeName(): String = Requests.safeName(this)
+fun Context?.isAppDebug(): Boolean = Requests.isAppDebug(this)

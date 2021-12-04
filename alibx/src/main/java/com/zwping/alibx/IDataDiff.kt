@@ -4,23 +4,21 @@ import androidx.recyclerview.widget.DiffUtil
 
 /**
  * DiffUtil封装扩展
- *  -[IDiffUtil]类对象管理oldData, 包含计算差异[calculateDiff]/监听data集合数据是否已产生差异[setOnDataDiffListener]
+ *  -[IDataDiff]类对象管理oldData, 包含计算差异[calculateDiff]/监听data集合数据是否已产生差异[setOnDataDiffListener]
  *
  * zwping @ 12/3/20
  *
  * @param areItemsTheSame
  * @param areContentsTheSame
  * @param getChangePayload
- *
- * @lastTime 2021年11月01日17:18:22
  */
-class IDiffUtil<B>(
+class IDataDiff<B>(
         private val areItemsTheSame: (od: B?, nd: B?) -> Boolean,
         private val areContentsTheSame: (od: B?, nd: B?) -> Boolean = { _, _ -> true },
         private val getChangePayload: ((od: B?, nd: B?) -> Any?)? = { _, _ -> null }) {
 
     var oldData: List<B>? = null // 老数据
-    private var dataDiffListener: (IDiffUtil<B>.(List<B>?) -> Unit)? = null
+    private var dataDiffListener: (IDataDiff<B>.(List<B>?) -> Unit)? = null
 
 
     /*** 类对象管理oldData ***/
@@ -34,7 +32,7 @@ class IDiffUtil<B>(
      * 监听data数据是否已产生差异
      * 借助(DiffUtil差量算法)实现List高效比对
      */
-    fun setOnDataDiffListener(lis: IDiffUtil<B>.(List<B>?) -> Unit): IDiffUtil<B> = apply { this.dataDiffListener = lis }
+    fun setOnDataDiffListener(lis: IDataDiff<B>.(List<B>?) -> Unit): IDataDiff<B> = apply { this.dataDiffListener = lis }
 
     /* ------------------------------ */
 

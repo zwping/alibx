@@ -19,7 +19,6 @@ import androidx.viewbinding.ViewBinding
 /**
  * ViewBinding的成熟推动了原生Adapter实用
  * zwping @ 5/10/21
- * @lastTime: 2021年11月08日11:00:43
  */
 abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() {
 

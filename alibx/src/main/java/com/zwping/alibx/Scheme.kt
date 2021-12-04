@@ -2,7 +2,6 @@ package com.zwping.alibx
 
 import android.app.Activity
 import android.app.ActivityOptions
-import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -13,37 +12,36 @@ import android.widget.Toast
 import com.zwping.alibx.LauncherMode.SingleTask
 import com.zwping.alibx.LauncherMode.SingleTop
 import com.zwping.alibx.OPTAnim.*
-import com.zwping.alibx.Scheme.open
 import java.util.*
 
 /**
  * schemeUri简单路由 [open]
  * zwping @ 2021/11/18
  */
-interface SchemeInterface {
+private interface IScheme {
 
     /*** scheme配置列表 ***/
-    var schemeList: SchemeListInterface?
+    var schemeList: ISchemeList?
     /*** scheme跳转错误toast [可选/默认系统Toast] ***/
     var warningToast: ((ctx: Context, msg: String)->Unit)?
 
-    fun init(schemeList: SchemeListInterface,
+    fun init(schemeList: ISchemeList,
              warningToast: ((ctx: Context, msg: String)->Unit)? = null)
-
 
     fun open(ctx: Context?, schemeURL: String?, option: SchemeIntentOption.() -> Unit = {})
     fun open(ctx: Context?, clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {})
 }
-object Scheme: SchemeInterface {
+
+object Scheme: IScheme {
 
     var ErrMsg1 = "scheme url is empty!!"
     var ErrMsg2 = "scheme url error!"
     var ErrMsg3 = "scheme list not init!"
 
-    override var schemeList: SchemeListInterface? = null
+    override var schemeList: ISchemeList? = null
     override var warningToast: ((ctx: Context, msg: String) -> Unit)? = null
 
-    override fun init(schemeList: SchemeListInterface,
+    override fun init(schemeList: ISchemeList,
                       warningToast: ((ctx: Context, msg: String) -> Unit)?) {
         this.schemeList = schemeList
         this.warningToast = warningToast
@@ -61,7 +59,6 @@ object Scheme: SchemeInterface {
     }
 
     /* ---------------------- */
-
 
     private fun open(ctx: Context, scheme: SchemeStandard?, clazz: Class<out Activity>?, opt: SchemeIntentOption){
         if (scheme == null && clazz == null) return
@@ -108,6 +105,7 @@ object Scheme: SchemeInterface {
 }
 
 fun String.scheme() = SchemeStandard(this)
+
 /**
  * 标准的SchemeUri
  */
@@ -142,13 +140,13 @@ class SchemeStandard {
 /**
  * scheme list 配置接口
  */
-interface SchemeListInterface{
+interface ISchemeList{
     val data: HashMap<SchemeStandard, Class<out Activity>>
     val dataFunc: HashMap<SchemeStandard, (ctx: Context, extra: Bundle?)->Unit>
     val webBrowser: Class<out Activity>? // 如果未设置内部webViewActivity, 默认跳转系统浏览器
 }
 
-interface SchemeIntentOptionInterface {
+interface ISchemeIntentOption {
     // extra
     var extra: Bundle?
     fun extra(putBlock: Bundle.()->Unit)
@@ -173,7 +171,7 @@ interface SchemeIntentOptionInterface {
 /**
  * scheme跳转意图配置项
  */
-class SchemeIntentOption(private val ctx: Context?): SchemeIntentOptionInterface {
+class SchemeIntentOption(private val ctx: Context?): ISchemeIntentOption {
 
     override var launcherMode: LauncherMode? = null
 
@@ -217,7 +215,9 @@ enum class OPTAnim {
     SlideToTop,             // 滑动 底部向上滑动弹出
     SlideToBottom,          // 滑动 弹出后向下滑动关闭
 }
+
 /* ----------KTX----------- */
+
 fun Activity?.overridePendingTransition(enum: OPTAnim) {
     this ?: return
     when(enum) {

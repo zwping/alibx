@@ -6,7 +6,6 @@ import androidx.annotation.Nullable;
 /**
  * 实现ktx高阶函数特性
  * zwping @ 5/18/21
- * @lastTime 2021年11月01日17:18:22
  */
 public class Jx {
 

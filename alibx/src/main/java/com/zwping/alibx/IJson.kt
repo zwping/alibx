@@ -4,7 +4,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.reflect.ParameterizedType
 
-
 /**
  * 原生json解析扩充
  *
@@ -13,7 +12,6 @@ import java.lang.reflect.ParameterizedType
  * @param autoReflexParse 自动解析简单对象
  *                        混淆必须加 { -keep public class * extends com.zwping.alibx.IJson { *; } }
  *                        alibx库已加混淆规则
- * @lastTime 2021年11月12日11:05:07
  */
 abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
 

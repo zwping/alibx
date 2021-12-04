@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
  * 消息总线
  * zwping @ 2021/11/18
  */
-interface BusInterface {
+private interface IBus {
     /**
      * 发送消息
      * @param key 消息key
@@ -48,10 +48,10 @@ interface BusInterface {
     }
 }
 
-object Bus : BusInterface {
+object Bus : IBus {
 
-    private val buses by lazy { ConcurrentHashMap<BusInterface.TagKey, ((msg: Any?) -> Unit)>() }
-    @Synchronized private fun busFilter(filter: BusInterface.TagKey.() -> Boolean) = buses.filter { it.key.filter() }
+    private val buses by lazy { ConcurrentHashMap<IBus.TagKey, ((msg: Any?) -> Unit)>() }
+    @Synchronized private fun busFilter(filter: IBus.TagKey.() -> Boolean) = buses.filter { it.key.filter() }
 
     override fun post(key: String, msg: Any?) { busFilter { isKey(key) }.values.forEach { it.invoke(msg) } }
 
@@ -71,7 +71,7 @@ object Bus : BusInterface {
             // set效果, 最后subscribe者获得订阅权限
             it.keys.forEach { buses[it] = observer }; return
         }
-        buses[BusInterface.TagKey(tag, key)] = observer
+        buses[IBus.TagKey(tag, key)] = observer
         if(tag is LifecycleOwner) {
             tag.lifecycle.addObserver(LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_DESTROY) _unsubscribe(tag)

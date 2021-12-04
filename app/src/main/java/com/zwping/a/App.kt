@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.widget.TextView
 import com.hjq.toast.ToastUtils
-import com.hjq.toast.config.IToastStrategy
 import com.hjq.toast.config.IToastStyle
 import com.zwping.alibx.*
 
@@ -69,7 +68,7 @@ class App : Application() {
         })
     }
 
-    class SchemeList: SchemeListInterface {
+    class SchemeList: ISchemeList {
         override val data: HashMap<SchemeStandard, Class<out Activity>> = hashMapOf(
             "alibx://ac/second".scheme() to AcSecond::class.java,
             "alibx://ac/main".scheme() to AcMain::class.java,

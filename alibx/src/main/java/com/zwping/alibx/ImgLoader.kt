@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.view.View
 import android.widget.ImageView
 import androidx.annotation.ColorInt
@@ -27,15 +26,13 @@ import com.bumptech.glide.request.transition.Transition
 import com.google.android.material.button.MaterialButton
 import java.io.File
 import java.security.MessageDigest
-import kotlin.math.max
 
 /**
- * 图片加载常用功能平铺: [ImgLoaderInterface]
- * 图片加载过程中图片常用操作功能平铺: [ImgLoaderOptInterface]
+ * 图片加载常用功能平铺: [IImgLoader]
+ * 图片加载过程中图片常用操作功能平铺: [IImgLoaderOpt]
  * zwping @ 2021/10/28
- * @lastTime 2021年11月01日17:18:22
  */
-interface ImgLoaderInterface {
+private interface IImgLoader {
 
     // 全局配置 级别最低
     var globalPlaceHolder: Int?
@@ -44,7 +41,7 @@ interface ImgLoaderInterface {
 
     /**
      * 加载图片
-     * @param opt 加载图片过程中的配置项 [ImgLoaderOptInterface]
+     * @param opt 加载图片过程中的配置项 [IImgLoaderOpt]
      */
     fun glide(iv: ImageView?, url: String?, opt: ImgLoaderOpt.()->Unit = {})
     fun glide(iv: ImageView?, url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {})
@@ -83,7 +80,7 @@ interface ImgLoaderInterface {
     }
 }
 
-interface ImgLoaderOptInterface {
+interface IImgLoaderOpt {
     // 占位图
     var placeHolderDrw: Drawable?
     var errorDrw: Drawable?
@@ -153,7 +150,7 @@ enum class ShapeType{ Default, Circle, Square }
 enum class TranscodeType { Drawable, Bitmap, Gif, File }
 enum class CacheType{ All, Memory, Disk, None }
 
-class ImgLoaderOpt: ImgLoaderOptInterface {
+class ImgLoaderOpt: IImgLoaderOpt {
     override var placeHolderDrw: Drawable?=null
     override var errorDrw: Drawable?=null
     override var placeHolder: Int?=null
@@ -163,7 +160,7 @@ class ImgLoaderOpt: ImgLoaderOptInterface {
     override var transcodeType = TranscodeType.Drawable
     override var scaleType: ImageView.ScaleType? = null
     override var shapeType = ShapeType.Default
-    override var stroke: ImgLoaderOptInterface.Stroke?=null
+    override var stroke: IImgLoaderOpt.Stroke?=null
     override var radii: FloatArray?=null
     override var animType: AnimType?=null
         get() = field ?: ImageLoader.globalAnimType
@@ -182,7 +179,7 @@ class ImgLoaderOpt: ImgLoaderOptInterface {
 /**
  * 基于glide4.0加载图片
  */
-object ImageLoader: ImgLoaderInterface {
+object ImageLoader: IImgLoader {
     override var globalPlaceHolder: Int? = null
     override var globalError: Int? = null
     override var globalAnimType: AnimType? = null
@@ -326,7 +323,7 @@ object ImageLoader: ImgLoaderInterface {
 
         override fun transform(pool: BitmapPool, toTransform: Bitmap, outWidth: Int, outHeight: Int): Bitmap {
             val inBmp = if (isCircle or isSquare) {
-                max(outWidth, outHeight).let { TransformationUtils.centerCrop(pool, toTransform, it, it) } // 多绘制一次
+                Math.max(outWidth, outHeight).let { TransformationUtils.centerCrop(pool, toTransform, it, it) } // 多绘制一次
             } else {
                 toTransform
             }
@@ -359,10 +356,12 @@ object ImageLoader: ImgLoaderInterface {
 
     }
 }
+
 /* ----------KTX----------- */
+
 /**
  * 加载图片
- * @param opt 加载图片过程中的配置项 [ImgLoaderOptInterface]
+ * @param opt 加载图片过程中的配置项 [IImgLoaderOpt]
  */
 fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {}) { glide(url, null, opt) }
 fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {}) {

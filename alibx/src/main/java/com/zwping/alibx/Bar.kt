@@ -22,9 +22,9 @@ import androidx.fragment.app.Fragment
 
 /**
  * 状态栏、导航栏常用功能平铺
- * @lastTime 2021年11月01日17:18:22
+ * zwping @ 2021/10/18
  */
-interface BarInterface {
+private interface IBar {
 
     /*** android 11 flags大量废弃 ***/
     fun isAndroidR() = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R // android 11
@@ -136,7 +136,7 @@ interface BarInterface {
  * 基于Android 5.0 状态栏/导航栏 散装方法
  * zwping @ 2021/10/22
  */
-object Bar : BarInterface {
+object Bar : IBar {
 
     override fun immersive(ac: Activity,
                            color: Int,

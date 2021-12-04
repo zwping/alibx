@@ -17,7 +17,6 @@ import java.util.*
  * @param period milliseconds 周期时间; =0 =单次倒计时任务
  *
  * zwping @ 12/24/20
- * @lastTime 2021年11月01日17:18:22
  */
 class ITimer(private val action: (ITimer) -> Unit, private val delay: Long, private val period: Long = 0): LifecycleEventObserver {
     /*** 执行次数 ***/

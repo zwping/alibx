@@ -23,7 +23,7 @@ import com.google.android.material.tabs.TabLayout
  * tabLayout扩展
  * zwping @ 2021/10/28
  */
-interface TabLayoutInterface {
+private interface ITabLayout {
     /**
      * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
      */
@@ -38,7 +38,8 @@ interface TabLayoutInterface {
     fun setBadge(tabLayout: TabLayout?, index: Int, num: Int?=null)
     fun removeBadge(tabLayout: TabLayout?, index: Int)
 }
-object TabLayout: TabLayoutInterface {
+
+object TabLayout: ITabLayout {
 
     override fun initBottomNavigationView(tabLayout: TabLayout?,
                                           tabSize: Int,
