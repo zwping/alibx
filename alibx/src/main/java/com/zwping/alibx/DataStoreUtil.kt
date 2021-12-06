@@ -16,6 +16,8 @@ private interface IDataStore {
     fun put(ctx: Context?, key: String, value: String?)
 }
 object DataStoreUtil: IDataStore {
+    var NAME = "DataStore"
+
     override fun get(ctx: Context?, key: String): String? {
         ctx ?: return null
         return ctx.dataStore.get(key)
@@ -29,7 +31,7 @@ object DataStoreUtil: IDataStore {
 /* ----------KTX----------- */
 
 // At the top level of your kotlin file:
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "DataStore")
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = DataStoreUtil.NAME)
 inline fun <reified T: Any> DataStore<Preferences>.get(key: String): T? {
     var result: T? = null
     val preferencesKey = when(T::class) {

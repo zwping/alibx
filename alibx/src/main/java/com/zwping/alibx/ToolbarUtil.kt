@@ -106,7 +106,7 @@ interface IToolbar {
     fun getActionProvider2(toolbar: Toolbar?, itemId: Int): ActionProvider2?
 }
 
-object ToolbarKtx : IToolbar {
+object ToolbarUtil : IToolbar {
     override fun setTitleOfCenter(toolbar: Toolbar?, title: CharSequence?): AppCompatTextView? {
         // setSupportActionBar(toolbar) // 不建议设置为ActionBar
         // supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -233,7 +233,7 @@ class ActionProvider2(context: Context?, private val item: MenuItem) : ActionPro
 
     private val ly by lazy {
         FrameLayout(context!!).apply {
-            val defaultH = context.resources.getDimensionPixelSize(androidx.appcompat.R.dimen.abc_action_bar_default_height_material) - (10 * context.resources.displayMetrics.density).toInt() // 盲减, 约等于默认menuItem宽度
+            val defaultH = context.resources.getDimensionPixelSize(R.dimen.abc_action_bar_default_height_material) - (10 * context.resources.displayMetrics.density).toInt() // 盲减, 约等于默认menuItem宽度
             layoutParams = ViewGroup.LayoutParams(defaultH, MATCH_PARENT)
             setBackgroundResource(TypedValue().also { getContext().theme.resolveAttribute(android.R.attr.actionBarItemBackground, it, true) }.resourceId)
             addView( // 增加图标
@@ -265,7 +265,7 @@ class ActionProvider2(context: Context?, private val item: MenuItem) : ActionPro
  * @return AppCompatTextView
  */
 fun Toolbar?.setTitleOfCenter(title: CharSequence?): AppCompatTextView? {
-    return ToolbarKtx.setTitleOfCenter(this, title)
+    return ToolbarUtil.setTitleOfCenter(this, title)
 }
 
 /**
@@ -274,7 +274,7 @@ fun Toolbar?.setTitleOfCenter(title: CharSequence?): AppCompatTextView? {
  *
  * @param title 标题 (注意其执行顺序, Toolbar内部动态addView)
  */
-fun Toolbar?.setTitleCenter(title: CharSequence?) { ToolbarKtx.setTitleCenter(this, title) }
+fun Toolbar?.setTitleCenter(title: CharSequence?) { ToolbarUtil.setTitleCenter(this, title) }
 
 /**
  * 快捷增加menu
@@ -290,13 +290,13 @@ fun Toolbar?.addMenu(itemId: Int,
                      @DrawableRes iconRes: Int,
                      title: CharSequence,
                      actionEnum: Int = MenuItem.SHOW_AS_ACTION_IF_ROOM) {
-    ToolbarKtx.addMenu(this, itemId, iconRes, title, actionEnum)
+    ToolbarUtil.addMenu(this, itemId, iconRes, title, actionEnum)
 }
 fun Menu?.addMenu(itemId: Int,
                   @DrawableRes iconRes: Int,
                   title: CharSequence,
                   actionEnum: Int = MenuItem.SHOW_AS_ACTION_IF_ROOM) {
-    ToolbarKtx.addMenu(this, itemId, iconRes, title, actionEnum)
+    ToolbarUtil.addMenu(this, itemId, iconRes, title, actionEnum)
 }
 
 /**
@@ -307,14 +307,14 @@ fun Toolbar?.addMenuBadge(itemId: Int,
                           @DrawableRes iconRes: Int,
                           title: CharSequence,
                           menuItemClickListener: ((ActionProvider2) -> Unit)?=null): ActionProvider2? {
-    return ToolbarKtx.addMenuBadge(this, itemId, iconRes, title, menuItemClickListener)
+    return ToolbarUtil.addMenuBadge(this, itemId, iconRes, title, menuItemClickListener)
 }
 fun Menu?.addMenuBadge(ctx: Context?,
                        itemId: Int,
                        @DrawableRes iconRes: Int,
                        title: CharSequence,
                        menuItemClickListener: ((ActionProvider2) -> Unit)? = null): ActionProvider2? {
-    return ToolbarKtx.addMenuBadge(this, ctx, itemId, iconRes, title, menuItemClickListener)
+    return ToolbarUtil.addMenuBadge(this, ctx, itemId, iconRes, title, menuItemClickListener)
 }
 
 /**
@@ -322,5 +322,5 @@ fun Menu?.addMenuBadge(ctx: Context?,
  * @return [ActionProvider2]
  */
 fun Toolbar?.getActionProvider2(itemId: Int): ActionProvider2? {
-    return ToolbarKtx.getActionProvider2(this, itemId)
+    return ToolbarUtil.getActionProvider2(this, itemId)
 }
