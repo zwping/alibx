@@ -32,7 +32,7 @@ import kotlin.random.Random
  *   - 满足restful api / down file / upload file / coroutine
  * zwping @ 5/24/21
  */
-private interface IRequests {
+internal interface IRequests {
     fun init(block: OkHttpClient.Builder.() -> Unit)
 
     fun get(url: String,

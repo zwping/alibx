@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
  * 消息总线
  * zwping @ 2021/11/18
  */
-private interface IBus {
+internal interface IBus {
     /**
      * 发送消息
      * @param key 消息key

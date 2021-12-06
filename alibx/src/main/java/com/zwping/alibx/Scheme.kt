@@ -18,7 +18,7 @@ import java.util.*
  * schemeUri简单路由 [open]
  * zwping @ 2021/11/18
  */
-private interface IScheme {
+internal interface IScheme {
 
     /*** scheme配置列表 ***/
     var schemeList: ISchemeList?

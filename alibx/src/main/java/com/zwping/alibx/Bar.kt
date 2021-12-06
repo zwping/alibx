@@ -24,7 +24,7 @@ import androidx.fragment.app.Fragment
  * 状态栏、导航栏常用功能平铺
  * zwping @ 2021/10/18
  */
-private interface IBar {
+internal interface IBar {
 
     /*** android 11 flags大量废弃 ***/
     fun isAndroidR() = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R // android 11

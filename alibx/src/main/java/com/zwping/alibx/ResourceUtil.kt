@@ -20,7 +20,7 @@ import androidx.core.content.ContextCompat
  *
  * zwping @ 12/29/20
  */
-private interface IResource {
+internal interface IResource {
     fun dpToPx(value: Float): Float
     fun dp2px(value: Float): Int
     fun px2dp(value: Int): Float

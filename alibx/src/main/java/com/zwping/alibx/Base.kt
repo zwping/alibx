@@ -21,7 +21,7 @@ import androidx.viewbinding.ViewBinding
  * 紧凑的封装[BaseAc] [BaseFm]
  * zwping @ 2021/10/18
  */
-private interface IBaseAc<VB: ViewBinding> {
+internal interface IBaseAc<VB: ViewBinding> {
 
     // 快捷
     fun initView()
@@ -40,7 +40,7 @@ private interface IBaseAc<VB: ViewBinding> {
     val handler: Handler
     fun dpToPx(dp: Float): Float { return 0.5F+dp*Resources.getSystem().displayMetrics.density }
 }
-private interface IBaseFm<VB: ViewBinding> {
+internal interface IBaseFm<VB: ViewBinding> {
 
     // 快捷
     fun initView()

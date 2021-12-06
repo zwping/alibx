@@ -19,7 +19,7 @@ import androidx.core.view.*
  * toast
  * zwping @ 2021/11/21
  */
-private interface IToastUtil {
+internal interface IToastUtil {
     fun init(app: Application, option: (ToastUtilOption)-> Unit = {})
 
     fun show(msg: Any?)

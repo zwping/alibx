@@ -11,7 +11,7 @@ import kotlinx.coroutines.runBlocking
  * DataStore扩展
  * zwping @ 1/11/21
  */
-private interface IDataStore {
+internal interface IDataStore {
     fun get(ctx: Context?, key: String): String? // 提供string支持
     fun put(ctx: Context?, key: String, value: String?)
 }
@@ -32,7 +32,7 @@ object DataStoreUtil: IDataStore {
 
 // At the top level of your kotlin file:
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = DataStoreUtil.NAME)
-inline fun <reified T: Any> DataStore<Preferences>.get(key: String): T? {
+inline fun <reified T: Any> DataStore<Preferences>.get(key: String, default: T?=null): T? {
     var result: T? = null
     val preferencesKey = when(T::class) {
         Boolean::class -> booleanPreferencesKey(key)
@@ -43,12 +43,10 @@ inline fun <reified T: Any> DataStore<Preferences>.get(key: String): T? {
         else -> stringPreferencesKey(key)
     }
     runBlocking { data.firstOrNull {
-        // val res = it[preferencesKey]
-        // if (res == null || res is T) result = res as T
-        result = it[preferencesKey] as T // 类型强转存在crash风险, 但该风险在开发期间会被规避掉
+        it[preferencesKey]?.also { if (it is T) result = it }
         true
     } }
-    return result
+    return result ?: default
 }
 inline fun <reified T: Any> DataStore<Preferences>.put(key: String, value: T?) {
     runBlocking { edit {

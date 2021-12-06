@@ -32,7 +32,7 @@ import java.security.MessageDigest
  * 图片加载过程中图片常用操作功能平铺: [IImgLoaderOpt]
  * zwping @ 2021/10/28
  */
-private interface IImgLoader {
+internal interface IImgLoader {
 
     // 全局配置 级别最低
     var globalPlaceHolder: Int?

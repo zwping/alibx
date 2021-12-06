@@ -23,7 +23,7 @@ import com.google.android.material.tabs.TabLayout
  * tabLayout扩展
  * zwping @ 2021/10/28
  */
-private interface ITabLayout {
+internal interface ITabLayout {
     /**
      * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
      */
