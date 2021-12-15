@@ -6,8 +6,6 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.TextView
-import com.hjq.toast.ToastUtils
-import com.hjq.toast.config.IToastStyle
 import com.zwping.alibx.*
 
 /**
@@ -22,50 +20,11 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        Scheme.init(SchemeList())
-        ToastUtils.init(this, object: IToastStyle<TextView> {
-            override fun createView(context: Context?): TextView {
-                return TextView(context).also {
-                    it.setBackgroundColor(Color.RED)
-                }
-            }
-
-        })
-        ToastUtil.init(this, option={
-            it.msgColor = Color.RED
-        })
-
-        registerActivityLifecycleCallbacks(object: ActivityLifecycleCallbacks{
-            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                acs.add(activity)
-                println("created: ${activity.javaClass.simpleName} - ${acs.map { it.javaClass.simpleName }}")
-            }
-
-            override fun onActivityStarted(activity: Activity) {
-
-            }
-
-            override fun onActivityResumed(activity: Activity) {
-            }
-
-            override fun onActivityPaused(activity: Activity) {
-
-            }
-
-            override fun onActivityStopped(activity: Activity) {
-
-            }
-
-            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-
-            }
-
-            override fun onActivityDestroyed(activity: Activity) {
-                acs.remove(activity)
-                println("destroy: ${activity.javaClass.simpleName} - ${acs.map { it.javaClass.simpleName }}")
-            }
-
-        })
+        com.zwping.alibx.Map.globalInit(this,
+            schemeList = SchemeList(), schemeToast = {_, msg ->  showToast(msg)},
+            placeholder = R.mipmap.ic_launcher, error = R.mipmap.ic_launcher,
+        )
+        Scheme.addInterceptor(LoginInterceptor())
     }
 
     class SchemeList: ISchemeList {
@@ -80,6 +39,14 @@ class App : Application() {
             }
         )
         override val webBrowser: Class<out Activity>? = null
+    }
+
+    class LoginInterceptor: ISchemeInterceptor{
+        override val weight: Int = 10
+        override fun process(ctx: Context, scheme: SchemeStandard): Boolean {
+            logd(scheme)
+            return false
+        }
     }
 
 }

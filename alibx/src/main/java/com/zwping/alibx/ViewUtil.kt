@@ -29,6 +29,11 @@ interface IView{
 
     fun showLoading(btn: MaterialButton?, @ColorInt color: Int?=btn?.textColors?.defaultColor, enabled: Boolean?=false)
     fun hideLoading(btn: MaterialButton?, enabled: Boolean?=true)
+
+    /**
+     * 转移焦点
+     */
+    fun focus(view: View?)
 }
 
 object ViewUtil : IView{
@@ -84,6 +89,10 @@ object ViewUtil : IView{
         btn ?: return
         enabled?.also { btn.isEnabled=it }; btn.icon = null
     }
+
+    override fun focus(view: View?) {
+        view?.apply { isFocusable = true; isFocusableInTouchMode = true; requestFocus() }
+    }
 }
 
 /* ----------KTX----------- */
@@ -111,4 +120,10 @@ fun MaterialButton?.showLoading(@ColorInt color: Int?=this?.textColors?.defaultC
 }
 fun MaterialButton?.hideLoading(enabled: Boolean?=true) {
     ViewUtil.hideLoading(this, enabled)
+}
+/**
+ * 转移焦点
+ */
+fun View?.focus() {
+    ViewUtil.focus(this)
 }

@@ -1,7 +1,9 @@
 package com.zwping.alibx
 
 import android.app.Application
+import android.content.Context
 import com.zwping.alibx.Requests.isAppDebug
+import okhttp3.OkHttpClient
 
 /**
  * alibx功能清单
@@ -9,12 +11,27 @@ import com.zwping.alibx.Requests.isAppDebug
  */
 object Map {
 
-    fun init(app: Application,
-             toastOpt: (ToastUtilOption)->Unit={}) {
+    fun globalInit(app: Application,
+                   schemeList: ISchemeList? = null,
+                   schemeToast: ((ctx: Context, msg: String) -> Unit)? = {_,_ ->},
+                   dataStoreName: String = "DataStore",
+                   placeholder: Int? = null,
+                   error: Int? = null,
+                   requests: OkHttpClient.Builder.() -> Unit = {},
+                   toastOpt: (ToastUtilOption)->Unit={}) {
 
         Util.DEBUG = app.isAppDebug()
 
         ToastUtil.init(app, toastOpt)
+
+        schemeList?.also { Scheme.init(it, schemeToast) }
+
+        Requests.init(requests)
+
+        DataStoreUtil.NAME = dataStoreName
+
+        ImageLoader.globalPlaceholder = placeholder
+        ImageLoader.globalError = error
     }
 
 }

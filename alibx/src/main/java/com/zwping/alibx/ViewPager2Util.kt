@@ -83,15 +83,15 @@ object ViewPager2Util : IViewPager2 {
         val option = ViewPager2Option<T>().also(opt)
         var touchOccupy: ((occupy: Boolean)->Unit)? = null
         if (option.hasLoop) {
-            autoStart?.also { option.owner=it; option.autoStart=true } // 方法直接传入则自动轮播
-            val autoLoop = BannerAutoLoopMange(WeakReference(viewPager2), option.autoLoopInterval, option.owner)
-            touchOccupy = { occupy: Boolean -> if (occupy) autoLoop.pause() else autoLoop.start() } // 失灵 2021年12月01日
+            autoStart?.also { option.owner=it; option.autoLoop=true } // 方法直接传入则自动轮播
+            val loopMange = BannerLoopMange(WeakReference(viewPager2), option.loopInterval, option.owner, option.autoLoop)
+            touchOccupy = { occupy: Boolean -> if (occupy) loopMange.pause() else loopMange.start() } // 失灵 2021年12月01日
             viewPager2.getChildAt(0).setOnTouchListener { _, event -> // 同时监听RecyclerView触摸事件
                 when(event.action){
-                    MotionEvent.ACTION_DOWN -> autoLoop.pause()
+                    MotionEvent.ACTION_DOWN -> loopMange.pause()
                     MotionEvent.ACTION_OUTSIDE,
                     MotionEvent.ACTION_CANCEL,
-                    MotionEvent.ACTION_UP -> autoLoop.start()
+                    MotionEvent.ACTION_UP -> loopMange.start()
                 }
                 false}
         }
@@ -129,9 +129,17 @@ object ViewPager2Util : IViewPager2 {
         val option = ViewPager2Option<T>().also(opt)
         var touchOccupy: ((occupy: Boolean)->Unit)? = null
         if (option.hasLoop) {
-            autoStart?.also { option.owner = it; option.autoStart = true } // 方法直接传入则自动轮播
-            val autoLoop = BannerAutoLoopMange(WeakReference(viewPager2), option.autoLoopInterval, option.owner)
-            touchOccupy = { occupy: Boolean -> if (occupy) autoLoop.pause() else autoLoop.start() }
+            autoStart?.also { option.owner=it; option.autoLoop=true } // 方法直接传入则自动轮播
+            val loopMange = BannerLoopMange(WeakReference(viewPager2), option.loopInterval, option.owner, option.autoLoop)
+            touchOccupy = { occupy: Boolean -> if (occupy) loopMange.pause() else loopMange.start() } // 失灵 2021年12月01日
+            viewPager2.getChildAt(0).setOnTouchListener { _, event -> // 同时监听RecyclerView触摸事件
+                when(event.action){
+                    MotionEvent.ACTION_DOWN -> loopMange.pause()
+                    MotionEvent.ACTION_OUTSIDE,
+                    MotionEvent.ACTION_CANCEL,
+                    MotionEvent.ACTION_UP -> loopMange.start()
+                }
+                false}
         }
         var vb: VB? = null
         val holder = { parent: ViewGroup -> BannerHolder(createHolderView(parent).also { vb=it }.root, touchOccupy) }
@@ -206,31 +214,31 @@ object ViewPager2Util : IViewPager2 {
 }
 
 interface IViewPager2Option<T> {
-    /*** 支持循环滚动 ***/
-    var hasLoop: Boolean
-    /*** 关联指示器, 提供一类通用指示器[BannerIndicator] ***/
-    var indicator: BannerIndicator?
     /*** 声明周期感知 ***/
     var owner: LifecycleOwner?
-    /*** 轮播时间间隔 ***/
-    var autoLoopInterval: Long
+    /*** 支持循环滚动 ***/
+    var hasLoop: Boolean
     /*** 是否自动轮播 ***/
-    var autoStart: Boolean
-    /*** 轮播管理器, owner失效时可外部管理[BannerAutoLoopMange.pause] ***/
-    var autoLoopManage: BannerAutoLoopMange?
+    var autoLoop: Boolean
+    /*** 轮播时间间隔 ***/
+    var loopInterval: Long
+    /*** 轮播管理器, owner失效时可外部管理[BannerLoopMange.pause] ***/
+    var loopManage: BannerLoopMange?
+    /*** 关联指示器, 提供一类通用指示器[BannerIndicator] ***/
+    var indicator: BannerIndicator?
 
     var onPageScrolled: (position: Int, offset: Float, offsetPixels: Int) -> Unit
     var onPageSelected: (position: Int, count: Int, data: T?)->Unit
     var onPageScrollStateChanged: (state: Int)->Unit
 }
 class ViewPager2Option<T>: IViewPager2Option<T> {
-    override var hasLoop: Boolean = true // 默认支持轮播
     override var indicator: BannerIndicator? = null
     override var owner: LifecycleOwner? = null
         set(value) { if (value != null) field = value }
-    override var autoLoopInterval: Long = 3000L
-    override var autoStart: Boolean = false // 建议传入owner自动播放
-    override var autoLoopManage: BannerAutoLoopMange? = null
+    override var hasLoop: Boolean = true // 默认支持轮播
+    override var autoLoop: Boolean = false // 建议传入owner自动播放
+    override var loopInterval: Long = 3000L
+    override var loopManage: BannerLoopMange? = null
 
     override var onPageScrolled: (position: Int, offset: Float, offsetPixels: Int) -> Unit = {_,_,_->}
     override var onPageSelected: (position: Int, count: Int, data: T?) -> Unit = {_,_,_->}
@@ -384,21 +392,21 @@ class BannerIndicator @JvmOverloads constructor(
     }
 }
 
-interface IBannerAutoLoop {
+interface IBannerLoop {
     var vp2: WeakReference<ViewPager2>?
     var intervalTime: Long
-    var autoStart: Boolean
+    var autoLoop: Boolean
 
     fun start()
     fun pause()
     fun destroy()
 }
-class BannerAutoLoopMange(
+class BannerLoopMange(
     override var vp2: WeakReference<ViewPager2>?,
     override var intervalTime: Long,
     private val owner: LifecycleOwner?=null,
-    override var autoStart: Boolean=false):
-    IBannerAutoLoop, LifecycleEventObserver{
+    override var autoLoop: Boolean=false):
+    IBannerLoop, LifecycleEventObserver{
 
     private val handler by lazy { Handler(Looper.getMainLooper()) }
     private val task by lazy { Runnable { nextPage() } }
@@ -409,10 +417,10 @@ class BannerAutoLoopMange(
 
     init {
         owner?.lifecycle?.addObserver(this)
-        if(autoStart) start()
+        start()
     }
 
-    override fun start() { pause(); handler.postDelayed(task, intervalTime) }
+    override fun start() { pause(); if (autoLoop) handler.postDelayed(task, intervalTime) }
     override fun pause() { handler.removeCallbacks(task) }
     override fun destroy() { pause(); owner?.lifecycle?.removeObserver(this) }
 

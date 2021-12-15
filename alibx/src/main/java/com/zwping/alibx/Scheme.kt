@@ -24,12 +24,21 @@ internal interface IScheme {
     var schemeList: ISchemeList?
     /*** scheme跳转错误toast [可选/默认系统Toast] ***/
     var warningToast: ((ctx: Context, msg: String)->Unit)?
+    /*** scheme 拦截器 ***/
+    var schemeInterceptors: MutableList<ISchemeInterceptor>
 
     fun init(schemeList: ISchemeList,
              warningToast: ((ctx: Context, msg: String)->Unit)? = null)
 
+    fun addInterceptor(interceptor: ISchemeInterceptor)
+
     fun open(ctx: Context?, schemeURL: String?, option: SchemeIntentOption.() -> Unit = {})
     fun open(ctx: Context?, clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {})
+}
+
+interface ISchemeInterceptor{
+    val weight: Int // 权重值越大越优先
+    fun process(ctx: Context, scheme: SchemeStandard): Boolean
 }
 
 object Scheme: IScheme {
@@ -40,11 +49,17 @@ object Scheme: IScheme {
 
     override var schemeList: ISchemeList? = null
     override var warningToast: ((ctx: Context, msg: String) -> Unit)? = null
+    override var schemeInterceptors: MutableList<ISchemeInterceptor> = mutableListOf()
 
     override fun init(schemeList: ISchemeList,
                       warningToast: ((ctx: Context, msg: String) -> Unit)?) {
         this.schemeList = schemeList
         this.warningToast = warningToast
+    }
+
+    override fun addInterceptor(interceptor: ISchemeInterceptor) {
+        schemeInterceptors.add(interceptor)
+        schemeInterceptors.sortByDescending { it.weight }
     }
 
     override fun open(ctx: Context?, schemeURL: String?, option: SchemeIntentOption.() -> Unit) {
@@ -67,6 +82,9 @@ object Scheme: IScheme {
             if (schemeList == null) {
                 showToast(ctx, ErrMsg3); return
             }
+            schemeInterceptors.forEach {
+                if (it.process(ctx, scheme)) return
+            }
             if (scheme.uri?.scheme?.startsWith("http")==true || scheme.uri?.scheme?.startsWith("https")==true) {
                 if (schemeList?.webBrowser == null) { // 未定制内部WebView则使用系统浏览器打开
                     ctx.startActivity(Intent(Intent.ACTION_VIEW, scheme.uri)); return
@@ -77,8 +95,12 @@ object Scheme: IScheme {
                 it.value.invoke(ctx, scheme.extra)
                 return  // dataFunc优先级高于data
             }
+            var schemeExist = false
             schemeList?.data?.filter { it.key.equals(scheme) }?.forEach {
-                cls = it.value
+                cls = it.value; schemeExist = true
+            }
+            if (!schemeExist) {
+                showToast(ctx, "$ErrMsg2 $scheme"); return
             }
         }
         ctx.startActivity(Intent(ctx, cls).also { i ->

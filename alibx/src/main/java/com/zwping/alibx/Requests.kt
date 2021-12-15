@@ -78,6 +78,13 @@ internal interface IRequests {
 }
 object Requests: IRequests {
 
+    var Error1 = "请求失败-"
+    var Error2 = "连接超时"
+    var Error3 = "连接服务器失败"
+    var Error4 = "网络异常"
+    var Error5 = "数据错误"
+    var Error6 = "未知错误"
+
     private val okHttpClient by lazy { _okHttpBuilder.build() }
     private val _okHttpBuilder by lazy { OkHttpClient.Builder() }
     val handler by lazy { Handler(Looper.getMainLooper()) }
@@ -154,7 +161,7 @@ object Requests: IRequests {
             override fun onResponse(call: Call, response: Response) {
                 if (!response.isSuccessful) {
                     handler.post {
-                        onFailure(call, "请求失败-${response.code}")
+                        onFailure(call, "$Error1${response.code}")
                         onEnd.invoke()
                     }
                     return
@@ -255,14 +262,14 @@ object Requests: IRequests {
                     val str = response.body?.string()
                     Response2(true, this, response.body, str, toJSONObject(str))
                 } else {
-                    Response2(false, this, msg = "请求失败-${response.code}")
+                    Response2(false, this, msg = "$Error1${response.code}")
                 }
             }catch (e: IOException) {
                 val msg = when(e) {
-                    is SocketTimeoutException -> "连接超时"
-                    is ConnectException -> "连接服务器失败"
-                    is UnknownHostException -> "网络异常"
-                    else -> "数据错误"
+                    is SocketTimeoutException -> Error2
+                    is ConnectException -> Error3
+                    is UnknownHostException -> Error4
+                    else -> Error5
                 }
                 Response2(false, this, msg = msg)
             }.also { response2 -> it.resume(response2) }
@@ -288,10 +295,10 @@ object Requests: IRequests {
             try {
                 handler.post { onResponse.invoke(call, response, str); onEnd() }
             } catch (e: Exception) {
-                handler.post { onFailure.invoke(call, "数据错误"); onEnd.invoke() }
+                handler.post { onFailure.invoke(call, Error5); onEnd.invoke() }
             }
         } else {
-            handler.post { onFailure.invoke(call, "请求失败-${response.code}"); onEnd.invoke() }
+            handler.post { onFailure.invoke(call, "$Error1${response.code}"); onEnd.invoke() }
         }
         /* response.body!!.string() 过程异步, 不能放在主线程中读取
         handler.post {
@@ -314,7 +321,7 @@ object Requests: IRequests {
                 onFinish.invoke(call, response, file.absolutePath); onEnd.invoke()
             } catch (e: Exception) {
                 e.printStackTrace()
-                onFailure.invoke(call, "数据错误"); onEnd.invoke()
+                onFailure.invoke(call, Error5); onEnd.invoke()
             }
         }
     }
@@ -324,11 +331,11 @@ object Requests: IRequests {
         once.set(true)
         e?.printStackTrace()
         val msg = when(e) {
-            is SocketTimeoutException -> "连接超时"
-            is ConnectException -> "连接服务器失败"
-            is UnknownHostException -> "网络异常"
-            null -> "数据错误!"
-            else -> "未知错误"
+            is SocketTimeoutException -> Error2
+            is ConnectException -> Error3
+            is UnknownHostException -> Error4
+            null -> Error5
+            else -> Error6
         }
         handler.post { onFailure.invoke(call, msg); onEnd.invoke() }
     }
@@ -452,7 +459,7 @@ data class Response2(val isSuccessful: Boolean,
                      val response: ResponseBody? = null,
                      val responseStr: String? = null,
                      val responseOb: JSONObject? = null,
-                     val msg: String = "数据错误!")
+                     val msg: String = Requests.Error5)
 
 /* ----------KTX----------- */
 

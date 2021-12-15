@@ -10,8 +10,8 @@ android {
     defaultConfig {
         minSdk 21
         targetSdk 30
-        versionCode 62
-        versionName "0.6.2"
+        versionCode 63
+        versionName "0.6.3"
         consumerProguardFiles 'consumer-rules.pro'
     }
     android.libraryVariants.all { variant ->
@@ -42,10 +42,10 @@ dependencies {
     api 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1'
     api "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01"
 
-    // OkHttp https://github.com/square/okhttp
+    // 第三方库
     api 'com.squareup.okhttp3:okhttp:4.9.1'
-    // glide
     api 'com.github.bumptech.glide:glide:4.12.0'
+    debugApi 'cat.ereza:customactivityoncrash:2.3.0'
 }
 
 //---------------------------------------------

@@ -13,14 +13,21 @@ object Util {
 
     /**
      * 以System.out通用TAG打印日志, 记录logd方法调用位置
+     * @param stackInfo 是否打印关键堆栈信息
+     * @param stackOffset 堆栈偏移量, 定位调用位置
      */
-    fun logd(vararg msgs: Any?) { _logd(*msgs, stackOffset = 1) }
-    internal fun _logd(vararg msgs: Any?, stackOffset: Int=0) {
+    fun logd(vararg msgs: Any?, stackInfo: Boolean=true, stackOffset: Int=1) {
         if (!DEBUG) return
-        var element : StackTraceElement? = null
-        Thread.currentThread().stackTrace.also { if (it.size >= (4+stackOffset)) { element = it[3+stackOffset]; return@also } }
-        Log.d("System.out", "${element}-> ${msgs.map { "$it" }.toString().let { it.substring(1, it.length-1) }}")
+        var element : Any? = null
+        if (stackInfo) {
+            Thread.currentThread().stackTrace.also {
+                if (it.size >= (4+stackOffset)) { element = it[3+stackOffset]; return@also }
+            }
+        }
+        element = if (element != null) "$element -> " else ""
+        Log.d("System.out", "$element${msgs.map { "$it" }.toString().let { it.substring(1, it.length-1) }}")
     }
+
 
     /**
      * 文件大小格式化
@@ -55,4 +62,6 @@ object Util {
 
 /* ----------KTX----------- */
 
-fun logd(vararg msg: Any?) { Util._logd(*msg, stackOffset = 1) }
+fun logd(vararg msg: Any?, stackInfo: Boolean=true) {
+    Util.logd(*msg, stackInfo=stackInfo, stackOffset=2)
+}

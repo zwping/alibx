@@ -35,7 +35,7 @@ import java.security.MessageDigest
 internal interface IImgLoader {
 
     // 全局配置 级别最低
-    var globalPlaceHolder: Int?
+    var globalPlaceholder: Int?
     var globalError: Int?
     var globalAnimType: AnimType?
 
@@ -154,7 +154,7 @@ class ImgLoaderOpt: IImgLoaderOpt {
     override var placeHolderDrw: Drawable?=null
     override var errorDrw: Drawable?=null
     override var placeHolder: Int?=null
-        get() = field ?: ImageLoader.globalPlaceHolder
+        get() = field ?: ImageLoader.globalPlaceholder
     override var error: Int?=null
         get() = field ?: ImageLoader.globalError
     override var transcodeType = TranscodeType.Drawable
@@ -180,7 +180,7 @@ class ImgLoaderOpt: IImgLoaderOpt {
  * 基于glide4.0加载图片
  */
 object ImageLoader: IImgLoader {
-    override var globalPlaceHolder: Int? = null
+    override var globalPlaceholder: Int? = null
     override var globalError: Int? = null
     override var globalAnimType: AnimType? = null
 
