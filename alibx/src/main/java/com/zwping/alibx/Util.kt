@@ -16,6 +16,8 @@ object Util {
      * @param stackInfo 是否打印关键堆栈信息
      * @param stackOffset 堆栈偏移量, 定位调用位置
      */
+    @JvmStatic
+    @JvmOverloads
     fun logd(vararg msgs: Any?, stackInfo: Boolean=true, stackOffset: Int=1) {
         if (!DEBUG) return
         var element : Any? = null
@@ -35,6 +37,8 @@ object Util {
      * @param unitIndex [B, KB, MB, GB, TB]下标 -1->自动判断单位
      * @param sig 有效位数 0->没有小数位
      */
+    @JvmStatic
+    @JvmOverloads
     fun formatBytes(size: Long?,
                    @IntRange(from=-1, to=4) unitIndex: Int=-1,
                    @IntRange(from=0, to=3) sig: Int=1): String? {

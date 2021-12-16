@@ -19,15 +19,7 @@ import androidx.core.view.*
  * toast
  * zwping @ 2021/11/21
  */
-internal interface IToastUtil {
-    fun init(app: Application, option: (ToastUtilOption)-> Unit = {})
-
-    fun show(msg: Any?)
-    fun show(msg: CharSequence)
-    fun show(msg: CharSequence, @IntRange(from=0, to=1) duration: Int = Toast.LENGTH_SHORT, option: (ToastUtilOption) -> Unit={})
-    fun cancel()
-}
-object ToastUtil : IToastUtil {
+object ToastUtil {
 
     private var app: Application? = null
     private val globalOption by lazy { ToastUtilOption() }
@@ -40,17 +32,19 @@ object ToastUtil : IToastUtil {
             return field
         }
 
-    override fun init(app: Application, option: (ToastUtilOption) -> Unit) {
+    fun init(app: Application, option: (ToastUtilOption)-> Unit = {}) {
         this.app = app; globalOption.also(option)
     }
 
-    override fun show(msg: Any?) {
+    fun show(msg: Any?) {
         show("$msg", duration = Toast.LENGTH_SHORT)
     }
-    override fun show(msg: CharSequence) {
-        show(msg, duration = Toast.LENGTH_SHORT)
-    }
-    override fun show(msg: CharSequence, duration: Int, option: (ToastUtilOption) -> Unit) {
+
+    @JvmStatic
+    @JvmOverloads
+    fun show(msg: CharSequence,
+             @IntRange(from=0, to=1) duration: Int = Toast.LENGTH_SHORT,
+             option: (ToastUtilOption) -> Unit={}) {
         runOnUi {
             cancel()
             toast?.also {
@@ -78,7 +72,7 @@ object ToastUtil : IToastUtil {
         }
     }
 
-    override fun cancel() {
+    fun cancel() {
         toast?.cancel()
         toast = null
     }
