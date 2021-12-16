@@ -12,40 +12,22 @@ import com.google.android.material.button.MaterialButton
  * View相关辅助操作
  * zwping @ 2021/11/30
  */
-interface IView{
+
+object ViewUtil{
+
     /*** 左右抖动 ***/
-    fun shakelr(view: View?)
-
-    /**
-     * 节流点击
-     * @param time 点击事件最大时间间隔, 连点间隔时间才生效一次
-     */
-    fun <V: View> setOnClickThrottleListener(view: V?, time: Long=500L, block: (V) -> Unit)
-    /**
-     * 防抖点击
-     * @param time 点击最大时间间隔, 连点无效
-     */
-    fun <V: View> setOnClickDebounceListener(view: V?, time: Long=500L, block: (V) -> Unit)
-
-    fun showLoading(btn: MaterialButton?, @ColorInt color: Int?=btn?.textColors?.defaultColor, enabled: Boolean?=false)
-    fun hideLoading(btn: MaterialButton?, enabled: Boolean?=true)
-
-    /**
-     * 转移焦点
-     */
-    fun focus(view: View?)
-}
-
-object ViewUtil : IView{
-
-    override fun shakelr(view: View?) {
+    fun shakelr(view: View?) {
         val animation = TranslateAnimation(0F, 10F, 0F, 0F)
         animation.interpolator = CycleInterpolator(5F)
         animation.duration = 1000
         view?.startAnimation(animation)
     }
 
-    override fun <V : View> setOnClickThrottleListener(view: V?, time: Long, block: (V) -> Unit) {
+    /**
+     * 节流点击
+     * @param time 点击事件最大时间间隔, 连点间隔时间才生效一次
+     */
+    fun <V: View> setOnClickThrottleListener(view: V?, time: Long=500L, block: (V) -> Unit) {
         view ?: return
         var lastTime = 0L
         view.setOnClickListener {
@@ -55,7 +37,11 @@ object ViewUtil : IView{
         }
     }
 
-    override fun <V : View> setOnClickDebounceListener(view: V?, time: Long, block: (V) -> Unit) {
+    /**
+     * 防抖点击
+     * @param time 点击最大时间间隔, 连点无效
+     */
+    fun <V: View> setOnClickDebounceListener(view: V?, time: Long=500L, block: (V) -> Unit) {
         view ?: return
         var lastTime = 0L
         view.setOnClickListener {
@@ -66,7 +52,7 @@ object ViewUtil : IView{
         }
     }
 
-    override fun showLoading(btn: MaterialButton?, color: Int?, enabled: Boolean?) {
+    fun showLoading(btn: MaterialButton?, @ColorInt color: Int?=btn?.textColors?.defaultColor, enabled: Boolean?=false) {
         btn ?: return
         enabled?.also { btn.isEnabled = it }
         btn.iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
@@ -85,45 +71,49 @@ object ViewUtil : IView{
         if (dw is Animatable) { dw.start() }
     }
 
-    override fun hideLoading(btn: MaterialButton?, enabled: Boolean?) {
+    fun hideLoading(btn: MaterialButton?, enabled: Boolean?=true) {
         btn ?: return
         enabled?.also { btn.isEnabled=it }; btn.icon = null
     }
 
-    override fun focus(view: View?) {
+    /**
+     * 转移焦点
+     */
+    fun focus(view: View?) {
         view?.apply { isFocusable = true; isFocusableInTouchMode = true; requestFocus() }
     }
-}
 
-/* ----------KTX----------- */
+    object KTX {
 
-/*** 左右抖动 ***/
-fun View?.shakelr() { ViewUtil.shakelr(this) }
+        /*** 左右抖动 ***/
+        fun View?.shakelr() { ViewUtil.shakelr(this) }
 
-/**
- * 节流点击
- * @param time 点击事件最大时间间隔, 连点间隔时间才生效一次
- */
-fun <V: View> V?.setOnClickThrottleListener(time: Long=500L, block: (V) -> Unit) {
-    ViewUtil.setOnClickThrottleListener(this, time, block)
-}
-/**
- * 防抖点击
- * @param time 点击最大时间间隔, 连点无效
- */
-fun <V: View> V?.setOnClickDebounceListener(time: Long=500L, block: (V) -> Unit) {
-    ViewUtil.setOnClickDebounceListener(this, time, block)
-}
+        /**
+         * 节流点击
+         * @param time 点击事件最大时间间隔, 连点间隔时间才生效一次
+         */
+        fun <V: View> V?.setOnClickThrottleListener(time: Long=500L, block: (V) -> Unit) {
+            ViewUtil.setOnClickThrottleListener(this, time, block)
+        }
+        /**
+         * 防抖点击
+         * @param time 点击最大时间间隔, 连点无效
+         */
+        fun <V: View> V?.setOnClickDebounceListener(time: Long=500L, block: (V) -> Unit) {
+            ViewUtil.setOnClickDebounceListener(this, time, block)
+        }
 
-fun MaterialButton?.showLoading(@ColorInt color: Int?=this?.textColors?.defaultColor, enabled: Boolean?=false) {
-    ViewUtil.showLoading(this, color, enabled)
-}
-fun MaterialButton?.hideLoading(enabled: Boolean?=true) {
-    ViewUtil.hideLoading(this, enabled)
-}
-/**
- * 转移焦点
- */
-fun View?.focus() {
-    ViewUtil.focus(this)
+        fun MaterialButton?.showLoading(@ColorInt color: Int?=this?.textColors?.defaultColor, enabled: Boolean?=false) {
+            ViewUtil.showLoading(this, color, enabled)
+        }
+        fun MaterialButton?.hideLoading(enabled: Boolean?=true) {
+            ViewUtil.hideLoading(this, enabled)
+        }
+        /**
+         * 转移焦点
+         */
+        fun View?.focus() {
+            ViewUtil.focus(this)
+        }
+    }
 }

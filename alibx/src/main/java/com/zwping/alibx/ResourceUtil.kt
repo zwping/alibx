@@ -20,55 +20,39 @@ import androidx.core.content.ContextCompat
  *
  * zwping @ 12/29/20
  */
-internal interface IResource {
-    fun dpToPx(value: Float): Float
-    fun dp2px(value: Float): Int
-    fun px2dp(value: Int): Float
+object ResourceUtil {
 
-    fun toInt2(str: String?): Int
+    private val density by lazy { Resources.getSystem().displayMetrics.density }
 
-    fun getColor2(ctx: Context, @ColorRes id: Int): Int
+    fun dpToPx(value: Float): Float = 0.5f + value * density
+    fun dp2px(value: Float): Int = dpToPx(value).toInt()
+    fun px2dp(value: Int): Float = value / density
+
+    fun toInt2(str: String?): Int {
+        return try { if (str.isNullOrBlank()) 0 else str.toInt() } catch (e: Exception) { 0 }
+    }
+
+    fun getColor2(ctx: Context, id: Int): Int = ContextCompat.getColor(ctx, id)
 
     /**
      * xml shape java代码实现方式
-     * @param shape [GradientDrawable.LINE] 线 [GradientDrawable.OVAL] 圆
-     * [GradientDrawable.RECTANGLE] 矩形 [GradientDrawable.LINEAR_GRADIENT] 虚线矩形
+     * @param shape
+     *  [GradientDrawable.LINE] 线
+     *  [GradientDrawable.OVAL] 圆
+     *  [GradientDrawable.RECTANGLE] 矩形
+     *  [GradientDrawable.LINEAR_GRADIENT] 虚线矩形
      */
     fun createGradientDrawable(shape: Int=GradientDrawable.RECTANGLE,
-                               block: GradientDrawable.() -> Unit): Drawable
+                               block: GradientDrawable.() -> Unit): Drawable {
+        return GradientDrawable().also { it.shape = shape; block(it) }
+    }
 
     /**
      * xml selector item drawable java代码实现, 代码创建view不同状态的Drawable
      */
     fun createStateListDrawable(ctx: Context?,
                                 @DrawableRes defaultRes: Int,
-                                block: (States<Int>) -> Unit = {}): StateListDrawable?
-    fun createStateListDrawable(default: Drawable,
-                                block: (States<Drawable>) -> Unit = {}): StateListDrawable
-}
-object ResourceUtil: IResource {
-    private val density by lazy { Resources.getSystem().displayMetrics.density }
-
-    override fun dpToPx(value: Float): Float = 0.5f + value * density
-    override fun dp2px(value: Float): Int = dpToPx(value).toInt()
-    override fun px2dp(value: Int): Float = (value / density)
-
-    override fun toInt2(str: String?): Int {
-        return try { if (str.isNullOrBlank()) 0 else str.toInt()
-        } catch (e: Exception) { 0 }
-    }
-
-    override fun getColor2(ctx: Context, id: Int): Int = ContextCompat.getColor(ctx, id)
-
-    override fun createGradientDrawable(shape: Int, block: GradientDrawable.() -> Unit): Drawable {
-        return GradientDrawable().also { it.shape = shape; block(it) }
-    }
-
-    override fun createStateListDrawable(
-        ctx: Context?,
-        defaultRes: Int,
-        block: (States<Int>) -> Unit
-    ): StateListDrawable? {
+                                block: (States<Int>) -> Unit = {}): StateListDrawable? {
         if (null == ctx) return null
         val states = States<Int>().also(block)
         return StateListDrawable().apply {
@@ -77,15 +61,48 @@ object ResourceUtil: IResource {
         }
     }
 
-    override fun createStateListDrawable(
-        default: Drawable,
-        block: (States<Drawable>) -> Unit
-    ): StateListDrawable {
+    fun createStateListDrawable(default: Drawable,
+                                block: (States<Drawable>) -> Unit = {}): StateListDrawable {
         val states = States<Drawable>().also(block)
         return StateListDrawable().apply {
             states.map.forEach { addState(intArrayOf(it.key), it.value) }
             addState(intArrayOf(), default)
         }
+    }
+
+    object KTX {
+
+        fun Float.dpToPx(): Float = ResourceUtil.dpToPx(this)
+        fun Float.dp2px(): Int = ResourceUtil.dp2px(this)
+        fun Int.px2dp(): Float = ResourceUtil.px2dp(this)
+
+        fun String?.toInt2(): Int = ResourceUtil.toInt2(this)
+
+        fun Context.getColor2(@ColorRes id: Int): Int = ResourceUtil.getColor2(this, id)
+
+        /**
+         * xml shape java代码实现方式
+         * @param shape [GradientDrawable.LINE] 线 [GradientDrawable.OVAL] 圆
+         * [GradientDrawable.RECTANGLE] 矩形 [GradientDrawable.LINEAR_GRADIENT] 虚线矩形
+         */
+        fun createGradientDrawable(shape: Int=GradientDrawable.RECTANGLE,
+                                   block: GradientDrawable.() -> Unit): Drawable {
+            return ResourceUtil.createGradientDrawable(shape, block)
+        }
+
+        /**
+         * xml selector item drawable java代码实现, 代码创建view不同状态的Drawable
+         */
+        fun createStateListDrawable(ctx: Context?,
+                                    @DrawableRes defaultRes: Int,
+                                    block: (States<Int>) -> Unit = {}): StateListDrawable? {
+            return ResourceUtil.createStateListDrawable(ctx, defaultRes, block)
+        }
+        fun createStateListDrawable(default: Drawable,
+                                    block: (States<Drawable>) -> Unit = {}): StateListDrawable {
+            return ResourceUtil.createStateListDrawable(default, block)
+        }
+
     }
 
 }
@@ -116,37 +133,4 @@ class States<T> {
     fun enabled(value: T?) { value?.also { map[-android.R.attr.state_enabled] = value } }
     fun unEnabled(value: T?) { value?.also { map[-android.R.attr.state_enabled] = value } }
     fun window_focused(value: T?) { value?.also { map[android.R.attr.state_window_focused] = value } }
-}
-
-/* ----------KTX----------- */
-
-fun Float.dpToPx(): Float = ResourceUtil.dpToPx(this)
-fun Float.dp2px(): Int = ResourceUtil.dp2px(this)
-fun Int.px2dp(): Float = ResourceUtil.px2dp(this)
-
-fun String?.toInt2(): Int = ResourceUtil.toInt2(this)
-
-fun Context.getColor2(@ColorRes id: Int): Int = ResourceUtil.getColor2(this, id)
-
-/**
- * xml shape java代码实现方式
- * @param shape [GradientDrawable.LINE] 线 [GradientDrawable.OVAL] 圆
- * [GradientDrawable.RECTANGLE] 矩形 [GradientDrawable.LINEAR_GRADIENT] 虚线矩形
- */
-fun createGradientDrawable(shape: Int=GradientDrawable.RECTANGLE,
-                           block: GradientDrawable.() -> Unit): Drawable {
-    return ResourceUtil.createGradientDrawable(shape, block)
-}
-
-/**
- * xml selector item drawable java代码实现, 代码创建view不同状态的Drawable
- */
-fun createStateListDrawable(ctx: Context?,
-                            @DrawableRes defaultRes: Int,
-                            block: (States<Int>) -> Unit = {}): StateListDrawable? {
-    return ResourceUtil.createStateListDrawable(ctx, defaultRes, block)
-}
-fun createStateListDrawable(default: Drawable,
-                            block: (States<Drawable>) -> Unit = {}): StateListDrawable {
-    return ResourceUtil.createStateListDrawable(default, block)
 }

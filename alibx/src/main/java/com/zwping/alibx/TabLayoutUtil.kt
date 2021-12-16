@@ -23,27 +23,14 @@ import com.google.android.material.tabs.TabLayout
  * tabLayout扩展
  * zwping @ 2021/10/28
  */
-internal interface ITabLayout {
+object TabLayoutUtil {
+
     /**
      * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
      */
-    fun initBottomNavigationView(tabLayout: TabLayout?, tabSize: Int, block: TabLayoutCustomView.(index: Int) -> Unit)
-    fun getTabLayoutCustomView(tabLayout: TabLayout?, index: Int): TabLayoutCustomView?
-
-    /**
-     * 增加小红点
-     * @param index
-     * @param num null -> 小红点
-     */
-    fun setBadge(tabLayout: TabLayout?, index: Int, num: Int?=null)
-    fun removeBadge(tabLayout: TabLayout?, index: Int)
-}
-
-object TabLayout: ITabLayout {
-
-    override fun initBottomNavigationView(tabLayout: TabLayout?,
-                                          tabSize: Int,
-                                          block: TabLayoutCustomView.(index: Int) -> Unit) {
+    fun initBottomNavigationView(tabLayout: TabLayout?,
+                                 tabSize: Int,
+                                 block: TabLayoutCustomView.(index: Int) -> Unit) {
         tabLayout ?: return
         tabLayout.setSelectedTabIndicatorHeight(0) // 去掉indicator
         for(index in 0 until tabSize) {
@@ -56,14 +43,19 @@ object TabLayout: ITabLayout {
         }
     }
 
-    override fun getTabLayoutCustomView(tabLayout: TabLayout?, index: Int): TabLayoutCustomView? {
+    fun getTabLayoutCustomView(tabLayout: TabLayout?, index: Int): TabLayoutCustomView? {
         tabLayout ?: return null
         val cus = tabLayout.getTabAt(index)?.customView
         if (cus is TabLayoutCustomView) return cus
         return null
     }
 
-    override fun setBadge(tabLayout: TabLayout?, index: Int, num: Int?) {
+    /**
+     * 增加小红点
+     * @param index
+     * @param num null -> 小红点
+     */
+    fun setBadge(tabLayout: TabLayout?, index: Int, num: Int?=null) {
         tabLayout ?: return
         getTabLayoutCustomView(tabLayout, index)?.also { it.setBadge(num); return }
         tabLayout.getTabAt(index)?.also {
@@ -71,7 +63,7 @@ object TabLayout: ITabLayout {
         }
     }
 
-    override fun removeBadge(tabLayout: TabLayout?, index: Int) {
+    fun removeBadge(tabLayout: TabLayout?, index: Int) {
         tabLayout ?: return
         getTabLayoutCustomView(tabLayout, index)?.also { it.removeBadge(); return }
         tabLayout.getTabAt(index)?.also {
@@ -79,6 +71,26 @@ object TabLayout: ITabLayout {
         }
     }
 
+    object KTX {
+
+        /**
+         * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
+         */
+        fun TabLayout?.initBottomNavigationView(tabSize: Int, block: TabLayoutCustomView.(index: Int) -> Unit) {
+            TabLayoutUtil.initBottomNavigationView(this, tabSize, block)
+        }
+        fun TabLayout?.getTabLayoutCustomView(index: Int): TabLayoutCustomView? {
+            return TabLayoutUtil.getTabLayoutCustomView(this, index)
+        }
+
+        /**
+         * 增加小红点
+         * @param index
+         * @param num null -> 小红点
+         */
+        fun TabLayout?.setBadge(index: Int, num: Int?=null) { TabLayoutUtil.setBadge(this, index, num) }
+        fun TabLayout?.removeBadge(index: Int) { TabLayoutUtil.removeBadge(this, index) }
+    }
 }
 
 
@@ -168,23 +180,3 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
     }
     private fun Float.dp2Px() = (0.5F+this*Resources.getSystem().displayMetrics.density).toInt()
 }
-
-/* ----------KTX----------- */
-
-/**
- * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
- */
-fun TabLayout?.initBottomNavigationView(tabSize: Int, block: TabLayoutCustomView.(index: Int) -> Unit) {
-    com.zwping.alibx.TabLayout.initBottomNavigationView(this, tabSize, block)
-}
-fun TabLayout?.getTabLayoutCustomView(index: Int): TabLayoutCustomView? {
-    return com.zwping.alibx.TabLayout.getTabLayoutCustomView(this, index)
-}
-
-/**
- * 增加小红点
- * @param index
- * @param num null -> 小红点
- */
-fun TabLayout?.setBadge(index: Int, num: Int?=null) { com.zwping.alibx.TabLayout.setBadge(this, index, num) }
-fun TabLayout?.removeBadge(index: Int) { com.zwping.alibx.TabLayout.removeBadge(this, index) }

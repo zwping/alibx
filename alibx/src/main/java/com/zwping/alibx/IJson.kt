@@ -105,8 +105,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
         ]
         array.optJSONArrayBasic { "$it" }
          */
-        @JvmStatic fun <BasicType> JSONArray?.optJSONArrayBasic(lis: (Any) -> BasicType):
-                MutableList<BasicType>? {
+        @JvmStatic fun <BasicType> JSONArray?.optJSONArrayBasic(lis: (Any) -> BasicType): MutableList<BasicType>? {
             this ?: return null
             val data = mutableListOf<BasicType>()
             for(i in 0 until length()) { get(i)?.also { data.add(lis(it)) } }
@@ -120,8 +119,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
         ]
         array.optJSONArrayOrNull { Entity(it) }
          */
-        @JvmStatic fun <T> JSONArray?.optJSONArrayOrNull(lis: (JSONObject) -> T):
-                MutableList<T>? {
+        @JvmStatic fun <T> JSONArray?.optJSONArrayOrNull(lis: (JSONObject) -> T): MutableList<T>? {
             this ?: return null
             val data = mutableListOf<T>()
             for(i in 0 until length()) { optJSONObject(i)?.also { data.add(lis(it)) } }

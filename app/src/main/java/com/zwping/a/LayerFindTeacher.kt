@@ -24,6 +24,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.zwping.alibx.*
+import com.zwping.alibx.ImageLoader.KTX.glide
+import com.zwping.alibx.ResourceUtil.KTX.createGradientDrawable
+import com.zwping.alibx.ResourceUtil.KTX.dp2px
 import kotlin.random.Random
 
 /**

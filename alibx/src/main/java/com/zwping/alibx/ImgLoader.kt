@@ -28,29 +28,27 @@ import java.io.File
 import java.security.MessageDigest
 
 /**
- * 图片加载常用功能平铺: [IImgLoader]
- * 图片加载过程中图片常用操作功能平铺: [IImgLoaderOpt]
- * zwping @ 2021/10/28
+ * 基于glide4.0加载图片, 可以等量替换成其它框架
  */
-internal interface IImgLoader {
-
+object ImageLoader {
     // 全局配置 级别最低
-    var globalPlaceholder: Int?
-    var globalError: Int?
-    var globalAnimType: AnimType?
+    var globalPlaceholder: Int? = null
+    var globalError: Int? = null
+    var globalAnimType: AnimType? = null
 
     /**
      * 加载图片
      * @param opt 加载图片过程中的配置项 [IImgLoaderOpt]
      */
-    fun glide(iv: ImageView?, url: String?, opt: ImgLoaderOpt.()->Unit = {})
-    fun glide(iv: ImageView?, url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {})
-
-    /**
-     * 清理图片缓存 disk & memory
-     * @param viewOrTarget 图片的key由url+其它操作共同构成, 根据view或加载对象可成功清理
-     */
-    fun clear(ctx: Context?, viewOrTarget: Any?)
+    fun glide(iv: ImageView?, url: String?, opt: ImgLoaderOpt.()->Unit = {}) {
+        glide(iv, url, null, opt)
+    }
+    fun glide(iv: ImageView?,
+              url: String?,
+              ctx: Context?=null,
+              opt: ImgLoaderOpt.()->Unit = {}) {
+        iv?.also { builder(it, url, ctx, opt)?.into(it) }
+    }
 
     /**
      * 下载图片
@@ -61,135 +59,7 @@ internal interface IImgLoader {
      */
     fun <T> down(url: String?, ctx: Context?,
                  sucLis: (Bitmap)->Unit, errLis: ()->Unit,
-                 wPx: Int=Target.SIZE_ORIGINAL, hPx: Int=Target.SIZE_ORIGINAL): T?
-    /*** 同步下载图片, 需要在io线程中 ***/
-    suspend fun <T> downSync(url: String?, ctx: Context?,
-                             wPx: Int=Target.SIZE_ORIGINAL, hPx: Int=Target.SIZE_ORIGINAL): T?
-
-    /*** 预加载 ***/
-    fun preload(ctx: Context?, vararg urls: String, opt: ImgLoaderOpt.() -> Unit={})
-
-    /*** 获取磁盘缓存大小 ***/
-    fun getDiskCacheSize(ctx: Context?): Long
-    suspend fun clearDiskCache(ctx: Context?) // 建议MemoryCache交由系统完成
-
-    fun isDestroy(ctx: Context?): Boolean {
-        ctx ?: return true
-        if (ctx is Activity) return ctx.isFinishing || ctx.isDestroyed
-        return false
-    }
-}
-
-interface IImgLoaderOpt {
-    // 占位图
-    var placeHolderDrw: Drawable?
-    var errorDrw: Drawable?
-    var placeHolder: Int?
-    var error: Int?
-
-    // 对图片的转码类型
-    var transcodeType: TranscodeType
-    fun asDrawable() { transcodeType = TranscodeType.Drawable }
-    fun asBitmap() { transcodeType = TranscodeType.Bitmap }
-    fun asGif() { transcodeType = TranscodeType.Gif }
-    fun asFile() { transcodeType = TranscodeType.File }
-
-    // 图片展示类型, 使用ImageView.ScaleType管理
-    var scaleType: ImageView.ScaleType?
-
-    // 图片形状 支持圆形 & 正方形
-    var shapeType: ShapeType
-    fun circleCrop() { shapeType = ShapeType.Circle }
-    fun squareCrop() { shapeType = ShapeType.Square }
-
-    // 图片边框
-    data class Stroke(val wDp: Float, @ColorInt val color: Int)
-    var stroke: Stroke?
-    fun setStroke(wDp: Float, @ColorInt color: Int) { stroke = Stroke(wDp, color) }
-
-    // 图片圆角, 指定圆角半径
-    var radii: FloatArray?
-    fun setRadius(rPx: Float) { setRadius(rPx, rPx, rPx, rPx) }
-    fun setRadius(tl: Float=0F, tr: Float=0F, br: Float=0F, bl: Float=0F) { radii = floatArrayOf(tl,tl, tr,tr, br,br, bl,bl) }
-
-    // 过渡动画
-    var animType: AnimType?
-
-    // 缓存
-    var cacheType: CacheType
-    fun skipMemoryCache() { cacheType = CacheType.Disk }
-    fun skipDiskCache() { cacheType = CacheType.Memory }
-    fun skipCache() { cacheType = CacheType.None }
-
-    // 本地模式, 只读取缓存图片
-    var onlyReadCache: Boolean
-    fun setOnlyRead() { onlyReadCache=true }
-
-    // 缩略图
-    var thumbnailUrl: String?
-
-    // 转换大小
-    var targetWidth: Float?
-    var targetHeight: Float?
-
-    // 监听
-    var lis: ((readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)?
-    /**
-     * 资源加载监听, 可控制资源渲染过程
-     *  - 当resource为[GifDrawable]时
-     *   - [GifDrawable.setLoopCount]可控制gif播放次数
-     *   - [GifDrawable.registerAnimationCallback]可监听gif播放过程[播放结束]
-     */
-    fun setOnLoaderListener(lis: (readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)
-
-    // gif只播放一次
-    var gifOncePlay: Boolean
-}
-enum class AnimType{ WithCrossFade }
-enum class ShapeType{ Default, Circle, Square }
-enum class TranscodeType { Drawable, Bitmap, Gif, File }
-enum class CacheType{ All, Memory, Disk, None }
-
-class ImgLoaderOpt: IImgLoaderOpt {
-    override var placeHolderDrw: Drawable?=null
-    override var errorDrw: Drawable?=null
-    override var placeHolder: Int?=null
-        get() = field ?: ImageLoader.globalPlaceholder
-    override var error: Int?=null
-        get() = field ?: ImageLoader.globalError
-    override var transcodeType = TranscodeType.Drawable
-    override var scaleType: ImageView.ScaleType? = null
-    override var shapeType = ShapeType.Default
-    override var stroke: IImgLoaderOpt.Stroke?=null
-    override var radii: FloatArray?=null
-    override var animType: AnimType?=null
-        get() = field ?: ImageLoader.globalAnimType
-    override var cacheType = CacheType.All
-    override var onlyReadCache: Boolean=false
-    override var thumbnailUrl: String?=null
-    override var targetWidth: Float?=null
-    override var targetHeight: Float?=null
-    override var gifOncePlay: Boolean=false
-    override var lis: ((readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)?=null
-    override fun setOnLoaderListener(lis: (readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit) {
-        this.lis = lis
-    }
-}
-
-/**
- * 基于glide4.0加载图片
- */
-object ImageLoader: IImgLoader {
-    override var globalPlaceholder: Int? = null
-    override var globalError: Int? = null
-    override var globalAnimType: AnimType? = null
-
-    override fun glide(iv: ImageView?, url: String?, opt: ImgLoaderOpt.()->Unit) { glide(iv, url, null, opt) }
-    override fun glide(iv: ImageView?, url: String?, ctx: Context?, opt: ImgLoaderOpt.()->Unit) { iv?.also { builder(it, url, ctx, opt)?.into(it) } }
-
-    override fun <T> down(url: String?, ctx: Context?,
-                          sucLis: (Bitmap) -> Unit, errLis: () -> Unit,
-                          wPx: Int, hPx: Int): T? {
+                 wPx: Int=Target.SIZE_ORIGINAL, hPx: Int=Target.SIZE_ORIGINAL): T? {
         ctx ?: return null
         val res: CustomTarget<Bitmap> = Glide.with(ctx).asBitmap().load(url).into(object: CustomTarget<Bitmap>(wPx, hPx){
             override fun onStart() { }
@@ -200,19 +70,25 @@ object ImageLoader: IImgLoader {
         return res as T
     }
 
-    override suspend fun <T> downSync(url: String?, ctx: Context?, wPx: Int, hPx: Int): T? {
+    /*** 同步下载图片, 需要在io线程中 ***/
+    suspend fun <T> downSync(url: String?, ctx: Context?,
+                             wPx: Int=Target.SIZE_ORIGINAL, hPx: Int=Target.SIZE_ORIGINAL): T? {
         ctx ?: return null
         val res: FutureTarget<Bitmap> = Glide.with(ctx).asBitmap().load(url).submit(wPx, hPx)
         // res.isDone判断结果, res.get()获取Bitmap, res使用完后需要清除避免crash
         return res as T
     }
 
-    override fun preload(ctx: Context?, vararg urls: String, opt: ImgLoaderOpt.() -> Unit) {
+    /*** 预加载 ***/
+    fun preload(ctx: Context?, vararg urls: String, opt: ImgLoaderOpt.() -> Unit={}) {
         ctx ?: return; urls.forEach { builder(null, it, ctx)?.preload() }
     }
 
-
-    override fun clear(ctx: Context?, viewOrTarget: Any?) {
+    /**
+     * 清理图片缓存 disk & memory
+     * @param viewOrTarget 图片的key由url+其它操作共同构成, 根据view或加载对象可成功清理
+     */
+    fun clear(ctx: Context?, viewOrTarget: Any?) {
         ctx ?: return
         when(viewOrTarget) {
             is View -> Glide.with(ctx).clear(viewOrTarget)
@@ -220,7 +96,8 @@ object ImageLoader: IImgLoader {
         }
     }
 
-    override fun getDiskCacheSize(ctx: Context?): Long {
+    /*** 获取磁盘缓存大小 ***/
+    fun getDiskCacheSize(ctx: Context?): Long {
         ctx ?: return 0L
         return getFolderSize(File(ctx.cacheDir, DiskCache.Factory.DEFAULT_DISK_CACHE_DIR))
     }
@@ -235,13 +112,20 @@ object ImageLoader: IImgLoader {
         return size
     }
 
-    override suspend fun clearDiskCache(ctx: Context?) { ctx ?: return; Glide.get(ctx).clearDiskCache() }
+    // 建议MemoryCache交由系统完成
+    suspend fun clearDiskCache(ctx: Context?) { ctx ?: return; Glide.get(ctx).clearDiskCache() }
+
+    fun isDestroy(ctx: Context?): Boolean {
+        ctx ?: return true
+        if (ctx is Activity) return ctx.isFinishing || ctx.isDestroyed
+        return false
+    }
 
     // --------------
 
     private fun builder(iv: ImageView?, url: String?,
-                       ctx: Context?=null,
-                       option: ImgLoaderOpt.()->Unit={ }): RequestBuilder<*>? {
+                        ctx: Context?=null,
+                        option: ImgLoaderOpt.()->Unit={ }): RequestBuilder<*>? {
         if (iv == null && ctx == null) return null
         val context = ctx ?: iv!!.context
         if (isDestroy(context)) return null // 避免 You cannot start a load for a destroyed activity com.bumptech.glide.i.l.a(RequestManagerRetriever.java:2)
@@ -355,16 +239,80 @@ object ImageLoader: IImgLoader {
         override fun updateDiskCacheKey(messageDigest: MessageDigest) { messageDigest.update(ID_BYTES) }
 
     }
+
+    object KTX {
+        /**
+         * 加载图片
+         * @param opt 加载图片过程中的配置项 [IImgLoaderOpt]
+         */
+        fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {}) { glide(url, null, opt) }
+        fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {}) {
+            ImageLoader.glide(this, url, ctx, opt)
+        }
+        fun Context?.isDestroy(): Boolean = ImageLoader.isDestroy(this)
+    }
 }
 
-/* ----------KTX----------- */
-
-/**
- * 加载图片
- * @param opt 加载图片过程中的配置项 [IImgLoaderOpt]
- */
-fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {}) { glide(url, null, opt) }
-fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {}) {
-    ImageLoader.glide(this, url, ctx, opt)
+class ImgLoaderOpt {
+    // 占位图
+    var placeHolderDrw: Drawable?=null
+    var errorDrw: Drawable?=null
+    var placeHolder: Int?=null
+        get() = field ?: ImageLoader.globalPlaceholder
+    var error: Int?=null
+        get() = field ?: ImageLoader.globalError
+    // 对图片的转码类型
+    var transcodeType = TranscodeType.Drawable
+    fun asDrawable() { transcodeType = TranscodeType.Drawable }
+    fun asBitmap() { transcodeType = TranscodeType.Bitmap }
+    fun asGif() { transcodeType = TranscodeType.Gif }
+    fun asFile() { transcodeType = TranscodeType.File }
+    // 图片展示类型, 使用ImageView.ScaleType管理
+    var scaleType: ImageView.ScaleType? = null
+    // 图片形状 支持圆形 & 正方形
+    var shapeType = ShapeType.Default
+    fun circleCrop() { shapeType = ShapeType.Circle }
+    fun squareCrop() { shapeType = ShapeType.Square }
+    // 图片边框
+    var stroke: Stroke?=null
+    fun setStroke(wDp: Float, @ColorInt color: Int) { stroke = Stroke(wDp, color) }
+    // 图片圆角, 指定圆角半径
+    var radii: FloatArray?=null
+    fun setRadius(rPx: Float) { setRadius(rPx, rPx, rPx, rPx) }
+    fun setRadius(tl: Float=0F, tr: Float=0F, br: Float=0F, bl: Float=0F) { radii = floatArrayOf(tl,tl, tr,tr, br,br, bl,bl) }
+    // 过渡动画
+    var animType: AnimType?=null
+        get() = field ?: ImageLoader.globalAnimType
+    // 缓存
+    var cacheType = CacheType.All
+    fun skipMemoryCache() { cacheType = CacheType.Disk }
+    fun skipDiskCache() { cacheType = CacheType.Memory }
+    fun skipCache() { cacheType = CacheType.None }
+    // 本地模式, 只读取缓存图片
+    var onlyReadCache: Boolean=false
+    fun setOnlyRead() { onlyReadCache=true }
+    // 缩略图
+    var thumbnailUrl: String?=null
+    // 转换大小
+    var targetWidth: Float?=null
+    var targetHeight: Float?=null
+    // gif只播放一次
+    var gifOncePlay: Boolean=false
+    // 监听
+    var lis: ((readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit)?=null
+    /**
+     * 资源加载监听, 可控制资源渲染过程
+     *  - 当resource为[GifDrawable]时
+     *   - [GifDrawable.setLoopCount]可控制gif播放次数
+     *   - [GifDrawable.registerAnimationCallback]可监听gif播放过程[播放结束]
+     */
+    fun setOnLoaderListener(lis: (readyOrFailed: Boolean, resource: Any?, e: GlideException?) -> Unit) {
+        this.lis = lis
+    }
 }
-fun Context?.isDestroy(): Boolean = ImageLoader.isDestroy(this)
+
+data class Stroke(val wDp: Float, @ColorInt val color: Int)
+enum class AnimType{ WithCrossFade }
+enum class ShapeType{ Default, Circle, Square }
+enum class TranscodeType { Drawable, Bitmap, Gif, File }
+enum class CacheType{ All, Memory, Disk, None }

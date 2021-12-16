@@ -7,8 +7,6 @@ import android.widget.ImageView
 import androidx.core.view.updateLayoutParams
 import com.zwping.a.databinding.AcMainBinding
 import com.zwping.alibx.BaseAc
-import com.zwping.alibx.Scheme.open
-import com.zwping.alibx.dp2px
 
 
 /**

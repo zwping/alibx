@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.annotation.LayoutRes
-import androidx.core.view.marginTop
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,52 +21,19 @@ import androidx.viewbinding.ViewBinding
  * ViewBinding的成熟推动了原生Adapter实用
  * zwping @ 5/10/21
  */
-internal interface IRecyclerView {
-    fun removeFocus(recyclerView: RecyclerView?)
-    fun setLinearLayoutManager(recyclerView: RecyclerView?,
-                               @RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
-                               noScrollV: Boolean = false,
-                               noScrollH: Boolean = false)
-    fun setGradLayoutManager(recyclerView: RecyclerView?,
-                             spanCount: Int,
-                             @RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
-                             noScrollV: Boolean = false,
-                             noScrollH: Boolean = false)
-    /*** recyclerView分割线 及 最后一个item底部偏移量 ***/
-    fun addItemDecorationLine(recyclerView: RecyclerView?,
-                              @ColorInt color: Int,
-                              dividerHeight: Int,
-                              dividerMargin: Int=0,
-                              dividerMarginLeft: Int?=null,
-                              dividerMarginRight: Int?=null,
-                              lastPositionOffset: Int=0,
-                              adp: BaseAdapter<*>?=null)
+object RecyclerViewUtil {
 
-    fun getLayoutInflater(viewGroup: ViewGroup): LayoutInflater
-    fun getLayoutInflater(viewGroup: ViewGroup, @LayoutRes layoutId: Int): View
-}
-object RecyclerViewUtil : IRecyclerView {
-
-    override fun getLayoutInflater(viewGroup: ViewGroup): LayoutInflater {
-        return LayoutInflater.from(viewGroup.context)
-    }
-    override fun getLayoutInflater(viewGroup: ViewGroup, layoutId: Int): View {
-        return getLayoutInflater(viewGroup).inflate(layoutId, viewGroup, false)
-    }
-
-    override fun removeFocus(recyclerView: RecyclerView?) {
+    fun removeFocus(recyclerView: RecyclerView?) {
         recyclerView?.apply {
             isFocusableInTouchMode = false
             requestFocus()
         }
     }
 
-    override fun setLinearLayoutManager(
-        recyclerView: RecyclerView?,
-        ort: Int,
-        noScrollV: Boolean,
-        noScrollH: Boolean
-    ) {
+    fun setLinearLayoutManager(recyclerView: RecyclerView?,
+                               @RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
+                               noScrollV: Boolean = false,
+                               noScrollH: Boolean = false){
         recyclerView?.layoutManager = object : LinearLayoutManager2(recyclerView?.context, ort, false) {
             override fun canScrollVertically(): Boolean {
                 return if (noScrollV) false else super.canScrollVertically()
@@ -78,13 +44,11 @@ object RecyclerViewUtil : IRecyclerView {
         }
     }
 
-    override fun setGradLayoutManager(
-        recyclerView: RecyclerView?,
-        spanCount: Int,
-        ort: Int,
-        noScrollV: Boolean,
-        noScrollH: Boolean
-    ) {
+    fun setGradLayoutManager(recyclerView: RecyclerView?,
+                             spanCount: Int,
+                             @RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
+                             noScrollV: Boolean = false,
+                             noScrollH: Boolean = false) {
         recyclerView?.layoutManager = object : GridLayoutManager2(recyclerView?.context, spanCount, ort, false) {
             override fun canScrollVertically(): Boolean {
                 return if (noScrollV) false else super.canScrollVertically()
@@ -95,16 +59,15 @@ object RecyclerViewUtil : IRecyclerView {
         }
     }
 
-    override fun addItemDecorationLine(
-        recyclerView: RecyclerView?,
-        color: Int,
-        dividerHeight: Int,
-        dividerMargin: Int,
-        dividerMarginLeft: Int?,
-        dividerMarginRight: Int?,
-        lastPositionOffset: Int,
-        adp: BaseAdapter<*>?
-    ) {
+    /*** recyclerView分割线 及 最后一个item底部偏移量 ***/
+    fun addItemDecorationLine(recyclerView: RecyclerView?,
+                              @ColorInt color: Int,
+                              dividerHeight: Int,
+                              dividerMargin: Int=0,
+                              dividerMarginLeft: Int?=null,
+                              dividerMarginRight: Int?=null,
+                              lastPositionOffset: Int=0,
+                              adp: BaseAdapter<*>?=null) {
         recyclerView?.addItemDecoration(object: RecyclerView.ItemDecoration() {
             val paint = Paint().also { it.isAntiAlias = true; it.color = color }
             override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
@@ -127,6 +90,42 @@ object RecyclerViewUtil : IRecyclerView {
                 }
             }
         })
+    }
+
+    fun getLayoutInflater(viewGroup: ViewGroup): LayoutInflater {
+        return LayoutInflater.from(viewGroup.context)
+    }
+    fun getLayoutInflater(viewGroup: ViewGroup, @LayoutRes layoutId: Int): View {
+        return getLayoutInflater(viewGroup).inflate(layoutId, viewGroup, false)
+    }
+
+    object KTX {
+
+        fun RecyclerView?.removeFocus() { RecyclerViewUtil.removeFocus(this) }
+        fun RecyclerView?.setLinearLayoutManager(@RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
+                                                 noScrollV: Boolean = false,
+                                                 noScrollH: Boolean = false) {
+            RecyclerViewUtil.setLinearLayoutManager(this, ort, noScrollV, noScrollH)
+        }
+        fun RecyclerView?.setGradLayoutManager(spanCount: Int,
+                                               @RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
+                                               noScrollV: Boolean = false,
+                                               noScrollH: Boolean = false) {
+            RecyclerViewUtil.setGradLayoutManager(this, spanCount, ort, noScrollV, noScrollH)
+        }
+        /*** recyclerView分割线 及 最后一个item底部偏移量 ***/
+        fun RecyclerView?.addItemDecorationLine(@ColorInt color: Int,
+                                                dividerHeight: Int,
+                                                dividerMargin: Int=0,
+                                                dividerMarginLeft: Int?=null,
+                                                dividerMarginRight: Int?=null,
+                                                lastPositionOffset: Int=0,
+                                                adp: BaseAdapter<*>?=null) {
+            RecyclerViewUtil.addItemDecorationLine(this, color, dividerHeight, dividerMargin, dividerMarginLeft, dividerMarginRight, lastPositionOffset, adp)
+        }
+
+        fun ViewGroup.getLayoutInflater(): LayoutInflater = RecyclerViewUtil.getLayoutInflater(this)
+        fun ViewGroup.getLayoutInflater(@LayoutRes layoutId: Int): View = RecyclerViewUtil.getLayoutInflater(this, layoutId)
     }
 }
 abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() {
@@ -392,31 +391,3 @@ open class BaseVH<E, out VB : ViewBinding>(
     val vb: VB,
     private val bindViewHolder: BaseVH<E, VB>.(vb: VB, entity: E) -> Unit) :
     BaseViewHolder<E, View>(vb.root, {_, entity -> bindViewHolder(this as BaseVH<E, VB>, vb, entity) })
-
-/* ----------KTX----------- */
-
-fun RecyclerView?.removeFocus() { RecyclerViewUtil.removeFocus(this) }
-fun RecyclerView?.setLinearLayoutManager(@RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
-                                         noScrollV: Boolean = false,
-                                         noScrollH: Boolean = false) {
-    RecyclerViewUtil.setLinearLayoutManager(this, ort, noScrollV, noScrollH)
-}
-fun RecyclerView?.setGradLayoutManager(spanCount: Int,
-                                       @RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
-                                       noScrollV: Boolean = false,
-                                       noScrollH: Boolean = false) {
-    RecyclerViewUtil.setGradLayoutManager(this, spanCount, ort, noScrollV, noScrollH)
-}
-/*** recyclerView分割线 及 最后一个item底部偏移量 ***/
-fun RecyclerView?.addItemDecorationLine(@ColorInt color: Int,
-                                        dividerHeight: Int,
-                                        dividerMargin: Int=0,
-                                        dividerMarginLeft: Int?=null,
-                                        dividerMarginRight: Int?=null,
-                                        lastPositionOffset: Int=0,
-                                        adp: BaseAdapter<*>?=null) {
-    RecyclerViewUtil.addItemDecorationLine(this, color, dividerHeight, dividerMargin, dividerMarginLeft, dividerMarginRight, lastPositionOffset, adp)
-}
-
-fun ViewGroup.getLayoutInflater(): LayoutInflater = RecyclerViewUtil.getLayoutInflater(this)
-fun ViewGroup.getLayoutInflater(@LayoutRes layoutId: Int): View = RecyclerViewUtil.getLayoutInflater(this, layoutId)

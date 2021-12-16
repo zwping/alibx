@@ -12,63 +12,46 @@ import android.widget.Toast
 import com.zwping.alibx.LauncherMode.SingleTask
 import com.zwping.alibx.LauncherMode.SingleTop
 import com.zwping.alibx.OPTAnim.*
+import com.zwping.alibx.Scheme.KTX.overridePendingTransition
+import com.zwping.alibx.Scheme.KTX.scheme
 import java.util.*
 
 /**
  * schemeUri简单路由 [open]
  * zwping @ 2021/11/18
  */
-internal interface IScheme {
 
-    /*** scheme配置列表 ***/
-    var schemeList: ISchemeList?
-    /*** scheme跳转错误toast [可选/默认系统Toast] ***/
-    var warningToast: ((ctx: Context, msg: String)->Unit)?
-    /*** scheme 拦截器 ***/
-    var schemeInterceptors: MutableList<ISchemeInterceptor>
-
-    fun init(schemeList: ISchemeList,
-             warningToast: ((ctx: Context, msg: String)->Unit)? = null)
-
-    fun addInterceptor(interceptor: ISchemeInterceptor)
-
-    fun open(ctx: Context?, schemeURL: String?, option: SchemeIntentOption.() -> Unit = {})
-    fun open(ctx: Context?, clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {})
-}
-
-interface ISchemeInterceptor{
-    val weight: Int // 权重值越大越优先
-    fun process(ctx: Context, scheme: SchemeStandard): Boolean
-}
-
-object Scheme: IScheme {
+object Scheme {
 
     var ErrMsg1 = "scheme url is empty!!"
     var ErrMsg2 = "scheme url error!"
     var ErrMsg3 = "scheme list not init!"
 
-    override var schemeList: ISchemeList? = null
-    override var warningToast: ((ctx: Context, msg: String) -> Unit)? = null
-    override var schemeInterceptors: MutableList<ISchemeInterceptor> = mutableListOf()
+    /*** scheme配置列表 ***/
+    var schemeList: ISchemeList? = null
+    /*** scheme跳转错误toast [可选/默认系统Toast] ***/
+    var warningToast: ((ctx: Context, msg: String)->Unit)? = null
+    /*** scheme 拦截器 ***/
+    var schemeInterceptors: MutableList<ISchemeInterceptor> = mutableListOf()
 
-    override fun init(schemeList: ISchemeList,
-                      warningToast: ((ctx: Context, msg: String) -> Unit)?) {
+    fun init(schemeList: ISchemeList,
+             warningToast: ((ctx: Context, msg: String)->Unit)? = null) {
         this.schemeList = schemeList
         this.warningToast = warningToast
     }
 
-    override fun addInterceptor(interceptor: ISchemeInterceptor) {
+    fun addInterceptor(interceptor: ISchemeInterceptor) {
         schemeInterceptors.add(interceptor)
         schemeInterceptors.sortByDescending { it.weight }
     }
 
-    override fun open(ctx: Context?, schemeURL: String?, option: SchemeIntentOption.() -> Unit) {
+    fun open(ctx: Context?, schemeURL: String?, option: SchemeIntentOption.() -> Unit = {}) {
         ctx ?: return
         if (schemeURL.isNullOrBlank()) { showToast(ctx, ErrMsg1); return }
         try { open(ctx, scheme = schemeURL.scheme(), null, SchemeIntentOption(ctx).also(option)) }
         catch (e: Exception) { e.printStackTrace(); showToast(ctx, "$ErrMsg2 $schemeURL"); return }
     }
-    override fun open(ctx: Context?, clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit) {
+    fun open(ctx: Context?, clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {}) {
         ctx ?: return
         open(ctx, null, clazz = clazz, SchemeIntentOption(ctx).also(option))
     }
@@ -124,9 +107,40 @@ object Scheme: IScheme {
         warningToast?.also { it(ctx, msg); return }
         Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
     }
+
+    object KTX {
+        fun String.scheme() = SchemeStandard(this)
+        fun Activity?.overridePendingTransition(enum: OPTAnim) {
+            this ?: return
+            when(enum) {
+                None -> overridePendingTransition(0, 0)
+                FadeInOut -> overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+                FadeIn -> overridePendingTransition(android.R.anim.fade_in, com.zwping.alibx.R.anim.opt_hold)
+                FadeOut -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, android.R.anim.fade_out)
+                SlideLeftRight -> overridePendingTransition(com.zwping.alibx.R.anim.slide_left_enter, com.zwping.alibx.R.anim.slide_right_exit)
+                SlideRightLeft -> overridePendingTransition(com.zwping.alibx.R.anim.slide_right_enter, com.zwping.alibx.R.anim.slide_left_exit)
+                SlideToTop -> overridePendingTransition(com.zwping.alibx.R.anim.slide_bottom_enter, com.zwping.alibx.R.anim.opt_hold)
+                SlideToBottom -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, com.zwping.alibx.R.anim.slide_bottom_exit)
+            }
+        }
+        fun Context?.open(schemeURL: String?, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, schemeURL, option) }
+        fun Context?.open(clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, clazz, option) }
+    }
 }
 
-fun String.scheme() = SchemeStandard(this)
+/**
+ * scheme list 配置接口
+ */
+interface ISchemeList{
+    val data: HashMap<SchemeStandard, Class<out Activity>>
+    val dataFunc: HashMap<SchemeStandard, (ctx: Context, extra: Bundle?)->Unit>
+    val webBrowser: Class<out Activity>? // 如果未设置内部webViewActivity, 默认跳转系统浏览器
+}
+
+interface ISchemeInterceptor{
+    val weight: Int // 权重值越大越优先
+    fun process(ctx: Context, scheme: SchemeStandard): Boolean
+}
 
 /**
  * 标准的SchemeUri
@@ -160,24 +174,23 @@ class SchemeStandard {
 }
 
 /**
- * scheme list 配置接口
+ * scheme跳转意图配置项
  */
-interface ISchemeList{
-    val data: HashMap<SchemeStandard, Class<out Activity>>
-    val dataFunc: HashMap<SchemeStandard, (ctx: Context, extra: Bundle?)->Unit>
-    val webBrowser: Class<out Activity>? // 如果未设置内部webViewActivity, 默认跳转系统浏览器
-}
+class SchemeIntentOption(private val ctx: Context?) {
 
-interface ISchemeIntentOption {
     // extra
-    var extra: Bundle?
-    fun extra(putBlock: Bundle.()->Unit)
+    var extra: Bundle? = null
+    fun extra(putBlock: Bundle.() -> Unit) {
+        extra?.also { it.putBlock(); return }
+        Bundle().also { extra = it }.putBlock()
+    }
     // launcherMode
-    var launcherMode: LauncherMode?
+    var launcherMode: LauncherMode? = null
+
     // 转场/过渡动画 overridePendingTransition(enter, exit)
-    var transitionAnim: OPTAnim?
-    var transitionAnimEnterResId: Int?
-    var transitionAnimExitResId: Int?
+    var transitionAnim: OPTAnim? = null
+    var transitionAnimEnterResId: Int? = null
+    var transitionAnimExitResId: Int? = null
     // 转场动画MD
     /**
      * 设置共享元素转场动画
@@ -186,21 +199,7 @@ interface ISchemeIntentOption {
      *  - 目标ActivityView为异步图片时, 可使用[Activity.postponeEnterTransition]暂停动画,
      *   等待图片准备完成后[Activity.startPostponedEnterTransition]恢复动画
      */
-    fun setSharedTransitionAnim(vararg views: View?)
-    var options: Bundle?
-}
-
-/**
- * scheme跳转意图配置项
- */
-class SchemeIntentOption(private val ctx: Context?): ISchemeIntentOption {
-
-    override var launcherMode: LauncherMode? = null
-
-    override var transitionAnim: OPTAnim? = null
-    override var transitionAnimEnterResId: Int? = null
-    override var transitionAnimExitResId: Int? = null
-    override fun setSharedTransitionAnim(vararg views: View?) {
+    fun setSharedTransitionAnim(vararg views: View?) {
         if (ctx !is Activity) return
         val sharedElements = ArrayList<Pair<View, String>>()
         views.filter { it!=null && !it.transitionName.isNullOrBlank() }.forEach { sharedElements.add(Pair(it, it!!.transitionName)) }
@@ -208,13 +207,7 @@ class SchemeIntentOption(private val ctx: Context?): ISchemeIntentOption {
         options = ActivityOptions.makeSceneTransitionAnimation(ctx, *sharedElements.toTypedArray()).toBundle()
     }
 
-    override var extra: Bundle? = null
-    override fun extra(putBlock: Bundle.() -> Unit) {
-        extra?.also { it.putBlock(); return }
-        Bundle().also { extra = it }.putBlock()
-    }
-
-    override var options: Bundle? = null
+    var options: Bundle? = null
 
     override fun toString(): String {
         return "SchemeIntentOption(ctx=$ctx, launcherMode=$launcherMode, transitionAnim=$transitionAnim, transitionAnimEnterResId=$transitionAnimEnterResId, transitionAnimExitResId=$transitionAnimExitResId, extra=$extra, options=$options)"
@@ -237,21 +230,3 @@ enum class OPTAnim {
     SlideToTop,             // 滑动 底部向上滑动弹出
     SlideToBottom,          // 滑动 弹出后向下滑动关闭
 }
-
-/* ----------KTX----------- */
-
-fun Activity?.overridePendingTransition(enum: OPTAnim) {
-    this ?: return
-    when(enum) {
-        None -> overridePendingTransition(0, 0)
-        FadeInOut -> overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-        FadeIn -> overridePendingTransition(android.R.anim.fade_in, com.zwping.alibx.R.anim.opt_hold)
-        FadeOut -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, android.R.anim.fade_out)
-        SlideLeftRight -> overridePendingTransition(com.zwping.alibx.R.anim.slide_left_enter, com.zwping.alibx.R.anim.slide_right_exit)
-        SlideRightLeft -> overridePendingTransition(com.zwping.alibx.R.anim.slide_right_enter, com.zwping.alibx.R.anim.slide_left_exit)
-        SlideToTop -> overridePendingTransition(com.zwping.alibx.R.anim.slide_bottom_enter, com.zwping.alibx.R.anim.opt_hold)
-        SlideToBottom -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, com.zwping.alibx.R.anim.slide_bottom_exit)
-    }
-}
-fun Context?.open(schemeURL: String?, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, schemeURL, option) }
-fun Context?.open(clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, clazz, option) }

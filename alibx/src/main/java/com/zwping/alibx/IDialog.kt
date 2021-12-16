@@ -576,7 +576,7 @@ class IDialogImpl<T: AlertDialog>(val dialog: T): LifecycleEventObserver {
     // 声明周期感知上传至父类
     private var onInitLifecycleStateChanged: ((source: LifecycleOwner, event: Lifecycle.Event)->Unit)? = null
     var canceledOnTouchOutSide = true   // 空白区域是否可以关闭
-        set(value) { Thread.currentThread().stackTrace.forEach { println(it) }; logd(value); if (cancelabled) field = value }
+        set(value) { if (cancelabled) field = value }
     var cancelabled = true              // 返回键 & 空白区域是否可以关闭
         set(value) { field = value; canceledOnTouchOutSide = value }
     var view: View? = null                      // 记录custom view, 在显示隐藏动画中使用

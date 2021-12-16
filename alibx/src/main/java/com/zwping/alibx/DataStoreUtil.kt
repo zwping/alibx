@@ -11,18 +11,15 @@ import kotlinx.coroutines.runBlocking
  * DataStore扩展
  * zwping @ 1/11/21
  */
-internal interface IDataStore {
-    fun get(ctx: Context?, key: String): String? // 提供string支持
-    fun put(ctx: Context?, key: String, value: String?)
-}
-object DataStoreUtil: IDataStore {
+object DataStoreUtil {
     var NAME = "DataStore"
 
-    override fun get(ctx: Context?, key: String): String? {
+    // 提供string支持
+    fun get(ctx: Context?, key: String): String? {
         ctx ?: return null
         return ctx.dataStore.get(key)
     }
-    override fun put(ctx: Context?, key: String, value: String?) {
+    fun put(ctx: Context?, key: String, value: String?) {
         ctx ?: return
         ctx.dataStore.put(key, value)
     }

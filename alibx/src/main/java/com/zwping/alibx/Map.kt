@@ -2,7 +2,7 @@ package com.zwping.alibx
 
 import android.app.Application
 import android.content.Context
-import com.zwping.alibx.Requests.isAppDebug
+import com.zwping.alibx.Requests.KTX.isAppDebug
 import okhttp3.OkHttpClient
 
 /**
@@ -18,7 +18,8 @@ object Map {
                    placeholder: Int? = null,
                    error: Int? = null,
                    requests: OkHttpClient.Builder.() -> Unit = {},
-                   toastOpt: (ToastUtilOption)->Unit={}) {
+                   toastOpt: (ToastUtilOption)->Unit={},
+                   stateLayoutCfg: StateLayout.Companion.Cfg = StateLayout.Companion.Cfg()) {
 
         Util.DEBUG = app.isAppDebug()
 
@@ -32,6 +33,8 @@ object Map {
 
         ImageLoader.globalPlaceholder = placeholder
         ImageLoader.globalError = error
+
+        StateLayout.init(stateLayoutCfg)
     }
 
 }

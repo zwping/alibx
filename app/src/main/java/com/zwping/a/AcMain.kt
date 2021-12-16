@@ -1,27 +1,27 @@
 package com.zwping.a
 
-import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.graphics.Color
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.animation.AnimatorSetCompat
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.zwping.a.databinding.AcMainBinding
 import com.zwping.a.databinding.Test1Binding
 import com.zwping.a.databinding.TestBinding
 import com.zwping.a.fm.FmHome
 import com.zwping.alibx.*
-import razerdp.util.animation.AnimationHelper
+import com.zwping.alibx.ImageLoader.KTX.glide
+import com.zwping.alibx.RecyclerViewUtil.KTX.getLayoutInflater
+import com.zwping.alibx.ResourceUtil.KTX.createGradientDrawable
+import com.zwping.alibx.ResourceUtil.KTX.dp2px
+import com.zwping.alibx.Scheme.KTX.open
+import com.zwping.alibx.Util.logd
+import com.zwping.alibx.ViewPager2Util.KTX.initBannerOfImg
+import com.zwping.alibx.ViewPager2Util.KTX.setBannerData
+import com.zwping.alibx.ViewPager2Util.KTX.setBannerMultiItem
 
 class AcMain : BaseAc<AcMainBinding>() {
 
@@ -34,7 +34,7 @@ class AcMain : BaseAc<AcMainBinding>() {
     override fun initView() {
         vb.iv.glide("https://p.qqan.com/up/20211-11/20211123931516611.jpg") {
             circleCrop()
-            stroke = IImgLoaderOpt.Stroke(1F, (0xffE1EBF5).toInt())
+            stroke = Stroke(1F, (0xffE1EBF5).toInt())
         }
         vb.layerFindTeacher.start(this, mutableListOf(
             "https://img2.woyaogexing.com/2021/12/04/c48b8378a714452fb878e96fb0927afb!400x400.jpg",
@@ -96,6 +96,8 @@ class AcMain : BaseAc<AcMainBinding>() {
         }
 //        IDialog.DialogItemsBuilder(this, mutableListOf( "me")).show(supportFragmentManager)
 
+        Util.logd(123)
+        logd()
     }
 
 
@@ -104,7 +106,7 @@ class AcMain : BaseAc<AcMainBinding>() {
             override fun holder(parent: ViewGroup) = BaseViewHolderVB<Entity, TestBinding>(
                 TestBinding.inflate(parent.getLayoutInflater(), parent, false),
                 {view, entity ->
-                    itemView.background = createGradientDrawable {
+                    itemView.background = createGradientDrawable() {
                         setColor(Color.WHITE)
                         setStroke(1F.dp2px(), Color.RED) }
                 }
