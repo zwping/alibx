@@ -30,6 +30,7 @@ class App : Application() {
     class SchemeList: ISchemeList {
         override val data: HashMap<SchemeStandard, Class<out Activity>> = hashMapOf(
             "alibx://ac/second".scheme() to AcSecond::class.java,
+            "yikao://test/scanning".scheme() to AcSecond::class.java,
             "alibx://ac/main".scheme() to AcMain::class.java,
         )
         override val dataFunc: HashMap<SchemeStandard, (ctx: Context, extra: Bundle?) -> Unit> = hashMapOf(

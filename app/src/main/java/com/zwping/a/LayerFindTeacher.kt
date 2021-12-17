@@ -10,6 +10,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -34,17 +35,6 @@ import kotlin.random.Random
 class LayerFindTeacher(context: Context, attrs: AttributeSet?) :
     FrameLayout(context, attrs) {
 
-    init {
-//        setBackgroundColor(Color.DKGRAY)
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        Math.min(measuredWidth, measuredHeight).also {
-            setMeasuredDimension(it, it)
-            r = it
-        }
-    }
 
     private var r1 = 60F.dp2px() // 起始直径
     private var r = 0 // 直径
@@ -54,8 +44,16 @@ class LayerFindTeacher(context: Context, attrs: AttributeSet?) :
     var speed = 2000L
     var density = 6 // 密度, 多少个圆
 
+    private val userAvatar by lazy { ImageView(context)
+        .also { it.layoutParams = LayoutParams(60F.dp2px(), 60F.dp2px()).also { it.gravity = Gravity.CENTER } }
+    }
 
-    fun start(owner: LifecycleOwner, avatars: MutableList<String>?) {
+    fun start(owner: LifecycleOwner, uAvatar: String?, avatars: MutableList<String>?) {
+        addView(userAvatar)
+        userAvatar.glide(uAvatar) {
+            circleCrop()
+            stroke = Stroke(1F, (0xffE1EBF5).toInt())
+        }
         val delay = speed / density - 0
         ITimer({
             addView(circle())
@@ -66,6 +64,18 @@ class LayerFindTeacher(context: Context, attrs: AttributeSet?) :
                 nextAvatar(avatars)
             }
         }, delay, delay).schedule(owner)
+    }
+
+    fun stop() {
+        anims.forEach { it.pause() }
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        Math.min(measuredWidth, measuredHeight).also {
+            setMeasuredDimension(it, it)
+            r = it
+        }
     }
 
     private var lastAvatar = ""
@@ -118,6 +128,7 @@ class LayerFindTeacher(context: Context, attrs: AttributeSet?) :
         anim(it)
     }
 
+    private val anims = mutableListOf<ObjectAnimator>()
     private fun anim(it: View) {
         if (r == 0) return
         val s1 = r1/r.toFloat()
@@ -146,10 +157,7 @@ class LayerFindTeacher(context: Context, attrs: AttributeSet?) :
 
     override fun setVisibility(visibility: Int) {
         super.setVisibility(visibility)
-        if (visibility == View.GONE) {
-            anims.forEach { it.pause() }
-        }
+        if (visibility == View.GONE) { stop() }
     }
-    private val anims = mutableListOf<ObjectAnimator>()
 
 }

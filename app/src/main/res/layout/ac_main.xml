@@ -9,70 +9,34 @@
     android:background="#fff"
     tools:context=".AcMain">
 
+    <LinearLayout
+        android:id="@+id/ly_find_teacher"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
     <com.zwping.a.LayerFindTeacher
         android:id="@+id/layer_find_teacher"
         android:layout_marginLeft="70dp"
         android:layout_marginRight="70dp"
-        android:layout_gravity="center_vertical"
+        android:layout_marginTop="140dp"
+        android:layout_gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-    <ImageView
-        android:id="@+id/iv"
-        android:layout_gravity="center"
-        android:layout_width="60dp"
-        android:layout_height="60dp" />
+
+        <TextView
+            android:layout_marginTop="20dp"
+            android:textSize="14dp"
+            android:textColor="#222"
+            android:layout_gravity="center_horizontal"
+            android:text="正在为你匹配老师…"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager2"
         android:layout_width="match_parent"
         android:layout_height="200dp" />
-
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:background="#0f0"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-    </androidx.core.widget.NestedScrollView>
-
-
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        <LinearLayout
-            android:background="#0f0"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/child"
-                android:text="1111"
-                android:layout_width="match_parent"
-                android:layout_height="100dp" />
-
-            <TextView
-                android:text="1111"
-                android:layout_width="match_parent"
-                android:layout_height="100dp" />
-
-            <TextView
-                android:text="1111"
-                android:layout_width="match_parent"
-                android:layout_height="100dp" />
-
-            <TextView
-                android:text="1111"
-                android:layout_width="match_parent"
-                android:layout_height="100dp" />
-
-            <WebView
-                android:id="@+id/web_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
 
 </FrameLayout>

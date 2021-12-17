@@ -39,8 +39,10 @@ class ITimer(private val action: (ITimer) -> Unit, private val delay: Long, priv
         cancel()
         count = 0
         initTimer()
-        if (0L == period) timer?.schedule(task, delay) // 单次计划执行
-        else timer?.schedule(task, delay, period)
+        val sd = if (delay<0) 0 else delay
+        val sp = if (period<0) 0 else period
+        if (sp == 0L) timer?.schedule(task, sd) // 单次计划执行
+        else timer?.schedule(task, sd, sp)
         return this
     }
 

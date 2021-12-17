@@ -22,6 +22,7 @@ import android.util.AttributeSet
 import android.view.*
 import android.view.animation.*
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.DrawableRes
@@ -31,6 +32,7 @@ import androidx.appcompat.app.AppCompatDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.cardview.widget.CardView
 import androidx.core.animation.addListener
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -62,22 +64,39 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
      */
     open class Dialog(context: Context,
                       block: Dialog.() -> Unit = { },
-                      themeResId: Int = DialogDefaultTheme) :
+                      themeResId: Int = -1) :
             AppCompatDialog(context, themeResId), LifecycleEventObserver {
 
-        private val decorView: View?
-            get() = window?.decorView
-        private val wlp: WindowManager.LayoutParams?
-            get() = window?.attributes
+
         private val animView: View?
             get() = customView ?: decorView
-
         var customView: View? = null
             private set
+
+        /*** 根布局, 自定义view时使用 ***/
+        val rootLayout = FrameLayout(context).apply {
+            setBackgroundColor(getBlackWithAlpha(0.5F))
+            setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
+        }
+//        var rootLayout: FrameLayout? = null
+//            get() {
+//                if (field == null) field = FrameLayout(context).apply {
+//                        setBackgroundColor(getBlackWithAlpha(0.5F))
+//                        setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
+//                    }
+//                return field
+//            }
+
+
+        val decorView: View?
+            get() = window?.decorView
+        val wlp: WindowManager.LayoutParams?
+            get() = window?.attributes
+
         var cancelabled = true              // 返回键 & 空白区域是否可以关闭
             private set(value) { field = value; canceledOnTouchOutSide = value }
         var canceledOnTouchOutSide = true   // 空白区域是否可以关闭
-            private set(value) { logd(value, cancelabled); if (cancelabled) field = value }
+            private set(value) { if (cancelabled) field = value }
         var canceledOnTouchOutSideSuper = false // 更强空白区域是否可以关闭, decorView两侧空白点击也可以关闭
             private set
         /*** 显示动画, 辅助类快捷调用[AnimHelper] ***/
@@ -115,17 +134,42 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
 
 
-        /*** 自定义view
-         *  [setContentView]在show之后调用
-         * ***/
+
+        // 自定义布局使用跟布局承载
+
+        /**
+         * 自定义view, 建议使用[rootLayout]inflater View保留xml中的样式
+         */
         override fun setContentView(view: View) {
-            super.setContentView(view)
-            customView = view
+            setContentView { view }
+        }
+
+        /**
+         * 自定义view, 保留xml中的样式
+         */
+        fun setContentView(inflater: (root: FrameLayout) -> View){
             resetThemeCfg()
+            rootLayout.removeAllViews()
+            val view = inflater(rootLayout)
+//            view.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT).also {
+//                it.gravity = Gravity.BOTTOM
+//            }
+            if (view.parent == null) rootLayout.addView(view)
+            super.setContentView(rootLayout)
+            customView = view
+        }
+
+        fun setDimAmount(@FloatRange(from=0.0, to=1.0) amount: Float) {
+            window?.setDimAmount(amount)
+            rootLayout?.setBackgroundColor(getBlackWithAlpha(amount))
         }
 
         fun setGravity(gravity: Int) {
             window?.setGravity(gravity)
+//            customView?.layoutParams?.also {
+//                if (it is FrameLayout.LayoutParams) it.gravity = gravity
+//                customView?.layoutParams = it
+//            }
         }
 
         override fun onCreate(savedInstanceState: Bundle?) {
@@ -155,7 +199,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             setGravity(Gravity.CENTER)
             wlp?.also {
                 it.width = WindowManager.LayoutParams.MATCH_PARENT
-                it.height = WindowManager.LayoutParams.WRAP_CONTENT
+                it.height = WindowManager.LayoutParams.MATCH_PARENT
                 window?.attributes = it
             }
             decorView?.setPadding(0, 0, 0, 0)
@@ -185,6 +229,17 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         }
         /*** 生命周期感知, 继承使用 ***/
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {  }
+
+        /**
+         * 给color添加透明度
+         * @param alpha 透明度 0f～1f
+         * @return
+         */
+        private fun getBlackWithAlpha(alpha: Float): Int {
+            val a = Math.min(255, Math.max(0, (alpha * 255).toInt())) shl 24
+            val rgb = 0x00ffffff and Color.BLACK
+            return a + rgb
+        }
     }
 
 //    final class DialogIOS(
