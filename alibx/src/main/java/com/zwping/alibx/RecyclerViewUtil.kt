@@ -99,34 +99,6 @@ object RecyclerViewUtil {
         return getLayoutInflater(viewGroup).inflate(layoutId, viewGroup, false)
     }
 
-    object KTX {
-
-        fun RecyclerView?.removeFocus() { RecyclerViewUtil.removeFocus(this) }
-        fun RecyclerView?.setLinearLayoutManager(@RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
-                                                 noScrollV: Boolean = false,
-                                                 noScrollH: Boolean = false) {
-            RecyclerViewUtil.setLinearLayoutManager(this, ort, noScrollV, noScrollH)
-        }
-        fun RecyclerView?.setGradLayoutManager(spanCount: Int,
-                                               @RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
-                                               noScrollV: Boolean = false,
-                                               noScrollH: Boolean = false) {
-            RecyclerViewUtil.setGradLayoutManager(this, spanCount, ort, noScrollV, noScrollH)
-        }
-        /*** recyclerView分割线 及 最后一个item底部偏移量 ***/
-        fun RecyclerView?.addItemDecorationLine(@ColorInt color: Int,
-                                                dividerHeight: Int,
-                                                dividerMargin: Int=0,
-                                                dividerMarginLeft: Int?=null,
-                                                dividerMarginRight: Int?=null,
-                                                lastPositionOffset: Int=0,
-                                                adp: BaseAdapter<*>?=null) {
-            RecyclerViewUtil.addItemDecorationLine(this, color, dividerHeight, dividerMargin, dividerMarginLeft, dividerMarginRight, lastPositionOffset, adp)
-        }
-
-        fun ViewGroup.getLayoutInflater(): LayoutInflater = RecyclerViewUtil.getLayoutInflater(this)
-        fun ViewGroup.getLayoutInflater(@LayoutRes layoutId: Int): View = RecyclerViewUtil.getLayoutInflater(this, layoutId)
-    }
 }
 abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() {
 
@@ -391,3 +363,31 @@ open class BaseVH<E, out VB : ViewBinding>(
     val vb: VB,
     private val bindViewHolder: BaseVH<E, VB>.(vb: VB, entity: E) -> Unit) :
     BaseViewHolder<E, View>(vb.root, {_, entity -> bindViewHolder(this as BaseVH<E, VB>, vb, entity) })
+
+/* ---------KTX----------- */
+
+fun RecyclerView?.removeFocus() { RecyclerViewUtil.removeFocus(this) }
+fun RecyclerView?.setLinearLayoutManager(@RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
+                                         noScrollV: Boolean = false,
+                                         noScrollH: Boolean = false) {
+    RecyclerViewUtil.setLinearLayoutManager(this, ort, noScrollV, noScrollH)
+}
+fun RecyclerView?.setGradLayoutManager(spanCount: Int,
+                                       @RecyclerView.Orientation ort: Int = RecyclerView.VERTICAL,
+                                       noScrollV: Boolean = false,
+                                       noScrollH: Boolean = false) {
+    RecyclerViewUtil.setGradLayoutManager(this, spanCount, ort, noScrollV, noScrollH)
+}
+/*** recyclerView分割线 及 最后一个item底部偏移量 ***/
+fun RecyclerView?.addItemDecorationLine(@ColorInt color: Int,
+                                        dividerHeight: Int,
+                                        dividerMargin: Int=0,
+                                        dividerMarginLeft: Int?=null,
+                                        dividerMarginRight: Int?=null,
+                                        lastPositionOffset: Int=0,
+                                        adp: BaseAdapter<*>?=null) {
+    RecyclerViewUtil.addItemDecorationLine(this, color, dividerHeight, dividerMargin, dividerMarginLeft, dividerMarginRight, lastPositionOffset, adp)
+}
+
+fun ViewGroup.getLayoutInflater(): LayoutInflater = RecyclerViewUtil.getLayoutInflater(this)
+fun ViewGroup.getLayoutInflater(@LayoutRes layoutId: Int): View = RecyclerViewUtil.getLayoutInflater(this, layoutId)

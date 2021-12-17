@@ -281,116 +281,116 @@ object Bar {
         view.layoutParams = lp
     }
 
-    object KTX {
-        /**
-         * 沉浸式 - 让view显示状态栏[/导航栏]后面
-         * @param color 状态栏颜色 默认透明&沉浸到状态栏后面
-         * @param darkMode 状态栏文本颜色
-         * @param navImmersive 是否沉浸到导航栏后面
-         * @param navColor 导航栏颜色
-         * @param navDarkMode 导航栏文本颜色, 部分手机会根据背景色自动显示反色
-         */
-        fun Activity.immersive(@ColorInt color: Int=Color.TRANSPARENT,
-                               darkMode: Boolean?=null,
-                               navImmersive: Boolean=false,
-                               @ColorInt navColor: Int? = null,
-                               navDarkMode: Boolean?=null) {
-            Bar.immersive(this, color, darkMode, navImmersive, navColor, navDarkMode)
-        }
-
-        /**
-         * 设置全屏
-         * @param full true-> 全屏 false-> 退出全屏
-         * @param behavior 全屏时bar的行为
-         *  2 -> [BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE] 滑动显示后自动隐藏
-         *  0 -> [BEHAVIOR_SHOW_BARS_BY_TOUCH] 触碰显示
-         *  1 -> [BEHAVIOR_SHOW_BARS_BY_SWIPE] 滑动显示
-         * @param cutoutMode 凹形屏适应模式
-         *  1 -> [LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES] 允许延伸到留海
-         *  0 -> [LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT] 全屏不允许延伸, 默认允许延伸到留海
-         *  2 -> [LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER]  不允许延伸
-         *
-         */
-        fun Activity.setFullScreen(full: Boolean=true,
-                                   behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
-                                   cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
-            Bar.setFullScreen(this, full, behavior, cutoutMode)
-        }
-
-        /**
-         * 设置状态栏深色模式
-         * @param darkMode true -> 字体电池黑色 false -> 字体电池白色
-         */
-        fun Activity.setStatusBarDarkMode(darkMode: Boolean=true) {
-            Bar.setStatusBarDarkMode(this, darkMode)
-        }
-        fun Fragment.setStatusBarDarkMode(darkMode:Boolean=true) {
-            Bar.setStatusBarDarkMode(this, darkMode)
-        }
-        fun Activity.setNavBarDarkMode(darkMode: Boolean=false) {
-            Bar.setNavBarDarkMode(this, darkMode)
-        }
-        fun Fragment.setNavBarDarkMode(darkMode: Boolean=false) {
-            Bar.setNavBarDarkMode(this, darkMode)
-        }
-
-        /**
-         * 设置状态栏隐藏/显示
-         * @param behavior 隐藏后bar显示的行为
-         * @param cutoutMode 异形屏兼容模式
-         */
-        fun Activity.setStatusBarHide(hide: Boolean=true,
-                                      behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
-                                      cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
-            Bar.setStatusBarHide(this, hide, behavior, cutoutMode)
-        }
-        fun Fragment.setStatusBarHide(hide: Boolean=true,
-                                      behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
-                                      cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
-            Bar.setStatusBarHide(this, hide, behavior, cutoutMode)
-        }
-        fun Activity.setNavBarHide(hide: Boolean=true,
-                                   behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE) {
-            Bar.setNavBarHide(this, hide, behavior)
-        }
-        fun Fragment.setNavBarHide(hide: Boolean=true,
-                                   behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE) {
-            Bar.setNavBarHide(this, hide, behavior)
-        }
-
-        /**
-         * 设置状态栏颜色
-         */
-        fun Activity.setStatusBarColor(@ColorInt color: Int) { Bar.setStatusBarColor(this, color) }
-        fun Fragment.setStatusBarColor( @ColorInt color: Int) { Bar.setStatusBarColor(this, color) }
-        fun Activity.setNavBarColor(@ColorInt color: Int) { Bar.setNavBarColor(this, color) }
-        fun Fragment.setNavBarColor( @ColorInt color: Int) { Bar.setNavBarColor(this, color) }
-        @RequiresApi(Build.VERSION_CODES.P)
-        fun Activity.setNavBarDividerColor(@ColorInt color: Int) { Bar.setNavBarDividerColor(this, color) }
-
-        fun AppCompatActivity.setActionBarColor(@ColorInt color: Int) { Bar.setActionBarColor(this, color) }
-
-        /**
-         * 获取状态栏高度/px
-         */
-        fun Context?.getStatusBarHeight(): Int = Bar.getStatusBarHeight(this)
-        fun Context?.getNavBarHeight(): Int = Bar.getNavBarHeight(this)
-        fun Context?.getActionBarHeight(): Int = Bar.getActionBarHeight(this)
-        fun Context?.getScreenWidth(): Int = Bar.getScreenWidth(this)
-        fun Context?.getScreenHeight(): Int = Bar.getScreenHeight(this)
-
-        fun Context?.isSupperNavBar(): Boolean = Bar.isSupperNavBar(this)
-
-        @RequiresApi(Build.VERSION_CODES.P)
-        fun Window.setCutoutMode(cutoutMode: Int) { Bar.setCutoutMode(this, cutoutMode) }
-
-        /**
-         * 手动补偿沉浸式后bar的空缺高度
-         */
-        fun Activity.getContentView(): View? = Bar.getContentView(this)
-        fun View?.addMarginBottomNavBarHeight() { Bar.addMarginBottomNavBarHeight(this) }
-        fun View?.subtractMarginBottomNavBarHeight() { Bar.subtractMarginBottomNavBarHeight(this) }
-        fun View?.addMarginTopStatusBarHeight() { Bar.addMarginTopStatusBarHeight(this) }
-        fun View?.subtractMarginTopStatusBarHeight() { Bar.subtractMarginTopStatusBarHeight(this) }
-    }
 }
+/* ---------KTX----------- */
+
+/**
+ * 沉浸式 - 让view显示状态栏[/导航栏]后面
+ * @param color 状态栏颜色 默认透明&沉浸到状态栏后面
+ * @param darkMode 状态栏文本颜色
+ * @param navImmersive 是否沉浸到导航栏后面
+ * @param navColor 导航栏颜色
+ * @param navDarkMode 导航栏文本颜色, 部分手机会根据背景色自动显示反色
+ */
+fun Activity.immersive(@ColorInt color: Int=Color.TRANSPARENT,
+                       darkMode: Boolean?=null,
+                       navImmersive: Boolean=false,
+                       @ColorInt navColor: Int? = null,
+                       navDarkMode: Boolean?=null) {
+    Bar.immersive(this, color, darkMode, navImmersive, navColor, navDarkMode)
+}
+
+/**
+ * 设置全屏
+ * @param full true-> 全屏 false-> 退出全屏
+ * @param behavior 全屏时bar的行为
+ *  2 -> [BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE] 滑动显示后自动隐藏
+ *  0 -> [BEHAVIOR_SHOW_BARS_BY_TOUCH] 触碰显示
+ *  1 -> [BEHAVIOR_SHOW_BARS_BY_SWIPE] 滑动显示
+ * @param cutoutMode 凹形屏适应模式
+ *  1 -> [LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES] 允许延伸到留海
+ *  0 -> [LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT] 全屏不允许延伸, 默认允许延伸到留海
+ *  2 -> [LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER]  不允许延伸
+ *
+ */
+fun Activity.setFullScreen(full: Boolean=true,
+                           behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
+                           cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
+    Bar.setFullScreen(this, full, behavior, cutoutMode)
+}
+
+/**
+ * 设置状态栏深色模式
+ * @param darkMode true -> 字体电池黑色 false -> 字体电池白色
+ */
+fun Activity.setStatusBarDarkMode(darkMode: Boolean=true) {
+    Bar.setStatusBarDarkMode(this, darkMode)
+}
+fun Fragment.setStatusBarDarkMode(darkMode:Boolean=true) {
+    Bar.setStatusBarDarkMode(this, darkMode)
+}
+fun Activity.setNavBarDarkMode(darkMode: Boolean=false) {
+    Bar.setNavBarDarkMode(this, darkMode)
+}
+fun Fragment.setNavBarDarkMode(darkMode: Boolean=false) {
+    Bar.setNavBarDarkMode(this, darkMode)
+}
+
+/**
+ * 设置状态栏隐藏/显示
+ * @param behavior 隐藏后bar显示的行为
+ * @param cutoutMode 异形屏兼容模式
+ */
+fun Activity.setStatusBarHide(hide: Boolean=true,
+                              behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
+                              cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
+    Bar.setStatusBarHide(this, hide, behavior, cutoutMode)
+}
+fun Fragment.setStatusBarHide(hide: Boolean=true,
+                              behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
+                              cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
+    Bar.setStatusBarHide(this, hide, behavior, cutoutMode)
+}
+fun Activity.setNavBarHide(hide: Boolean=true,
+                           behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE) {
+    Bar.setNavBarHide(this, hide, behavior)
+}
+fun Fragment.setNavBarHide(hide: Boolean=true,
+                           behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE) {
+    Bar.setNavBarHide(this, hide, behavior)
+}
+
+/**
+ * 设置状态栏颜色
+ */
+fun Activity.setStatusBarColor(@ColorInt color: Int) { Bar.setStatusBarColor(this, color) }
+fun Fragment.setStatusBarColor( @ColorInt color: Int) { Bar.setStatusBarColor(this, color) }
+fun Activity.setNavBarColor(@ColorInt color: Int) { Bar.setNavBarColor(this, color) }
+fun Fragment.setNavBarColor( @ColorInt color: Int) { Bar.setNavBarColor(this, color) }
+@RequiresApi(Build.VERSION_CODES.P)
+fun Activity.setNavBarDividerColor(@ColorInt color: Int) { Bar.setNavBarDividerColor(this, color) }
+
+fun AppCompatActivity.setActionBarColor(@ColorInt color: Int) { Bar.setActionBarColor(this, color) }
+
+/**
+ * 获取状态栏高度/px
+ */
+fun Context?.getStatusBarHeight(): Int = Bar.getStatusBarHeight(this)
+fun Context?.getNavBarHeight(): Int = Bar.getNavBarHeight(this)
+fun Context?.getActionBarHeight(): Int = Bar.getActionBarHeight(this)
+fun Context?.getScreenWidth(): Int = Bar.getScreenWidth(this)
+fun Context?.getScreenHeight(): Int = Bar.getScreenHeight(this)
+
+fun Context?.isSupperNavBar(): Boolean = Bar.isSupperNavBar(this)
+
+@RequiresApi(Build.VERSION_CODES.P)
+fun Window.setCutoutMode(cutoutMode: Int) { Bar.setCutoutMode(this, cutoutMode) }
+
+/**
+ * 手动补偿沉浸式后bar的空缺高度
+ */
+fun Activity.getContentView(): View? = Bar.getContentView(this)
+fun View?.addMarginBottomNavBarHeight() { Bar.addMarginBottomNavBarHeight(this) }
+fun View?.subtractMarginBottomNavBarHeight() { Bar.subtractMarginBottomNavBarHeight(this) }
+fun View?.addMarginTopStatusBarHeight() { Bar.addMarginTopStatusBarHeight(this) }
+fun View?.subtractMarginTopStatusBarHeight() { Bar.subtractMarginTopStatusBarHeight(this) }

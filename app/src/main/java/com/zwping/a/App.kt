@@ -7,9 +7,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.widget.TextView
 import com.zwping.alibx.*
-import com.zwping.alibx.Scheme.KTX.scheme
-import com.zwping.alibx.ToastUtil.KTX.showToast
-import com.zwping.alibx.Util.KTX.logd
 
 /**
  *

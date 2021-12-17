@@ -240,17 +240,6 @@ object ImageLoader {
 
     }
 
-    object KTX {
-        /**
-         * 加载图片
-         * @param opt 加载图片过程中的配置项 [IImgLoaderOpt]
-         */
-        fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {}) { glide(url, null, opt) }
-        fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {}) {
-            ImageLoader.glide(this, url, ctx, opt)
-        }
-        fun Context?.isDestroy(): Boolean = ImageLoader.isDestroy(this)
-    }
 }
 
 class ImgLoaderOpt {
@@ -316,3 +305,15 @@ enum class AnimType{ WithCrossFade }
 enum class ShapeType{ Default, Circle, Square }
 enum class TranscodeType { Drawable, Bitmap, Gif, File }
 enum class CacheType{ All, Memory, Disk, None }
+
+/* ---------KTX----------- */
+
+/**
+ * 加载图片
+ * @param opt 加载图片过程中的配置项 [IImgLoaderOpt]
+ */
+fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {}) { glide(url, null, opt) }
+fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {}) {
+    ImageLoader.glide(this, url, ctx, opt)
+}
+fun Context?.isDestroy(): Boolean = ImageLoader.isDestroy(this)

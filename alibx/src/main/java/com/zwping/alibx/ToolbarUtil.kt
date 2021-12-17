@@ -157,77 +157,6 @@ object ToolbarUtil {
         return MenuItemCompat.getActionProvider(toolbar?.menu?.findItem(itemId)) as ActionProvider2?
     }
 
-    object KTX {
-
-        /**
-         * 设置Toolbar居中的标题
-         * 新增一个TextView, 相对于Toolbar完全居中
-         *
-         * @param title 标题
-         * @return AppCompatTextView
-         */
-        fun Toolbar?.setTitleOfCenter(title: CharSequence?): AppCompatTextView? {
-            return ToolbarUtil.setTitleOfCenter(this, title)
-        }
-
-        /**
-         * 设置Toolbar标题居中
-         * 不改变原有结构, 相对于本身TextView居中
-         *
-         * @param title 标题 (注意其执行顺序, Toolbar内部动态addView)
-         */
-        fun Toolbar?.setTitleCenter(title: CharSequence?) { ToolbarUtil.setTitleCenter(this, title) }
-
-        /**
-         * 快捷增加menu
-         * @param itemId menuId 0x01
-         * @param iconRes 图标
-         * @param title 标题
-         * @param actionEnum 展现方式
-         *                  总是显示在界面上 MenuItem.SHOW_AS_ACTION_ALWAYS
-         *                  不显示在界面上 MenuItem.SHOW_AS_ACTION_NEVER
-         *                  如果有位置才显示, 不然就出现在右边的三个点中 MenuItem.SHOW_AS_ACTION_IF_ROOM
-         */
-        fun Toolbar?.addMenu(itemId: Int,
-                             @DrawableRes iconRes: Int,
-                             title: CharSequence,
-                             actionEnum: Int = MenuItem.SHOW_AS_ACTION_IF_ROOM) {
-            ToolbarUtil.addMenu(this, itemId, iconRes, title, actionEnum)
-        }
-        fun Menu?.addMenu(itemId: Int,
-                          @DrawableRes iconRes: Int,
-                          title: CharSequence,
-                          actionEnum: Int = MenuItem.SHOW_AS_ACTION_IF_ROOM) {
-            ToolbarUtil.addMenu(this, itemId, iconRes, title, actionEnum)
-        }
-
-        /**
-         * 快捷增加带角标的menu
-         * @return [ActionProvider2]
-         */
-        fun Toolbar?.addMenuBadge(itemId: Int,
-                                  @DrawableRes iconRes: Int,
-                                  title: CharSequence,
-                                  menuItemClickListener: ((ActionProvider2) -> Unit)?=null): ActionProvider2? {
-            return ToolbarUtil.addMenuBadge(this, itemId, iconRes, title, menuItemClickListener)
-        }
-        fun Menu?.addMenuBadge(ctx: Context?,
-                               itemId: Int,
-                               @DrawableRes iconRes: Int,
-                               title: CharSequence,
-                               menuItemClickListener: ((ActionProvider2) -> Unit)? = null): ActionProvider2? {
-            return ToolbarUtil.addMenuBadge(this, ctx, itemId, iconRes, title, menuItemClickListener)
-        }
-
-        /**
-         * 获取带角标的ActionProvider2
-         * @return [ActionProvider2]
-         */
-        fun Toolbar?.getActionProvider2(itemId: Int): ActionProvider2? {
-            return ToolbarUtil.getActionProvider2(this, itemId)
-        }
-    }
-
 }
 /*** 圆形背景TextView ***/
 class BadgeTextView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : AppCompatTextView(context, attrs, defStyleAttr) {
@@ -298,4 +227,73 @@ class ActionProvider2(context: Context?, private val item: MenuItem) : ActionPro
         }
     }
     override fun onCreateActionView(): View = ly
+}
+/* ---------KTX----------- */
+
+/**
+ * 设置Toolbar居中的标题
+ * 新增一个TextView, 相对于Toolbar完全居中
+ *
+ * @param title 标题
+ * @return AppCompatTextView
+ */
+fun Toolbar?.setTitleOfCenter(title: CharSequence?): AppCompatTextView? {
+    return ToolbarUtil.setTitleOfCenter(this, title)
+}
+
+/**
+ * 设置Toolbar标题居中
+ * 不改变原有结构, 相对于本身TextView居中
+ *
+ * @param title 标题 (注意其执行顺序, Toolbar内部动态addView)
+ */
+fun Toolbar?.setTitleCenter(title: CharSequence?) { ToolbarUtil.setTitleCenter(this, title) }
+
+/**
+ * 快捷增加menu
+ * @param itemId menuId 0x01
+ * @param iconRes 图标
+ * @param title 标题
+ * @param actionEnum 展现方式
+ *                  总是显示在界面上 MenuItem.SHOW_AS_ACTION_ALWAYS
+ *                  不显示在界面上 MenuItem.SHOW_AS_ACTION_NEVER
+ *                  如果有位置才显示, 不然就出现在右边的三个点中 MenuItem.SHOW_AS_ACTION_IF_ROOM
+ */
+fun Toolbar?.addMenu(itemId: Int,
+                     @DrawableRes iconRes: Int,
+                     title: CharSequence,
+                     actionEnum: Int = MenuItem.SHOW_AS_ACTION_IF_ROOM) {
+    ToolbarUtil.addMenu(this, itemId, iconRes, title, actionEnum)
+}
+fun Menu?.addMenu(itemId: Int,
+                  @DrawableRes iconRes: Int,
+                  title: CharSequence,
+                  actionEnum: Int = MenuItem.SHOW_AS_ACTION_IF_ROOM) {
+    ToolbarUtil.addMenu(this, itemId, iconRes, title, actionEnum)
+}
+
+/**
+ * 快捷增加带角标的menu
+ * @return [ActionProvider2]
+ */
+fun Toolbar?.addMenuBadge(itemId: Int,
+                          @DrawableRes iconRes: Int,
+                          title: CharSequence,
+                          menuItemClickListener: ((ActionProvider2) -> Unit)?=null): ActionProvider2? {
+    return ToolbarUtil.addMenuBadge(this, itemId, iconRes, title, menuItemClickListener)
+}
+fun Menu?.addMenuBadge(ctx: Context?,
+                       itemId: Int,
+                       @DrawableRes iconRes: Int,
+                       title: CharSequence,
+                       menuItemClickListener: ((ActionProvider2) -> Unit)? = null): ActionProvider2? {
+    return ToolbarUtil.addMenuBadge(this, ctx, itemId, iconRes, title, menuItemClickListener)
+}
+
+/**
+ * 获取带角标的ActionProvider2
+ * @return [ActionProvider2]
+ */
+fun Toolbar?.getActionProvider2(itemId: Int): ActionProvider2? {
+    return ToolbarUtil.getActionProvider2(this, itemId)
 }

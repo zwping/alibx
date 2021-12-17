@@ -141,44 +141,45 @@ object WebViewUtil {
         // saf2webFileCallback = null // 最后一定要重新赋null值
     }
 
-    object KTX {
-        fun WebView?.initSetting(): WebSettings? = WebViewUtil.initSetting(this)
-
-        fun WebView?.initClient(lis: (vc: WebViewClient, cc: WebChromeClient)->Unit,
-                                onProgress: (Int) -> Unit = {},
-                                pageTitleLis:(String?)->Unit = {},
-                                shouldOverrideUrlLoading: (web: WebView, url: String)-> Boolean = { _, _ -> false },
-                                onShowFileChooser: (web: WebView?, saf2webFileCallback: ValueCallback<Array<Uri>>?) -> Boolean = { _, _ -> false }) {
-            WebViewUtil.initClient(this, lis, onProgress, pageTitleLis, shouldOverrideUrlLoading, onShowFileChooser)
-        }
-
-        fun WebView?.goBack2(): Boolean = WebViewUtil.goBack2(this)
-        fun ProgressBar?.setColors(bgColor: Int,
-                                   progressColor: Int,
-                                   secondaryProgress: Int = -1) {
-            WebViewUtil.setProgressBarColor(this, bgColor, progressColor, secondaryProgress)
-        }
-
-        fun WebView?.android2Js(func: String, callback: ValueCallback<String>) {
-            WebViewUtil.android2Js(this, func, callback)
-        }
-        fun WebView?.js2Android(obj: Any, interfaceName: String) {
-            WebViewUtil.js2Android(this, obj, interfaceName)
-        }
-
-        /*** 开启SAF文件选择 ***/
-        fun Activity?.openSAFFileChooser(type: ChooserType, requestCode: Int) {
-            WebViewUtil.openSAFFileChooser(this, type, requestCode)
-        }
-        /*** SAF文件选择器结果回传webView ***/
-        fun ValueCallback<Array<Uri>>?.onActivityResult(webReqCode: Int,
-                                                        requestCode: Int,
-                                                        resultCode: Int,
-                                                        data: Intent?) {
-            WebViewUtil.onActivityResult(this, webReqCode, requestCode, resultCode, data)
-            // saf2webFileCallback = null // 最后一定要重新赋null值
-        }
-    }
 }
 
 enum class ChooserType{ FILE, IMAGE }
+
+/* ---------KTX----------- */
+
+fun WebView?.initSetting(): WebSettings? = WebViewUtil.initSetting(this)
+
+fun WebView?.initClient(lis: (vc: WebViewClient, cc: WebChromeClient)->Unit,
+                        onProgress: (Int) -> Unit = {},
+                        pageTitleLis:(String?)->Unit = {},
+                        shouldOverrideUrlLoading: (web: WebView, url: String)-> Boolean = { _, _ -> false },
+                        onShowFileChooser: (web: WebView?, saf2webFileCallback: ValueCallback<Array<Uri>>?) -> Boolean = { _, _ -> false }) {
+    WebViewUtil.initClient(this, lis, onProgress, pageTitleLis, shouldOverrideUrlLoading, onShowFileChooser)
+}
+
+fun WebView?.goBack2(): Boolean = WebViewUtil.goBack2(this)
+fun ProgressBar?.setColors(bgColor: Int,
+                           progressColor: Int,
+                           secondaryProgress: Int = -1) {
+    WebViewUtil.setProgressBarColor(this, bgColor, progressColor, secondaryProgress)
+}
+
+fun WebView?.android2Js(func: String, callback: ValueCallback<String>) {
+    WebViewUtil.android2Js(this, func, callback)
+}
+fun WebView?.js2Android(obj: Any, interfaceName: String) {
+    WebViewUtil.js2Android(this, obj, interfaceName)
+}
+
+/*** 开启SAF文件选择 ***/
+fun Activity?.openSAFFileChooser(type: ChooserType, requestCode: Int) {
+    WebViewUtil.openSAFFileChooser(this, type, requestCode)
+}
+/*** SAF文件选择器结果回传webView ***/
+fun ValueCallback<Array<Uri>>?.onActivityResult(webReqCode: Int,
+                                                requestCode: Int,
+                                                resultCode: Int,
+                                                data: Intent?) {
+    WebViewUtil.onActivityResult(this, webReqCode, requestCode, resultCode, data)
+    // saf2webFileCallback = null // 最后一定要重新赋null值
+}

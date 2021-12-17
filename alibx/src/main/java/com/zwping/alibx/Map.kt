@@ -2,7 +2,6 @@ package com.zwping.alibx
 
 import android.app.Application
 import android.content.Context
-import com.zwping.alibx.Requests.KTX.isAppDebug
 import okhttp3.OkHttpClient
 
 /**

@@ -12,8 +12,6 @@ import android.widget.Toast
 import com.zwping.alibx.LauncherMode.SingleTask
 import com.zwping.alibx.LauncherMode.SingleTop
 import com.zwping.alibx.OPTAnim.*
-import com.zwping.alibx.Scheme.KTX.overridePendingTransition
-import com.zwping.alibx.Scheme.KTX.scheme
 import java.util.*
 
 /**
@@ -108,24 +106,6 @@ object Scheme {
         Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
     }
 
-    object KTX {
-        fun String.scheme() = SchemeStandard(this)
-        fun Activity?.overridePendingTransition(enum: OPTAnim) {
-            this ?: return
-            when(enum) {
-                None -> overridePendingTransition(0, 0)
-                FadeInOut -> overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-                FadeIn -> overridePendingTransition(android.R.anim.fade_in, com.zwping.alibx.R.anim.opt_hold)
-                FadeOut -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, android.R.anim.fade_out)
-                SlideLeftRight -> overridePendingTransition(com.zwping.alibx.R.anim.slide_left_enter, com.zwping.alibx.R.anim.slide_right_exit)
-                SlideRightLeft -> overridePendingTransition(com.zwping.alibx.R.anim.slide_right_enter, com.zwping.alibx.R.anim.slide_left_exit)
-                SlideToTop -> overridePendingTransition(com.zwping.alibx.R.anim.slide_bottom_enter, com.zwping.alibx.R.anim.opt_hold)
-                SlideToBottom -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, com.zwping.alibx.R.anim.slide_bottom_exit)
-            }
-        }
-        fun Context?.open(schemeURL: String?, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, schemeURL, option) }
-        fun Context?.open(clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, clazz, option) }
-    }
 }
 
 /**
@@ -230,3 +210,22 @@ enum class OPTAnim {
     SlideToTop,             // 滑动 底部向上滑动弹出
     SlideToBottom,          // 滑动 弹出后向下滑动关闭
 }
+
+/* ---------KTX----------- */
+
+fun String.scheme() = SchemeStandard(this)
+fun Activity?.overridePendingTransition(enum: OPTAnim) {
+    this ?: return
+    when(enum) {
+        None -> overridePendingTransition(0, 0)
+        FadeInOut -> overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        FadeIn -> overridePendingTransition(android.R.anim.fade_in, com.zwping.alibx.R.anim.opt_hold)
+        FadeOut -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, android.R.anim.fade_out)
+        SlideLeftRight -> overridePendingTransition(com.zwping.alibx.R.anim.slide_left_enter, com.zwping.alibx.R.anim.slide_right_exit)
+        SlideRightLeft -> overridePendingTransition(com.zwping.alibx.R.anim.slide_right_enter, com.zwping.alibx.R.anim.slide_left_exit)
+        SlideToTop -> overridePendingTransition(com.zwping.alibx.R.anim.slide_bottom_enter, com.zwping.alibx.R.anim.opt_hold)
+        SlideToBottom -> overridePendingTransition(com.zwping.alibx.R.anim.opt_hold, com.zwping.alibx.R.anim.slide_bottom_exit)
+    }
+}
+fun Context?.open(schemeURL: String?, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, schemeURL, option) }
+fun Context?.open(clazz: Class<out Activity>, option: SchemeIntentOption.() -> Unit = {}) { Scheme.open(this, clazz, option) }

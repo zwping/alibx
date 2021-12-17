@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import com.zwping.a.databinding.AcMainBinding
 import com.zwping.alibx.BaseAc
 import com.zwping.alibx.LauncherMode
-import com.zwping.alibx.Scheme.KTX.open
+import com.zwping.alibx.open
 
 /**
  *

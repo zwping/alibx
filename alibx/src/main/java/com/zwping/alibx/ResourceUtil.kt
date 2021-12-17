@@ -70,41 +70,6 @@ object ResourceUtil {
         }
     }
 
-    object KTX {
-
-        fun Float.dpToPx(): Float = ResourceUtil.dpToPx(this)
-        fun Float.dp2px(): Int = ResourceUtil.dp2px(this)
-        fun Int.px2dp(): Float = ResourceUtil.px2dp(this)
-
-        fun String?.toInt2(): Int = ResourceUtil.toInt2(this)
-
-        fun Context.getColor2(@ColorRes id: Int): Int = ResourceUtil.getColor2(this, id)
-
-        /**
-         * xml shape java代码实现方式
-         * @param shape [GradientDrawable.LINE] 线 [GradientDrawable.OVAL] 圆
-         * [GradientDrawable.RECTANGLE] 矩形 [GradientDrawable.LINEAR_GRADIENT] 虚线矩形
-         */
-        fun createGradientDrawable(shape: Int=GradientDrawable.RECTANGLE,
-                                   block: GradientDrawable.() -> Unit): Drawable {
-            return ResourceUtil.createGradientDrawable(shape, block)
-        }
-
-        /**
-         * xml selector item drawable java代码实现, 代码创建view不同状态的Drawable
-         */
-        fun createStateListDrawable(ctx: Context?,
-                                    @DrawableRes defaultRes: Int,
-                                    block: (States<Int>) -> Unit = {}): StateListDrawable? {
-            return ResourceUtil.createStateListDrawable(ctx, defaultRes, block)
-        }
-        fun createStateListDrawable(default: Drawable,
-                                    block: (States<Drawable>) -> Unit = {}): StateListDrawable {
-            return ResourceUtil.createStateListDrawable(default, block)
-        }
-
-    }
-
 }
 
 /*** xml selector item color java代码实现 ***/
@@ -133,4 +98,37 @@ class States<T> {
     fun enabled(value: T?) { value?.also { map[-android.R.attr.state_enabled] = value } }
     fun unEnabled(value: T?) { value?.also { map[-android.R.attr.state_enabled] = value } }
     fun window_focused(value: T?) { value?.also { map[android.R.attr.state_window_focused] = value } }
+}
+
+/* ---------KTX----------- */
+
+fun Float.dpToPx(): Float = ResourceUtil.dpToPx(this)
+fun Float.dp2px(): Int = ResourceUtil.dp2px(this)
+fun Int.px2dp(): Float = ResourceUtil.px2dp(this)
+
+fun String?.toInt2(): Int = ResourceUtil.toInt2(this)
+
+fun Context.getColor2(@ColorRes id: Int): Int = ResourceUtil.getColor2(this, id)
+
+/**
+ * xml shape java代码实现方式
+ * @param shape [GradientDrawable.LINE] 线 [GradientDrawable.OVAL] 圆
+ * [GradientDrawable.RECTANGLE] 矩形 [GradientDrawable.LINEAR_GRADIENT] 虚线矩形
+ */
+fun createGradientDrawable(shape: Int=GradientDrawable.RECTANGLE,
+                           block: GradientDrawable.() -> Unit): Drawable {
+    return ResourceUtil.createGradientDrawable(shape, block)
+}
+
+/**
+ * xml selector item drawable java代码实现, 代码创建view不同状态的Drawable
+ */
+fun createStateListDrawable(ctx: Context?,
+                            @DrawableRes defaultRes: Int,
+                            block: (States<Int>) -> Unit = {}): StateListDrawable? {
+    return ResourceUtil.createStateListDrawable(ctx, defaultRes, block)
+}
+fun createStateListDrawable(default: Drawable,
+                            block: (States<Drawable>) -> Unit = {}): StateListDrawable {
+    return ResourceUtil.createStateListDrawable(default, block)
 }

@@ -321,39 +321,6 @@ object Requests {
         method(method, requestBody)
         return this
     }
-
-    object KTX {
-        fun Call.enqueue2(owner: LifecycleOwner?,
-                          onResponse: (Call, Response, String) -> Unit,
-                          onFailure: (Call, msg: String) -> Unit,
-                          onStart: () -> Unit = {},
-                          onEnd: () -> Unit = {}) {
-            Requests.enqueue2(this, owner, onResponse, onFailure, onStart, onEnd)
-        }
-        suspend fun Call.execute2(): Response2 = Requests.execute2(this)
-        fun Call.enqueueDown(owner: LifecycleOwner?,
-                             dir: String,
-                             onFinish: (Call, Response, filePath: String) -> Unit,
-                             onFailure: (Call, msg: String) -> Unit,
-                             onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit={ _, _, _, _ -> },
-                             name: String?=null,
-                             onStart: () -> Unit={},
-                             onEnd: () -> Unit={}) {
-            Requests.enqueueDown(this, owner, dir, onFinish, onFailure, onProgress, name, onStart, onEnd)
-        }
-
-        fun String?.toJSONObject(): JSONObject? = Requests.toJSONObject(this)
-        fun String?.toJSONArray(): JSONArray? = Requests.toJSONArray(this)
-        fun Response2.isSuccessful2Safe(): Boolean = Requests.isSuccessful2Safe(this)
-        fun RequestBody.toJSONObject(): JSONObject? = Requests.toJSONObject(this)
-        fun Response.writeFile(file: File,
-                               onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit): Boolean {
-            return Requests.writeFile(this, file, onProgress)
-        }
-
-        fun String.safeName(): String = Requests.safeName(this)
-        fun Context?.isAppDebug(): Boolean = Requests.isAppDebug(this)
-    }
 }
 
 class UploadRequestBody(private val fileName: String, private val file: File, private val onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit) : RequestBody(){
@@ -453,3 +420,36 @@ data class Response2(val isSuccessful: Boolean,
                      val responseStr: String? = null,
                      val responseOb: JSONObject? = null,
                      val msg: String = Requests.Error5)
+
+/* ---------KTX----------- */
+
+fun Call.enqueue2(owner: LifecycleOwner?,
+                  onResponse: (Call, Response, String) -> Unit,
+                  onFailure: (Call, msg: String) -> Unit,
+                  onStart: () -> Unit = {},
+                  onEnd: () -> Unit = {}) {
+    Requests.enqueue2(this, owner, onResponse, onFailure, onStart, onEnd)
+}
+suspend fun Call.execute2(): Response2 = Requests.execute2(this)
+fun Call.enqueueDown(owner: LifecycleOwner?,
+                     dir: String,
+                     onFinish: (Call, Response, filePath: String) -> Unit,
+                     onFailure: (Call, msg: String) -> Unit,
+                     onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit={ _, _, _, _ -> },
+                     name: String?=null,
+                     onStart: () -> Unit={},
+                     onEnd: () -> Unit={}) {
+    Requests.enqueueDown(this, owner, dir, onFinish, onFailure, onProgress, name, onStart, onEnd)
+}
+
+fun String?.toJSONObject(): JSONObject? = Requests.toJSONObject(this)
+fun String?.toJSONArray(): JSONArray? = Requests.toJSONArray(this)
+fun Response2.isSuccessful2Safe(): Boolean = Requests.isSuccessful2Safe(this)
+fun RequestBody.toJSONObject(): JSONObject? = Requests.toJSONObject(this)
+fun Response.writeFile(file: File,
+                       onProgress: (progress: Int, curSize: Long, total: Long, fileName: String) -> Unit): Boolean {
+    return Requests.writeFile(this, file, onProgress)
+}
+
+fun String.safeName(): String = Requests.safeName(this)
+fun Context?.isAppDebug(): Boolean = Requests.isAppDebug(this)

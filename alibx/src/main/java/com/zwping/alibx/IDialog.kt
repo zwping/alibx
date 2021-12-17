@@ -27,6 +27,7 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.cardview.widget.CardView
 import androidx.core.animation.addListener
@@ -43,200 +44,259 @@ import java.util.*
  *
  * zwping @ 2021/12/8
  */
-class IDialog: AppCompatDialogFragment{
 
-    private var alertAppDialog: android.app.AlertDialog? = null     // dialog show成dialogFragment
-    var alertDialog: AlertDialog? = null                            // dialog show成dialogFragment
-
-    constructor() : super()
-    constructor(alertAppDialog: android.app.AlertDialog?) { this.alertAppDialog = alertAppDialog }
-    constructor(alertDialog: AlertDialog?) { this.alertDialog = alertDialog }
+class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFragment(){
 
     override fun onCreateDialog(savedInstanceState: Bundle?): android.app.Dialog {
-        return alertDialog ?: alertAppDialog ?: super.onCreateDialog(savedInstanceState)
+        return alertDialog ?: super.onCreateDialog(savedInstanceState)
     }
 
     override fun show(manager: FragmentManager, tag: String?) {
-        try { super.show(manager, tag) }
+        try { super.show(manager, tag) } // 暂时catch住
         catch (e: IllegalStateException) { e.printStackTrace() }
     }
 
     /**
-     * AlertDialog复写, 支持继承/快速调用使用
-     * @param implBlock 快速调用具体实现操作
+     * AppCompatDialog复写, 支持继承/快速调用使用
+     * @param block 快速调用具体实现操作
      */
     open class Dialog(context: Context,
-                      implBlock: (IDialogImpl<Dialog>) -> Unit,
+                      block: Dialog.() -> Unit = { },
                       themeResId: Int = DialogDefaultTheme) :
-            AlertDialog(context, themeResId), LifecycleEventObserver {
+            AppCompatDialog(context, themeResId), LifecycleEventObserver {
 
-        protected val impl by lazy { IDialogImpl(this).also(implBlock) }
+        private val decorView: View?
+            get() = window?.decorView
+        private val wlp: WindowManager.LayoutParams?
+            get() = window?.attributes
+        private val animView: View?
+            get() = customView ?: decorView
+
+        var customView: View? = null
+            private set
+        var cancelabled = true              // 返回键 & 空白区域是否可以关闭
+            private set(value) { field = value; canceledOnTouchOutSide = value }
+        var canceledOnTouchOutSide = true   // 空白区域是否可以关闭
+            private set(value) { logd(value, cancelabled); if (cancelabled) field = value }
+        var canceledOnTouchOutSideSuper = false // 更强空白区域是否可以关闭, decorView两侧空白点击也可以关闭
+            private set
+        /*** 显示动画, 辅助类快捷调用[AnimHelper] ***/
+        var showAnimator: ((View)->AnimatorSet)? = null
+        var hideAnimator: ((View)->AnimatorSet)? = null
 
         init {
-            impl.init(
-                changed = {source, event -> onStateChanged(source, event) }, // 生命周期感知透传
-            )
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            setGravity(Gravity.CENTER)
+            block.invoke(this)
+            // fixCancelabled()
         }
 
+
+        private fun fixCanceledOnTouchOutSide() {
+            var last = 0L
+            decorView?.also {
+                if (it is ViewGroup)   // 屏幕点击事件, 转移dialog原有canceledOnTouchOutSide功能
+                    repeat(it.childCount) { i -> it.getChildAt(i).setOnClickListener {  } }
+                it.setOnTouchListener { _, event ->
+                    if (!canceledOnTouchOutSideSuper) false
+                    when(event?.action) {
+                        MotionEvent.ACTION_DOWN -> last = System.currentTimeMillis()
+                        MotionEvent.ACTION_UP -> if (System.currentTimeMillis() - last < 300) cancel()
+                    }
+                    true
+                }
+            }
+        }
+        private fun fixCancelabled() {
+            setOnKeyListener { _, keyCode, _ ->
+                keyCode == KeyEvent.KEYCODE_BACK && !cancelabled
+            }
+        }
+
+
+
+        /*** 自定义view
+         *  [setContentView]在show之后调用
+         * ***/
+        override fun setContentView(view: View) {
+            super.setContentView(view)
+            customView = view
+            resetThemeCfg()
+        }
+
+        fun setGravity(gravity: Int) {
+            window?.setGravity(gravity)
+        }
+
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+        }
         override fun onStart() {
             super.onStart()
-            impl.view?.post { impl.showAnimator?.invoke(impl.view!!)?.start() }
+            animView?.post { showAnimator?.invoke(animView!!)?.start() }
         }
 
+        private var lockDismiss = false
         override fun dismiss() {
-            if (impl.view != null && impl.hideAnimator != null) {
-                impl.hideAnimator!!(impl.view!!).also {
-                    it.addListener(onEnd = { super.dismiss() })
+            if (lockDismiss) return
+            if (animView != null && hideAnimator != null) {
+                hideAnimator!!(animView!!).also {
+                    it.addListener(onEnd = { lockDismiss = false; super.dismiss() })
                 }.start()
+                lockDismiss = true
                 return
             }
             super.dismiss()
         }
 
-        /*** 自定义view ***/
-        override fun setView(view: View?) {
-            super.setView(view)
-            impl.initOfCustomView(view) // 全宽, 背景透明
+        /*** 自定义view时, 恢复部分theme设置 ***/
+        private fun resetThemeCfg() {
+            window?.setBackgroundDrawableResource(android.R.color.transparent)
+            setGravity(Gravity.CENTER)
+            wlp?.also {
+                it.width = WindowManager.LayoutParams.MATCH_PARENT
+                it.height = WindowManager.LayoutParams.WRAP_CONTENT
+                window?.attributes = it
+            }
+            decorView?.setPadding(0, 0, 0, 0)
         }
 
         /*** 返回键 & 空白区域是否可以关闭, show之前调用无效 ***/
         override fun setCancelable(flag: Boolean) {
-            impl.cancelabled = flag; super.setCancelable(flag)
+            super.setCancelable(flag); cancelabled = flag
         }
         /*** 空白区域是否可以关闭, show之前调用无效 ***/
         override fun setCanceledOnTouchOutside(cancel: Boolean) {
-            impl.canceledOnTouchOutSide = cancel
-            super.setCanceledOnTouchOutside(cancel)
+            super.setCanceledOnTouchOutside(cancel); canceledOnTouchOutSide = cancel
         }
-
-        /*** 显示AlertDialog ***/
-        override fun show() {
-            if (impl.isShowLock) super.show()
-            else impl.show()
-        }
-
+        override fun show() { create(); super.show() }
         /**
          * 显示DialogFragment, 支持[onStateChanged], 同时支持[IDialogImpl.onStateChanged]
          */
+        @Deprecated("未调试")
         fun show(fragmentManager: FragmentManager): IDialog {
-            if (impl.isShowLock && impl.idialog != null) return impl.idialog!!
-            return impl.show(fragmentManager)
+            create()
+            return IDialog(this).also {
+                it.show(fragmentManager, javaClass.simpleName)
+                // it.isCancelable = false
+                it.lifecycle.removeObserver(this)
+                it.lifecycle.addObserver(this)
+            }
         }
         /*** 生命周期感知, 继承使用 ***/
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {  }
     }
 
-    final class DialogIOS(
-        context: Context,
-        implCallback: (IDialogImpl<Dialog>) -> Unit = {},
-        themeResId: Int = DialogDefaultTheme
-    ) : Dialog(context, implCallback, themeResId) {
-
-        private val view by lazy { IOS(context) }
-
-        init {
-            setView(view)
-            val dplr = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-            impl.setViewMarginLR(dplr, dplr)
-            view.title.visibility = View.GONE
-            view.message.visibility = View.GONE
-            view.btnConfirm.visibility = View.GONE
-            view.btnCancel.visibility = View.GONE
-            view.line.visibility = View.GONE
-        }
-
-        fun setIOSTitle(txt: CharSequence): DialogIOS {
-            view.title.visibility = View.VISIBLE; view.title.text = txt; return this
-        }
-        fun setIOSMessage(txt: CharSequence): DialogIOS {
-            view.message.visibility = View.VISIBLE; view.message.text = txt; return this
-        }
-        fun setIOSBtnCancel(txt: CharSequence="取消", lis: (DialogIOS)->Unit={}): DialogIOS {
-            view.line.visibility = View.VISIBLE
-            view.btnCancel.also {
-                it.visibility = View.VISIBLE; it.text = txt
-                it.setOnClickListener { dismiss(); lis(this) }
-            }
-            return this
-        }
-        fun setIOSBtnConfirm(txt: CharSequence="确认", lis: (DialogIOS)->Unit): DialogIOS {
-            view.btnConfirm.also {
-                it.visibility = View.VISIBLE; it.text = txt
-                it.setOnClickListener { lis(this) }
-            }
-            return this
-        }
-
-        private class IOS @JvmOverloads constructor(
-            context: Context, attrs: AttributeSet? = null
-        ) : CardView(context, attrs) {
-
-            val title by lazy { TextView(context).apply {
-                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-                dp05*40.also{ setPadding(it, 0, it, 0) }
-                setTextColor(Color.BLACK); textSize = 18F
-                typeface = Typeface.defaultFromStyle(Typeface.BOLD)
-            } }
-            val message by lazy { TextView(context).apply {
-                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).also { it.topMargin = dp05*5 }
-                dp05*40.also{ setPadding(it, 0, it, 0) }
-                setTextColor(Color.BLACK); textSize = 15F
-            } }
-            val btnConfirm by lazy { TextView(context).apply {
-                layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
-                background = StateListDrawable().apply {
-                    addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
-                    addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
-                }
-                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
-                gravity=Gravity.CENTER; text = "确认"
-            }  }
-            val btnCancel by lazy { TextView(context).apply {
-                layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
-                background = StateListDrawable().apply {
-                    addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
-                    addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
-                }
-                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
-                typeface = Typeface.defaultFromStyle(Typeface.BOLD)
-                gravity=Gravity.CENTER; text = "取消"
-            }  }
-            val line by lazy { View(context).apply {
-                setBackgroundColor((0xffb3b3b3).toInt())
-                layoutParams = LinearLayout.LayoutParams(dp05, LayoutParams.MATCH_PARENT)
-            } }
-
-            val dp05 = (0.5*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-            val dpRadius = 16*Resources.getSystem().displayMetrics.density+0.5F
-            val dpPadding = (26*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-            val dpBottomHeight = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-
-            init {
-                setCardBackgroundColor((0xe6f9f9f9).toInt())
-                radius = dpRadius; elevation = 0F
-                val lyRoot = LinearLayout(context).apply {
-                    orientation = LinearLayout.VERTICAL
-                    gravity = Gravity.CENTER
-                    setPadding(0, dpPadding, 0, 0)
-                    addView(title)
-                    addView(message)
-                    addView(View(context).also {
-                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp05).also { it.topMargin = dpPadding }
-                        it.setBackgroundColor((0xffb3b3b3).toInt())
-                    })
-                    addView(LinearLayout(context).also {
-                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dpBottomHeight)
-                        it.orientation = LinearLayout.HORIZONTAL
-                        it.addView(btnCancel)
-                        it.addView(line)
-                        it.addView(btnConfirm)
-                    })
-                }
-                addView(lyRoot)
-            }
-        }
-
-    }
+//    final class DialogIOS(
+//        context: Context,
+//        block: DialogIOS.() -> Unit = {},
+//    ) : Dialog(context) {
+//
+//        private val view by lazy { IOS(context) }
+//
+//        init {
+//            setView(view)
+//            val dplr = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
+////            impl.setViewMarginLR(dplr, dplr)
+//            view.title.visibility = View.GONE
+//            view.message.visibility = View.GONE
+//            view.btnConfirm.visibility = View.GONE
+//            view.btnCancel.visibility = View.GONE
+//            view.line.visibility = View.GONE
+//        }
+//
+//        fun setIOSTitle(txt: CharSequence): DialogIOS {
+//            view.title.visibility = View.VISIBLE; view.title.text = txt; return this
+//        }
+//        fun setIOSMessage(txt: CharSequence): DialogIOS {
+//            view.message.visibility = View.VISIBLE; view.message.text = txt; return this
+//        }
+//        fun setIOSBtnCancel(txt: CharSequence="取消", lis: (DialogIOS)->Unit={}): DialogIOS {
+//            view.line.visibility = View.VISIBLE
+//            view.btnCancel.also {
+//                it.visibility = View.VISIBLE; it.text = txt
+//                it.setOnClickListener { dismiss(); lis(this) }
+//            }
+//            return this
+//        }
+//        fun setIOSBtnConfirm(txt: CharSequence="确认", lis: (DialogIOS)->Unit): DialogIOS {
+//            view.btnConfirm.also {
+//                it.visibility = View.VISIBLE; it.text = txt
+//                it.setOnClickListener { lis(this) }
+//            }
+//            return this
+//        }
+//
+//        private class IOS @JvmOverloads constructor(
+//            context: Context, attrs: AttributeSet? = null
+//        ) : CardView(context, attrs) {
+//
+//            val title by lazy { TextView(context).apply {
+//                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+//                dp05*40.also{ setPadding(it, 0, it, 0) }
+//                setTextColor(Color.BLACK); textSize = 18F
+//                typeface = Typeface.defaultFromStyle(Typeface.BOLD)
+//            } }
+//            val message by lazy { TextView(context).apply {
+//                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).also { it.topMargin = dp05*5 }
+//                dp05*40.also{ setPadding(it, 0, it, 0) }
+//                setTextColor(Color.BLACK); textSize = 15F
+//            } }
+//            val btnConfirm by lazy { TextView(context).apply {
+//                layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
+//                background = StateListDrawable().apply {
+//                    addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
+//                    addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
+//                }
+//                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
+//                gravity=Gravity.CENTER; text = "确认"
+//            }  }
+//            val btnCancel by lazy { TextView(context).apply {
+//                layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
+//                background = StateListDrawable().apply {
+//                    addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
+//                    addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
+//                }
+//                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
+//                typeface = Typeface.defaultFromStyle(Typeface.BOLD)
+//                gravity=Gravity.CENTER; text = "取消"
+//            }  }
+//            val line by lazy { View(context).apply {
+//                setBackgroundColor((0xffb3b3b3).toInt())
+//                layoutParams = LinearLayout.LayoutParams(dp05, LayoutParams.MATCH_PARENT)
+//            } }
+//
+//            val dp05 = (0.5*Resources.getSystem().displayMetrics.density+0.5F).toInt()
+//            val dpRadius = 16*Resources.getSystem().displayMetrics.density+0.5F
+//            val dpPadding = (26*Resources.getSystem().displayMetrics.density+0.5F).toInt()
+//            val dpBottomHeight = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
+//
+//            init {
+//                setCardBackgroundColor((0xe6f9f9f9).toInt())
+//                radius = dpRadius; elevation = 0F
+//                val lyRoot = LinearLayout(context).apply {
+//                    orientation = LinearLayout.VERTICAL
+//                    gravity = Gravity.CENTER
+//                    setPadding(0, dpPadding, 0, 0)
+//                    addView(title)
+//                    addView(message)
+//                    addView(View(context).also {
+//                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp05).also { it.topMargin = dpPadding }
+//                        it.setBackgroundColor((0xffb3b3b3).toInt())
+//                    })
+//                    addView(LinearLayout(context).also {
+//                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dpBottomHeight)
+//                        it.orientation = LinearLayout.HORIZONTAL
+//                        it.addView(btnCancel)
+//                        it.addView(line)
+//                        it.addView(btnConfirm)
+//                    })
+//                }
+//                addView(lyRoot)
+//            }
+//        }
+//
+//    }
 
     open class DialogBottomSheet(context: Context,
                                  theme: Int = 0) :
@@ -270,16 +330,16 @@ class IDialog: AppCompatDialogFragment{
         fun setMinDate(date: Long): DialogDatePicker {
             datePicker.minDate = date; return this
         }
-        override fun show() { super.show() }
-        private var idialog: IDialog? = null
-        fun show(fragmentManager: FragmentManager): IDialog {
-            val idialog = IDialog(this)
-            idialog.show(fragmentManager, javaClass.simpleName)
-            idialog.lifecycle.addObserver(this)
-            return idialog
-        }
+//        override fun show() { super.show() }
+//        private var idialog: IDialog? = null
+//        fun show(fragmentManager: FragmentManager): IDialog {
+//            val idialog = IDialog(this)
+//            idialog.show(fragmentManager, javaClass.simpleName)
+//            idialog.lifecycle.addObserver(this)
+//            return idialog
+//        }
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-            if (event == Lifecycle.Event.ON_DESTROY) idialog?.lifecycle?.removeObserver(this)
+//            if (event == Lifecycle.Event.ON_DESTROY) idialog?.lifecycle?.removeObserver(this)
         }
     }
 
@@ -301,16 +361,16 @@ class IDialog: AppCompatDialogFragment{
             super.updateTime(hourOfDay, minuteOfHour)
         }
 
-        override fun show() { super.show() }
-        private var idialog: IDialog? = null
-        fun show(fragmentManager: FragmentManager): IDialog {
-            val idialog = IDialog(this)
-            idialog.show(fragmentManager, javaClass.simpleName)
-            idialog.lifecycle.addObserver(this)
-            return idialog
-        }
+//        override fun show() { super.show() }
+//        private var idialog: IDialog? = null
+//        fun show(fragmentManager: FragmentManager): IDialog {
+//            val idialog = IDialog(this)
+//            idialog.show(fragmentManager, javaClass.simpleName)
+//            idialog.lifecycle.addObserver(this)
+//            return idialog
+//        }
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-            if (event == Lifecycle.Event.ON_DESTROY) idialog?.lifecycle?.removeObserver(this)
+//            if (event == Lifecycle.Event.ON_DESTROY) idialog?.lifecycle?.removeObserver(this)
         }
     }
 
@@ -345,16 +405,16 @@ class IDialog: AppCompatDialogFragment{
         // 进度百分比 null->隐藏
         override fun setProgressPercentFormat(format: NumberFormat?) { super.setProgressPercentFormat(format) }
 
-        override fun show() { super.show() }
-        private var idialog: IDialog? = null
-        fun show(fragmentManager: FragmentManager): IDialog {
-            val idialog = IDialog(this)
-            idialog.show(fragmentManager, javaClass.simpleName)
-            idialog.lifecycle.addObserver(this)
-            return idialog
-        }
+//        override fun show() { super.show() }
+//        private var idialog: IDialog? = null
+//        fun show(fragmentManager: FragmentManager): IDialog {
+//            val idialog = IDialog(this)
+//            idialog.show(fragmentManager, javaClass.simpleName)
+//            idialog.lifecycle.addObserver(this)
+//            return idialog
+//        }
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-            if (event == Lifecycle.Event.ON_DESTROY) idialog?.lifecycle?.removeObserver(this)
+//            if (event == Lifecycle.Event.ON_DESTROY) idialog?.lifecycle?.removeObserver(this)
         }
     }
 
@@ -460,19 +520,19 @@ class IDialog: AppCompatDialogFragment{
             return dialog
         }
 
-        private var idialog: IDialog? = null
-        override fun show(): AlertDialog { return opt.init().also { it.show(); opt.resetCLickListener() } }
-        fun show(fragmentManager: FragmentManager): IDialog {
-            val idialog = IDialog(opt.init())
-            idialog.show(fragmentManager, javaClass.simpleName)
-            idialog.lifecycle.addObserver(this)
-            return idialog
-        }
+//        private var idialog: IDialog? = null
+//        override fun show(): AlertDialog { return opt.init().also { it.show(); opt.resetCLickListener() } }
+//        fun show(fragmentManager: FragmentManager): IDialog {
+//            val idialog = IDialog(opt.init())
+//            idialog.show(fragmentManager, javaClass.simpleName)
+//            idialog.lifecycle.addObserver(this)
+//            return idialog
+//        }
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-            when(event) {
-                Lifecycle.Event.ON_RESUME -> opt.resetCLickListener()
-                Lifecycle.Event.ON_DESTROY -> idialog?.lifecycle?.removeObserver(this)
-            }
+//            when(event) {
+//                Lifecycle.Event.ON_RESUME -> opt.resetCLickListener()
+//                Lifecycle.Event.ON_DESTROY -> idialog?.lifecycle?.removeObserver(this)
+//            }
         }
     }
 
@@ -531,19 +591,19 @@ class IDialog: AppCompatDialogFragment{
             return dialog
         }
 
-        private var idialog: IDialog? = null
-        override fun show(): AlertDialog { return impl.init().also { it.show(); impl.resetCLickListener() } }
-        fun show(fragmentManager: FragmentManager): IDialog {
-            val idialog = IDialog(impl.init())
-            idialog.show(fragmentManager, javaClass.simpleName)
-            idialog.lifecycle.addObserver(this)
-            return idialog
-        }
+//        private var idialog: IDialog? = null
+//        override fun show(): AlertDialog { return impl.init().also { it.show(); impl.resetCLickListener() } }
+//        fun show(fragmentManager: FragmentManager): IDialog {
+//            val idialog = IDialog(impl.init())
+//            idialog.show(fragmentManager, javaClass.simpleName)
+//            idialog.lifecycle.addObserver(this)
+//            return idialog
+//        }
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-            when(event) {
-                Lifecycle.Event.ON_RESUME -> impl.resetCLickListener()
-                Lifecycle.Event.ON_DESTROY -> idialog?.lifecycle?.removeObserver(this)
-            }
+//            when(event) {
+//                Lifecycle.Event.ON_RESUME -> impl.resetCLickListener()
+//                Lifecycle.Event.ON_DESTROY -> idialog?.lifecycle?.removeObserver(this)
+//            }
         }
     }
 
@@ -560,26 +620,28 @@ class IDialog: AppCompatDialogFragment{
          *  [android.R.style.Theme_DeviceDefault_Light_Dialog_Alert]
          */
         private val DialogDefaultTheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
-            android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else
-            android.R.style.Theme_Material_Light_Dialog_Alert
+            android.R.style.Theme_DeviceDefault_Light_Dialog_Alert
+            else android.R.style.Theme_Material_Light_Dialog_Alert
     }
 }
 
 /**
  * [IDialog]实现类
  */
-class IDialogImpl<T: AlertDialog>(val dialog: T): LifecycleEventObserver {
+class IDialogImpl<T: AlertDialog>(private val dialog: T): LifecycleEventObserver {
 
     private val window: Window? by lazy { dialog.window }
     private val decorView: View? by lazy { window?.decorView }
     private val layoutParams: WindowManager.LayoutParams? by lazy { window?.attributes }
+
+    val context by lazy { dialog.context }
     // 声明周期感知上传至父类
     private var onInitLifecycleStateChanged: ((source: LifecycleOwner, event: Lifecycle.Event)->Unit)? = null
     var canceledOnTouchOutSide = true   // 空白区域是否可以关闭
-        set(value) { if (cancelabled) field = value }
+        set(value) { if (!isShowLock && cancelabled) field = value } // isShowLock 在dialogFragment中失效
     var cancelabled = true              // 返回键 & 空白区域是否可以关闭
-        set(value) { field = value; canceledOnTouchOutSide = value }
-    var view: View? = null                      // 记录custom view, 在显示隐藏动画中使用
+        set(value) { if (!isShowLock) { field = value; canceledOnTouchOutSide = value} }
+    var animView: View? = null                      // 记录custom view, 在显示隐藏动画中使用
         private set
         get() = field ?: decorView
     var showAnimator: ((View)->AnimatorSet)? = null
@@ -611,8 +673,11 @@ class IDialogImpl<T: AlertDialog>(val dialog: T): LifecycleEventObserver {
     }
 
 
+    fun setView(view: View) {
+        dialog.setView(view)
+    }
     fun initOfCustomView(view: View?) {
-        this.view = view
+        this.animView = view
         setViewBg(android.R.color.transparent)
         decorView?.setPadding(0, 0, 0, 0)
         layoutParams?.width = WindowManager.LayoutParams.MATCH_PARENT
@@ -664,8 +729,9 @@ class IDialogImpl<T: AlertDialog>(val dialog: T): LifecycleEventObserver {
         window?.setDimAmount(dimAmount)
     }
 
-    // https://blog.csdn.net/harvic880925/article/details/50598322
-
+    fun dismiss() {
+        dialog.dismiss()
+    }
 
     var isShowLock = false // show是个异步过程, 禁止循环执行show
     fun show() {

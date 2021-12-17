@@ -82,10 +82,6 @@ object ToastUtil {
         handler.post(runnable)
     }
 
-    object KTX {
-        fun showToast(msg: Any?, duration: Int=Toast.LENGTH_SHORT) { ToastUtil.show("$msg", duration=duration) }
-    }
-
 }
 
 /**
@@ -120,3 +116,5 @@ class ToastUtilOption {
 
     private fun dpToPx(dp: Float): Float = 0.5F + dp*Resources.getSystem().displayMetrics.density
 }
+/* ---------KTX----------- */
+fun showToast(msg: Any?, duration: Int=Toast.LENGTH_SHORT) { ToastUtil.show("$msg", duration=duration) }

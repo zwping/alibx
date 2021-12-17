@@ -83,37 +83,36 @@ object ViewUtil{
         view?.apply { isFocusable = true; isFocusableInTouchMode = true; requestFocus() }
     }
 
-    object KTX {
+}
+/* ---------KTX----------- */
 
-        /*** 左右抖动 ***/
-        fun View?.shakelr() { ViewUtil.shakelr(this) }
+/*** 左右抖动 ***/
+fun View?.shakelr() { ViewUtil.shakelr(this) }
 
-        /**
-         * 节流点击
-         * @param time 点击事件最大时间间隔, 连点间隔时间才生效一次
-         */
-        fun <V: View> V?.setOnClickThrottleListener(time: Long=500L, block: (V) -> Unit) {
-            ViewUtil.setOnClickThrottleListener(this, time, block)
-        }
-        /**
-         * 防抖点击
-         * @param time 点击最大时间间隔, 连点无效
-         */
-        fun <V: View> V?.setOnClickDebounceListener(time: Long=500L, block: (V) -> Unit) {
-            ViewUtil.setOnClickDebounceListener(this, time, block)
-        }
+/**
+ * 节流点击
+ * @param time 点击事件最大时间间隔, 连点间隔时间才生效一次
+ */
+fun <V: View> V?.setOnClickThrottleListener(time: Long=500L, block: (V) -> Unit) {
+    ViewUtil.setOnClickThrottleListener(this, time, block)
+}
+/**
+ * 防抖点击
+ * @param time 点击最大时间间隔, 连点无效
+ */
+fun <V: View> V?.setOnClickDebounceListener(time: Long=500L, block: (V) -> Unit) {
+    ViewUtil.setOnClickDebounceListener(this, time, block)
+}
 
-        fun MaterialButton?.showLoading(@ColorInt color: Int?=this?.textColors?.defaultColor, enabled: Boolean?=false) {
-            ViewUtil.showLoading(this, color, enabled)
-        }
-        fun MaterialButton?.hideLoading(enabled: Boolean?=true) {
-            ViewUtil.hideLoading(this, enabled)
-        }
-        /**
-         * 转移焦点
-         */
-        fun View?.focus() {
-            ViewUtil.focus(this)
-        }
-    }
+fun MaterialButton?.showLoading(@ColorInt color: Int?=this?.textColors?.defaultColor, enabled: Boolean?=false) {
+    ViewUtil.showLoading(this, color, enabled)
+}
+fun MaterialButton?.hideLoading(enabled: Boolean?=true) {
+    ViewUtil.hideLoading(this, enabled)
+}
+/**
+ * 转移焦点
+ */
+fun View?.focus() {
+    ViewUtil.focus(this)
 }

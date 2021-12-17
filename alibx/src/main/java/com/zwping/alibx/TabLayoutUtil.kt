@@ -71,26 +71,6 @@ object TabLayoutUtil {
         }
     }
 
-    object KTX {
-
-        /**
-         * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
-         */
-        fun TabLayout?.initBottomNavigationView(tabSize: Int, block: TabLayoutCustomView.(index: Int) -> Unit) {
-            TabLayoutUtil.initBottomNavigationView(this, tabSize, block)
-        }
-        fun TabLayout?.getTabLayoutCustomView(index: Int): TabLayoutCustomView? {
-            return TabLayoutUtil.getTabLayoutCustomView(this, index)
-        }
-
-        /**
-         * 增加小红点
-         * @param index
-         * @param num null -> 小红点
-         */
-        fun TabLayout?.setBadge(index: Int, num: Int?=null) { TabLayoutUtil.setBadge(this, index, num) }
-        fun TabLayout?.removeBadge(index: Int) { TabLayoutUtil.removeBadge(this, index) }
-    }
 }
 
 
@@ -180,3 +160,22 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
     }
     private fun Float.dp2Px() = (0.5F+this*Resources.getSystem().displayMetrics.density).toInt()
 }
+/* ---------KTX----------- */
+
+/**
+ * 借助[TabLayoutCustomView]实现类[BottomNavigationView]控件
+ */
+fun TabLayout?.initBottomNavigationView(tabSize: Int, block: TabLayoutCustomView.(index: Int) -> Unit) {
+    TabLayoutUtil.initBottomNavigationView(this, tabSize, block)
+}
+fun TabLayout?.getTabLayoutCustomView(index: Int): TabLayoutCustomView? {
+    return TabLayoutUtil.getTabLayoutCustomView(this, index)
+}
+
+/**
+ * 增加小红点
+ * @param index
+ * @param num null -> 小红点
+ */
+fun TabLayout?.setBadge(index: Int, num: Int?=null) { TabLayoutUtil.setBadge(this, index, num) }
+fun TabLayout?.removeBadge(index: Int) { TabLayoutUtil.removeBadge(this, index) }

@@ -23,6 +23,7 @@ import androidx.viewbinding.ViewBinding
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.imageview.ShapeableImageView
+import com.zwping.alibx.ViewPager2Util.setBannerData
 import java.lang.ref.WeakReference
 
 /**
@@ -180,56 +181,6 @@ object ViewPager2Util {
         }
     }
 
-    object KTX {
-
-        /**
-         * ViewPager2标准实现banner, 后续接口返回数据调用[setBannerData]
-         * @param createHolderView 自定义HolderView
-         * @param bindView 数据绑定至view
-         * @param autoStart 非空传入则自动开始轮播
-         * @param opt ViewPager2相关配置 & 回调
-         */
-        fun <T> ViewPager2?.initBanner(createHolderView: (parent: ViewGroup)->View,
-                                       bindView: (view: View, data: MutableList<T>, position: Int)->Unit,
-                                       autoStart: LifecycleOwner?=null,
-                                       opt: ViewPager2Option<T>.()->Unit={}): BannerAdapter<T>? {
-            return ViewPager2Util.initBanner(this, createHolderView, bindView, autoStart, opt)
-        }
-
-        /*** 针对ImageView的便捷调用, 后续接口返回数据调用[setBannerData] ***/
-        fun <T> ViewPager2?.initBannerOfImg(bindView: (iv: ShapeableImageView, data: MutableList<T>, position: Int)->Unit,
-                                            autoStart: LifecycleOwner?=null,
-                                            opt: ViewPager2Option<T>.()->Unit={}): BannerAdapter<T>? {
-            return ViewPager2Util.initBannerOfImg(this, bindView, autoStart, opt)
-        }
-
-        /*** ViewPager2标准实现banner, 支持ViewBinding, 后续接口返回数据调用[setBannerData] ***/
-        fun <T, VB: ViewBinding>
-                ViewPager2?.initBannerOfVB(createHolderView: (parent: ViewGroup)->VB,
-                                           bindView: (vb: VB, data: MutableList<T>, position: Int)->Unit,
-                                           autoStart: LifecycleOwner?=null,
-                                           opt: ViewPager2Option<T>.()->Unit={}): BannerAdapter<T>? {
-            return ViewPager2Util.initBannerOfVB(this, createHolderView, bindView, autoStart, opt)
-        }
-
-        /**
-         * 设置banner数据
-         * @param hasLoop 是否支持循环滚动 -> setCurrentItem(2, false)
-         */
-        fun <T> ViewPager2?.setBannerData(data: MutableList<T>?, hasLoop: Boolean=true) {
-            ViewPager2Util.setBannerData(this, data, hasLoop)
-        }
-        fun <T> ViewPager2?.getBannerAdp(): BannerAdapter<T>? = ViewPager2Util.getBannerAdp(this)
-
-        /**
-         * 设置banner一页多屏
-         * @param itemMargin item之间的间隔
-         * @param vp2Padding viewPager2内RecyclerView内部排挤值
-         */
-        fun ViewPager2?.setBannerMultiItem(itemMargin: Int, vp2Padding: Int) {
-            ViewPager2Util.setBannerMultiItem(this, itemMargin, vp2Padding)
-        }
-    }
 }
 
 class ViewPager2Option<T> {
@@ -427,4 +378,53 @@ class BannerLoopMange(var vp2: WeakReference<ViewPager2>?,
         }
     }
 
+}
+/* ---------KTX----------- */
+
+/**
+ * ViewPager2标准实现banner, 后续接口返回数据调用[setBannerData]
+ * @param createHolderView 自定义HolderView
+ * @param bindView 数据绑定至view
+ * @param autoStart 非空传入则自动开始轮播
+ * @param opt ViewPager2相关配置 & 回调
+ */
+fun <T> ViewPager2?.initBanner(createHolderView: (parent: ViewGroup)->View,
+                               bindView: (view: View, data: MutableList<T>, position: Int)->Unit,
+                               autoStart: LifecycleOwner?=null,
+                               opt: ViewPager2Option<T>.()->Unit={}): BannerAdapter<T>? {
+    return ViewPager2Util.initBanner(this, createHolderView, bindView, autoStart, opt)
+}
+
+/*** 针对ImageView的便捷调用, 后续接口返回数据调用[setBannerData] ***/
+fun <T> ViewPager2?.initBannerOfImg(bindView: (iv: ShapeableImageView, data: MutableList<T>, position: Int)->Unit,
+                                    autoStart: LifecycleOwner?=null,
+                                    opt: ViewPager2Option<T>.()->Unit={}): BannerAdapter<T>? {
+    return ViewPager2Util.initBannerOfImg(this, bindView, autoStart, opt)
+}
+
+/*** ViewPager2标准实现banner, 支持ViewBinding, 后续接口返回数据调用[setBannerData] ***/
+fun <T, VB: ViewBinding>
+        ViewPager2?.initBannerOfVB(createHolderView: (parent: ViewGroup)->VB,
+                                   bindView: (vb: VB, data: MutableList<T>, position: Int)->Unit,
+                                   autoStart: LifecycleOwner?=null,
+                                   opt: ViewPager2Option<T>.()->Unit={}): BannerAdapter<T>? {
+    return ViewPager2Util.initBannerOfVB(this, createHolderView, bindView, autoStart, opt)
+}
+
+/**
+ * 设置banner数据
+ * @param hasLoop 是否支持循环滚动 -> setCurrentItem(2, false)
+ */
+fun <T> ViewPager2?.setBannerData(data: MutableList<T>?, hasLoop: Boolean=true) {
+    ViewPager2Util.setBannerData(this, data, hasLoop)
+}
+fun <T> ViewPager2?.getBannerAdp(): BannerAdapter<T>? = ViewPager2Util.getBannerAdp(this)
+
+/**
+ * 设置banner一页多屏
+ * @param itemMargin item之间的间隔
+ * @param vp2Padding viewPager2内RecyclerView内部排挤值
+ */
+fun ViewPager2?.setBannerMultiItem(itemMargin: Int, vp2Padding: Int) {
+    ViewPager2Util.setBannerMultiItem(this, itemMargin, vp2Padding)
 }

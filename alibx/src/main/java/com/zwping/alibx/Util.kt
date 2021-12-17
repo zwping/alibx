@@ -62,10 +62,9 @@ object Util {
         }
     }
 
-    object KTX {
-        fun logd(vararg msg: Any?, stackInfo: Boolean=true) {
-            Util.logd(*msg, stackInfo=stackInfo, stackOffset=2)
-        }
-    }
+}
+/* ---------KTX----------- */
 
+fun logd(vararg msg: Any?, stackInfo: Boolean=true) {
+    Util.logd(*msg, stackInfo=stackInfo, stackOffset=2)
 }
