@@ -14,6 +14,7 @@ import android.view.WindowManager.LayoutParams.*
 import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDialog
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat.Type.*
 import androidx.core.view.WindowInsetsControllerCompat
@@ -31,8 +32,11 @@ object Bar {
 
     /*** insets compat简化了insets操作 ***/
     fun insetsController(ac: Activity): WindowInsetsControllerCompat? {
-        ac.window?.decorView ?: return null
-        return WindowInsetsControllerCompat(ac.window, ac.window.decorView)
+        return insetsController(ac.window)
+    }
+    private fun insetsController(window: Window?): WindowInsetsControllerCompat? {
+        window?.decorView ?: return null
+        return WindowInsetsControllerCompat(window, window.decorView)
     }
 
     /**
@@ -88,24 +92,60 @@ object Bar {
         navDarkMode?.also { setNavBarDarkMode(ac, it) }
     }
 
+    fun immersive(dialog: AppCompatDialog,
+                  @ColorInt color: Int=Color.TRANSPARENT,
+                  darkMode: Boolean?=null,
+                  navImmersive: Boolean=false,
+                  @ColorInt navColor: Int? = null,
+                  navDarkMode: Boolean?=null){
+        val window = dialog.window ?: return
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        if (!navImmersive) { // 不考虑二次逆向调用
+            addMarginBottomNavBarHeight(dialog.findViewById<ViewGroup?>(android.R.id.content)?.getChildAt(0))
+        }
+        setStatusBarColor(window, color)
+        darkMode?.also { setStatusBarDarkMode(window, it) }
+        navColor?.also { setNavBarColor(window, it) }
+        if (navImmersive && navColor == null) setNavBarColor(window, Color.TRANSPARENT)
+        navDarkMode?.also { setNavBarDarkMode(window, it) }
+    }
+
+
     /**
      * 设置状态栏深色模式
      * @param darkMode true -> 字体电池黑色 false -> 字体电池白色
      */
-    fun setStatusBarDarkMode(ac: Activity, darkMode: Boolean=true) {
+    private fun setStatusBarDarkMode(window: Window?, darkMode: Boolean=true) {
+        window ?: return
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         if (Build.VERSION.SDK_INT != Build.VERSION_CODES.R) {  // android 11不生效
-            insetsController(ac)?.isAppearanceLightStatusBars = darkMode
+            insetsController(window)?.isAppearanceLightStatusBars = darkMode
             return
         }
-        var uiflag = ac.window?.decorView?.systemUiVisibility ?: return
+        var uiflag = window.decorView.systemUiVisibility
         uiflag = if (darkMode) { uiflag or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR }
         else { uiflag and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() }
-        ac.window?.decorView?.systemUiVisibility = uiflag
+        window.decorView.systemUiVisibility = uiflag
+    }
+    fun setStatusBarDarkMode(ac: Activity, darkMode: Boolean=true) {
+        setStatusBarDarkMode(ac.window, darkMode)
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+//        if (Build.VERSION.SDK_INT != Build.VERSION_CODES.R) {  // android 11不生效
+//            insetsController(ac)?.isAppearanceLightStatusBars = darkMode
+//            return
+//        }
+//        var uiflag = ac.window?.decorView?.systemUiVisibility ?: return
+//        uiflag = if (darkMode) { uiflag or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR }
+//        else { uiflag and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() }
+//        ac.window?.decorView?.systemUiVisibility = uiflag
     }
 
+    fun setNavBarDarkMode(window: Window?, darkMode: Boolean=false) {
+        window ?: return
+        insetsController(window)?.isAppearanceLightNavigationBars = darkMode
+    }
     fun setNavBarDarkMode(ac: Activity, darkMode: Boolean=false) {
-        insetsController(ac)?.isAppearanceLightNavigationBars = darkMode // 部分手机会自动取navBar颜色的反色
+        setNavBarDarkMode(ac.window) // 部分手机会自动取navBar颜色的反色
     }
 
     fun setStatusBarDarkMode(fm: Fragment, darkMode: Boolean=true) {
@@ -163,14 +203,20 @@ object Bar {
     /**
      * 设置状态栏颜色
      */
+    private fun setStatusBarColor(window: Window?, @ColorInt color: Int) {
+        window?.statusBarColor = color
+    }
     fun setStatusBarColor(ac: Activity, @ColorInt color: Int) {
-        ac.window?.statusBarColor = color
+        setStatusBarColor(ac.window, color)
     }
     fun setStatusBarColor(fm: Fragment, @ColorInt color: Int) {
         fm.activity?.also { setStatusBarColor(it, color) }
     }
+    private fun setNavBarColor(window: Window?, @ColorInt color: Int) {
+        window?.navigationBarColor = color
+    }
     fun setNavBarColor(ac: Activity, @ColorInt color: Int) {
-        ac.window?.navigationBarColor = color
+        setNavBarColor(ac.window, color)
     }
     fun setNavBarColor(fm: Fragment, @ColorInt color: Int) {
         fm.activity?.also { setNavBarColor(it, color) }

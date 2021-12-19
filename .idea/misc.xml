@@ -9,10 +9,14 @@
         <entry key="../../Library/Android/sdk/platforms/android-30/data/res/layout/select_dialog_item.xml" value="0.20516304347826086" />
         <entry key="alibx/src/main/res/xml/network_security_config.xml" value="0.1734375" />
         <entry key="app/src/main/res/drawable/progressbar.xml" value="0.2635416666666667" />
-        <entry key="app/src/main/res/layout/ac_main.xml" value="0.335" />
+        <entry key="app/src/main/res/layout/ac_main.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.14206300185299567" />
         <entry key="app/src/main/res/layout/test.xml" value="0.165" />
         <entry key="app/src/main/res/layout/test1.xml" value="0.28286852589641437" />
+        <entry key="app/src/main/res/layout/test3.xml" value="0.335" />
+        <entry key="app/src/main/res/layout/test4.xml" value="0.125" />
+        <entry key="app/src/main/res/layout/test5.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/test6.xml" value="0.45" />
       </map>
     </option>
   </component>

@@ -98,10 +98,10 @@ class StateLayout @JvmOverloads constructor(
     fun init(lis: () -> Unit) { showLoadingView(); this.retryClickListener = lis }
     fun showContentView() { showView(State.CONTENT) }
     fun showLoadingView(txt: CharSequence? = null) { showView(State.LOADING, txt) }
+    @JvmOverloads
     fun showEmptyView(txt: CharSequence? = null, iconResId: Int? = null) { showView(State.EMPTY, txt, iconResId) }
+    @JvmOverloads
     fun showErrorView(txt: CharSequence? = null, iconResId: Int? = null) { showView(State.ERROR, txt, iconResId) }
-    fun showEmptyView(txt: CharSequence? = null) { showEmptyView(null, null) }
-    fun showErrorView(txt: CharSequence? = null) { showErrorView(null, null) }
     // fun setRetryClickListener(lis: ()->Unit) { this.retryClickListener = lis }
 
     private fun inflaterView(layoutId: Int?, defaultViewLazy: () -> View) : View {
@@ -211,6 +211,7 @@ class StateLayout @JvmOverloads constructor(
             setTextColor(cfg.DefaultRemindTxtColor)
             textSize = cfg.DefaultRemindTxtSize
             text = cfg.DefaultEmptyTxt
+            gravity = Gravity.CENTER
         } }
         init {
             orientation = VERTICAL

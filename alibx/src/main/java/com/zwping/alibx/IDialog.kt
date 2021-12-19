@@ -62,10 +62,19 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
      * AppCompatDialog复写, 支持继承/快速调用使用
      * @param block 快速调用具体实现操作
      */
-    open class Dialog(context: Context,
-                      block: Dialog.() -> Unit = { },
-                      themeResId: Int = -1) :
-            AppCompatDialog(context, themeResId), LifecycleEventObserver {
+    open class Dialog : AppCompatDialog, LifecycleEventObserver {
+
+        constructor(context: Context?) : super(context, -1) { init() }
+        constructor(context: Context,
+                    block: Dialog.() -> Unit = { },
+                    themeResId: Int = -1) : super(context, themeResId) {
+                        init(); block(this)
+                    }
+
+        private fun init() {
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            setGravity(Gravity.CENTER)
+        }
 
 
         private val animView: View?
@@ -75,6 +84,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
         /*** 根布局, 自定义view时使用 ***/
         val rootLayout = FrameLayout(context).apply {
+            layoutParams = ViewGroup.LayoutParams(-1, -1)
             setBackgroundColor(getBlackWithAlpha(0.5F))
             setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
         }
@@ -103,12 +113,6 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         var showAnimator: ((View)->AnimatorSet)? = null
         var hideAnimator: ((View)->AnimatorSet)? = null
 
-        init {
-            requestWindowFeature(Window.FEATURE_NO_TITLE)
-            setGravity(Gravity.CENTER)
-            block.invoke(this)
-            // fixCancelabled()
-        }
 
 
         private fun fixCanceledOnTouchOutSide() {
@@ -139,6 +143,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
         /**
          * 自定义view, 建议使用[rootLayout]inflater View保留xml中的样式
+         * bug ConstraintLayout不友好
          */
         override fun setContentView(view: View) {
             setContentView { view }
@@ -146,17 +151,16 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
         /**
          * 自定义view, 保留xml中的样式
+         * bug ConstraintLayout不友好
          */
         fun setContentView(inflater: (root: FrameLayout) -> View){
             resetThemeCfg()
             rootLayout.removeAllViews()
             val view = inflater(rootLayout)
-//            view.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT).also {
-//                it.gravity = Gravity.BOTTOM
-//            }
             if (view.parent == null) rootLayout.addView(view)
             super.setContentView(rootLayout)
             customView = view
+            animView?.visibility = View.INVISIBLE
         }
 
         fun setDimAmount(@FloatRange(from=0.0, to=1.0) amount: Float) {
@@ -177,7 +181,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         }
         override fun onStart() {
             super.onStart()
-            animView?.post { showAnimator?.invoke(animView!!)?.start() }
+            animView?.post { animView?.visibility = View.VISIBLE; showAnimator?.invoke(animView!!)?.start() }
         }
 
         private var lockDismiss = false
@@ -196,7 +200,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         /*** 自定义view时, 恢复部分theme设置 ***/
         private fun resetThemeCfg() {
             window?.setBackgroundDrawableResource(android.R.color.transparent)
-            setGravity(Gravity.CENTER)
+            // setGravity(Gravity.CENTER)
             wlp?.also {
                 it.width = WindowManager.LayoutParams.MATCH_PARENT
                 it.height = WindowManager.LayoutParams.MATCH_PARENT
@@ -683,6 +687,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 /**
  * [IDialog]实现类
  */
+@Deprecated("只维护AppCompatDialog则不需要这么多兼容写法")
 class IDialogImpl<T: AlertDialog>(private val dialog: T): LifecycleEventObserver {
 
     private val window: Window? by lazy { dialog.window }

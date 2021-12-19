@@ -12,6 +12,8 @@ import java.lang.reflect.ParameterizedType
  * @param autoReflexParse 自动解析简单对象
  *                        混淆必须加 { -keep public class * extends com.zwping.alibx.IJson { *; } }
  *                        alibx库已加混淆规则
+ * @bug 构造函数使然, 不支持默认值, 如果可以在代码最末尾部分加上自动解析即可
+ *      解法: 不使用默认值 / 默认值加在get方法中
  */
 abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
 

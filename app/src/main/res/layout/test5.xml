@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ly_root"
+    android:orientation="vertical"
+    android:layout_gravity="right"
+    android:layout_width="276dp"
+    android:layout_height="match_parent">
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:layout_height="0dp" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_marginBottom="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="42dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            app:cornerRadius="21dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:stateListAnimator="@null"
+            android:layout_marginLeft="15dp"
+            app:backgroundTint="#fff"
+            app:strokeColor="#0a84ff"
+            app:strokeWidth="0.5dp"
+            android:textColor="#0a84ff"
+            android:textSize="15dp"
+            android:text="取消"
+            />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_confirm"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
+            app:cornerRadius="21dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:stateListAnimator="@null"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            app:backgroundTint="#0a84ff"
+            android:textColor="#fff"
+            android:textSize="15dp"
+            android:text="确定"
+            />
+
+    </LinearLayout>
+
+</LinearLayout>

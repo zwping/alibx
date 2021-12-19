@@ -171,6 +171,7 @@ open class AdapterQuick<E>(val createViewHolder: (ViewGroup) -> BaseViewHolder<E
     }
 }
 interface ItemViewType { val itemViewType: Enum<*> }  // Support RecyclerView ItemViewType
+interface IItemViewType : ItemViewType
 /**
  * 借助enum类特征实现多布局
  * @deprecated 更友好约束的封装[AdapterMulti]
@@ -185,6 +186,7 @@ abstract class BaseAdapterMulti<ENUM: Enum<*>>(private val enums: Array<ENUM>): 
     abstract fun onCreateViewHolder(parent: ViewGroup, enum: ENUM): BaseViewHolder<out ItemViewType, View>
 }
 interface IEnumViewHolder{ fun holder(parent: ViewGroup): BaseViewHolder<out ItemViewType, View> }
+interface IViewHolderEnum : IEnumViewHolder
 /**
  * 多布局Adapter
  *  enum类实现[IEnumViewHolder]ViewHolder

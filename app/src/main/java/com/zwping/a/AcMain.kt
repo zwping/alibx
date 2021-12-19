@@ -22,6 +22,7 @@ import com.zwping.a.databinding.TestBinding
 import com.zwping.a.fm.FmHome
 import com.zwping.alibx.*
 import com.zwping.alibx.Util.logd
+import okio.ByteString.Companion.encode
 import org.json.JSONObject
 import java.security.Key
 import javax.crypto.Cipher
@@ -36,20 +37,20 @@ class AcMain : BaseAc<AcMainBinding>() {
         return AcMainBinding.inflate(inflater)
     }
 
+    fun decode(encodeText: String): String {
+        fun decode1(unicode: String) = unicode.toInt(16).toChar()
+        val unicodes = encodeText.split("\\u")
+            .map { if (it.isNotBlank()) decode1(it) else null }.filterNotNull()
+        return String(unicodes.toCharArray())
+    }
 
     private val fmHome by lazy { FmHome() }
     override fun initView() {
-        val u = "https://pic2.zhimg.com/80/v2-df7fd62e3fffcd9c14c9f82db55a9a3d_1440w.jpg"
-        vb.layerFindTeacher.start(this, u,  mutableListOf(
-            "https://img2.woyaogexing.com/2021/12/04/c48b8378a714452fb878e96fb0927afb!400x400.jpg",
-            "https://img2.woyaogexing.com/2021/12/04/c3f26419f3284de79b4d293090568e46!400x400.jpeg",
-            "https://img2.woyaogexing.com/2021/12/04/fb461641da2e49cfb0291a4736c3b475!400x400.jpeg",
-        ))
-        handler.postDelayed({
-            vb.layerFindTeacher.visibility = View.GONE
-        }, 5000)
 
+        vb.tv1.text = "所读专业"
+        vb.tv2.text = Html.fromHtml("教&#12288;&#12288;授")
 
+        vb.viewPager2.visibility = View.GONE
         vb.viewPager2.initBannerOfImg<String>({iv, data, position ->
             iv.glide(data[position])
         })
@@ -82,9 +83,8 @@ class AcMain : BaseAc<AcMainBinding>() {
 //            }.show()
         }, 2000)
 
-        open("alibx://ac/sec")
+//        open("alibx://ac/sec")
 
-        Dlg(this).show()
 
 //        IDialog.Dialog(this, {
 //            showAnimator = { AnimHelper.slideRightLeftIn(it) }
@@ -93,9 +93,13 @@ class AcMain : BaseAc<AcMainBinding>() {
 //            setContentView(vb.root)
 //        }).show()
 
+        Dlg(this).show()
+
+
+
     }
 
-    class Dlg(context: Context) : IDialog.Dialog(context, { }) {
+    class Dlg(context: Context) : IDialog.Dialog(context) {
 
         private val ob by lazy {
             JSONObject("{\n" +
@@ -126,13 +130,14 @@ class AcMain : BaseAc<AcMainBinding>() {
         init {
             setContentView(vb.root)
 
-            setCanceledOnTouchOutside(ob.optBoolean("clickBgHide", true))
+            val entity = EntityDialogVarFunc(ob)
+
+            showToast(entity.clickBgHide)
+            setCanceledOnTouchOutside(entity.clickBgHide == true)
             val w = context.getScreenWidth() * 0.78F
             var h = w * 427F / 290 // 原本比例宽高
-            val w1 = ob.optInt("width")
-            val h1 = ob.optInt("height")
-            if (w1 > 0 && h1 > 0) {
-                h = w * h1 / w1
+            if ((entity.width ?: 0) > 0 && (entity.height ?: 0) > 0) {
+                h = w * (entity.height ?: 0) / (entity.width ?: 0)
             }
             vb.lyRoot.updateLayoutParams<FrameLayout.LayoutParams> {
                 width = w.toInt()
@@ -141,45 +146,79 @@ class AcMain : BaseAc<AcMainBinding>() {
             vb.lyContainer.updateLayoutParams {
                 width = w.toInt(); height = h.toInt()
             }
-            vb.ivBg.glide(ob.optString("bg").also {  }) { scaleType = ImageView.ScaleType.CENTER_CROP }
+            vb.ivBg.glide(entity.bg)
             vb.btn.visibility = View.GONE
-            ob.optJSONObject("button")?.also { btn ->
+            entity.button?.also { btn ->
                 vb.btn.visibility = View.VISIBLE
                 vb.btn.apply {
-                    val bg = try { Color.parseColor("${btn.optString("bg") ?: "#0a84ff"}") } catch (e: Exception) { (0xff0a84ff).toInt() }
+                    val bg = try { Color.parseColor(btn.bg ?: "#0a84ff") } catch (e: Exception) { (0xff0a84ff).toInt() }
                     backgroundTintList = ColorStateList.valueOf(bg)
-                    val tc = try { Color.parseColor("${btn.optString("color") ?: "#ffffff"}") } catch (e: Exception) { (0xffffffff).toInt() }
+                    val tc = try { Color.parseColor(btn.color ?: "#ffffff") } catch (e: Exception) { (0xffffffff).toInt() }
                     setTextColor(tc)
-                    text = btn.optString("title")
+                    text = btn.title
                     updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                        btn.optInt("left").toFloat().dp2px().also { leftMargin=it; rightMargin=it }
-                        bottomMargin = btn.optInt("bottom").toFloat().dp2px()
+                        (btn.left ?: 0).toFloat().dp2px().also { leftMargin=it; rightMargin=it }
+                        bottomMargin = (btn.bottom ?: 0).toFloat().dp2px()
                     }
                     setOnClickListener {
                         dismiss()
-                        it.context.open(btn.optString("url"))
+                        it.context.open(btn.url)
                     }
                 }
             }
             vb.tvTips.visibility = View.GONE
-            ob.optJSONObject("tips")?.also { tip ->
+            entity.tips?.also { tip ->
                 vb.tvTips.visibility = View.VISIBLE
-                val tc = try { Color.parseColor("${tip.optString("color") ?: "#999999"}") } catch (e: Exception) { (0xff999999).toInt() }
+                val tc = try { Color.parseColor(tip.color ?: "#999999") } catch (e: Exception) { (0xff999999).toInt() }
                 vb.tvTips.setTextColor(tc)
-                vb.tvTips.setText(Html.fromHtml(tip.optString("title")))
+                vb.tvTips.setText(Html.fromHtml(tip.title))
                 vb.tvTips.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                    bottomMargin = tip.optInt("bottom").toFloat().dp2px()
+                    bottomMargin = (tip.bottom ?: 0).toFloat().dp2px()
                 }
             }
             vb.ivClose.apply {
                 visibility = View.GONE
-                val icon = ob.optString("closeBtn")
+                val icon = entity.closeBtn
                 if (!icon.isNullOrBlank()) {
                     visibility = View.VISIBLE
                     glide(icon)
                     setOnClickListener { dismiss() }
                 }
             }
+        }
+    }
+
+    class EntityDialogVarFunc(ob: JSONObject? = null): IJson(ob, true) {
+
+
+        var bg: String? = null
+        var width: Int? = null
+        var height: Int? = null
+        var button: Button? = null
+        var tips: Tips? = null
+        var closeBtn: String? = null
+        var clickBgHide: Boolean? = null
+        var nextShowTime: Long? = null
+
+
+        init {
+            logd(clickBgHide)
+            logd(ob)
+            logd(clickBgHide)
+        }
+
+        class Button(ob: JSONObject? = null): IJson(ob, true) {
+            var bg: String? = null
+            var color: String? = null
+            var title: String? = null
+            var left: Int? = null
+            var bottom: Int? = null
+            var url: String? = null
+        }
+        class Tips(ob: JSONObject? = null): IJson(ob, true) {
+            var color: String? = null
+            var title: String? = null
+            var bottom: Int? = null
         }
     }
 

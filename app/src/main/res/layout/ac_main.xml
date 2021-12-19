@@ -2,35 +2,36 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ly_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:id="@+id/ly_root"
     android:background="#fff"
+    android:orientation="vertical"
     tools:context=".AcMain">
 
     <LinearLayout
         android:id="@+id/ly_find_teacher"
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    <com.zwping.a.LayerFindTeacher
-        android:id="@+id/layer_find_teacher"
-        android:layout_marginLeft="70dp"
-        android:layout_marginRight="70dp"
-        android:layout_marginTop="140dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.zwping.a.LayerFindTeacher
+            android:id="@+id/layer_find_teacher"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="70dp"
+            android:layout_marginTop="140dp"
+            android:layout_marginRight="70dp" />
 
         <TextView
-            android:layout_marginTop="20dp"
-            android:textSize="14dp"
-            android:textColor="#222"
-            android:layout_gravity="center_horizontal"
-            android:text="正在为你匹配老师…"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:text="正在为你匹配老师…"
+            android:textColor="#222"
+            android:textSize="14dp" />
 
     </LinearLayout>
 
@@ -38,5 +39,129 @@
         android:id="@+id/view_pager2"
         android:layout_width="match_parent"
         android:layout_height="200dp" />
+
+    <TextView
+        android:id="@+id/tv1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tv2"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="bottom" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#fff">
+
+        <androidx.appcompat.widget.Toolbar
+            app:title="名师测评入口页"
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize" />
+
+        <com.zwping.alibx.StateLayout
+            android:id="@+id/state_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="?actionBarSize">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:paddingLeft="40dp"
+                    android:paddingRight="40dp"
+                    android:orientation="vertical">
+
+
+                    <TextView
+                        android:id="@+id/tv_title"
+                        android:text="邀请你参加名师测评"
+                        android:textSize="24dp"
+                        android:textColor="#222"
+                        android:textStyle="bold"
+                        android:layout_marginTop="16dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:id="@+id/tv_title2"
+                        android:text="要艺考？先测评！"
+                        android:textSize="16dp"
+                        android:textColor="#EF8426"
+                        android:textStyle="bold"
+                        android:layout_marginTop="10dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/tv_content"
+                        android:text="名师测评功能通过AI智能算法，帮你找到适合你的艺考名师，预约测评后，名师能够帮你："
+                        android:textSize="14dp"
+                        android:textColor="#666"
+                        android:lineHeight="26dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/tv_content2"
+                        android:text="1.对你的专业能力进行评估；
+2.测试你适合的艺考方向；
+3.解答你的艺考相关困惑；
+4.获取专业能力提升建议。"
+                        android:textSize="14dp"
+                        android:textColor="#222"
+                        android:lineHeight="26dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <ImageView
+                        android:id="@+id/iv_cover"
+                        android:layout_marginTop="26dp"
+                        android:layout_width="match_parent"
+                        android:minHeight="190dp"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_start"
+                    android:layout_gravity="bottom"
+                    android:layout_marginBottom="73dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    app:cornerRadius="23dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:stateListAnimator="@null"
+                    android:layout_marginLeft="62dp"
+                    android:layout_marginRight="62dp"
+                    app:backgroundTint="#0a84ff"
+                    android:textColor="#fff"
+                    android:textSize="14dp"
+                    android:text="立即参加"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_tips"
+                    android:text="已有441304人参加测评"
+                    android:textSize="12dp"
+                    android:textColor="#999"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:layout_marginBottom="46dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </FrameLayout>
+
+        </com.zwping.alibx.StateLayout>
+
+    </FrameLayout>
 
 </FrameLayout>
