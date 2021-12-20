@@ -170,9 +170,15 @@ class AcThree: BaseAc<Test3Binding>() {
         }
         vb.stateLayout.showContentView()
 
+        handler.postDelayed({
+                            vb.viewPager2.getBannerAdp<Entity.Content>()?.also {
+                                it.data?.forEach { it.name = "123" }
+                                it.notifyDataSetChanged()
+                            }
+        }, 3000)
 
-        vb.stateLayout.showEmptyView("没有找到和你信息匹配的老师\n" +
-                "请更换专业再试试吧～")
+//        vb.stateLayout.showEmptyView("没有找到和你信息匹配的老师\n" +
+//                "请更换专业再试试吧～")
     }
 
 

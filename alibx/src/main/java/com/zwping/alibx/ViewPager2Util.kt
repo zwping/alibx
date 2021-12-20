@@ -135,8 +135,8 @@ object ViewPager2Util {
                 when(state) {
                     ViewPager2.SCROLL_STATE_DRAGGING -> { // 滑动衔接
                         when(viewPager2.currentItem) { // 左右各加2个预留位
-                            0 -> viewPager2.setCurrentItem(3, false)
-                            1 -> viewPager2.setCurrentItem(4, false)
+                            0 -> viewPager2.setCurrentItem(adp.dataSize, false)
+                            1 -> viewPager2.setCurrentItem(adp.dataSize+1, false)
                             adp.dataSize+4-2 -> viewPager2.setCurrentItem(2, false)
                             adp.dataSize+4-1 -> viewPager2.setCurrentItem(3, false)
                         }
@@ -227,7 +227,7 @@ class BannerAdapter<T>(private val hasLoop: Boolean,
                        private val bindView: (view: View, data: MutableList<T>, position: Int)->Unit):
     RecyclerView.Adapter<BannerHolder>() {
 
-    var data: MutableList<T>? = null
+    var data: MutableList<T>? = null  // bug 不支持数据刷新
         set(value) { field = value; notifyDataSetChanged() }
     var dataSize: Int = 0
         get() = if (data == null) 0 else data!!.size

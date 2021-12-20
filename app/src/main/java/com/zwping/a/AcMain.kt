@@ -14,11 +14,13 @@ import android.view.*
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.zackratos.ultimatebarx.ultimatebarx.java.UltimateBarX
 import com.zackratos.ultimatebarx.ultimatebarx.navigationBarHeight
 import com.zwping.a.databinding.AcMainBinding
@@ -99,34 +101,43 @@ class AcMain : BaseAc<AcMainBinding>() {
 //            setContentView(vb.root)
 //        }).show()
 
-        Dlg(this).show()
+        // Dlg(this).show()
 
-        com.zwping.alibx.logd(
-            navigationBarHeight,
-            Bar.getNavBarHeight(this),
-            Bar.isNavBarVisible(this),
-            commonNavigationBarExist()
-        )
+        var p1 = 2
+        vb.viewPager23.initBannerOfVB({ Test1Binding.inflate(it.getLayoutInflater(), it, false) },
+            { view, data: MutableList<E>, position ->
+                logd(position, data[position].s)
+                view.tvTips.text = data[position].s
+        }, opt = { onPageSelected = {position, count, data -> p1 = position } })
+        vb.viewPager23.registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback(){
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+//                logd("真实: $position")
+            }
+        })
+        vb.viewPager23.setBannerMultiItem(6F.dp2px(), 15F.dp2px())
+//        vb.viewPager23.setBannerData(mutableListOf("1", "2", "3"))
+        vb.viewPager23.setBannerData(mutableListOf(E("1"), E("2"), E("3"), E("4"), E("5")))
+        vb.viewPager23.offscreenPageLimit = 100
+
+        handler.postDelayed({
+                            vb.viewPager23.getBannerAdp<E>()?.also {
+                                it.data?.forEach { it.s = "100${it.s}" }
+                                val data = mutableListOf<E>()
+                                it.data?.forEach { data.add(it) }
+                                vb.viewPager23.initBannerOfVB({ Test1Binding.inflate(it.getLayoutInflater(), it, false) },
+                                    { view, data: MutableList<E>, position ->
+                                        logd(position, data[position].s)
+                                        view.tvTips.text = data[position].s
+                                    })
+                                vb.viewPager23.setBannerData(data, false)
+                                vb.viewPager23.setCurrentItem(p1+2, false)
+                            }
+        }, 3000)
+//        open(AcThree::class.java)
     }
 
-    fun Context.commonNavigationBarExist(): Boolean {
-        val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val d = wm.defaultDisplay
-        val realDisplayMetrics = DisplayMetrics()
-
-        d.getRealMetrics(realDisplayMetrics)
-
-        val realHeight = realDisplayMetrics.heightPixels
-        val realWidth = realDisplayMetrics.widthPixels
-
-        val displayMetrics = DisplayMetrics()
-        d.getMetrics(displayMetrics)
-
-        val displayHeight = displayMetrics.heightPixels
-        val displayWidth = displayMetrics.widthPixels
-
-        return realWidth - displayWidth > 0 || realHeight - displayHeight > 0
-    }
+    data class E(var s: String="0")
 
 
 
