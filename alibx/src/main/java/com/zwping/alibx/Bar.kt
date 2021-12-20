@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Point
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
+import android.provider.Settings
 import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.*
@@ -20,6 +21,12 @@ import androidx.core.view.WindowInsetsCompat.Type.*
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.*
 import androidx.fragment.app.Fragment
+import android.view.ViewGroup
+
+import androidx.annotation.NonNull
+
+
+
 
 /**
  * 基于Android 5.0 状态栏/导航栏 散装方法
@@ -101,7 +108,8 @@ object Bar {
         val window = dialog.window ?: return
         WindowCompat.setDecorFitsSystemWindows(window, false)
         if (!navImmersive) { // 不考虑二次逆向调用
-            addMarginBottomNavBarHeight(dialog.findViewById<ViewGroup?>(android.R.id.content)?.getChildAt(0))
+            val content = dialog.findViewById<ViewGroup?>(android.R.id.content)?.getChildAt(0)
+            addMarginBottomNavBarHeight(content)
         }
         setStatusBarColor(window, color)
         darkMode?.also { setStatusBarDarkMode(window, it) }
@@ -242,7 +250,9 @@ object Bar {
     }
     fun getNavBarHeight(ctx: Context?): Int {
         ctx ?: return 0
-        if (!isSupperNavBar(ctx)) return 0
+        // if (!isSupperNavBar(ctx)) return 0
+        if (isFullScreenGestureOn(ctx)) return 0
+        if (!isNavBarVisible(ctx)) return 0
         val resId = ctx.resources.getIdentifier("navigation_bar_height", "dimen", "android")
         if (resId == 0) return 0
         return ctx.resources.getDimensionPixelSize(resId)
@@ -276,6 +286,7 @@ object Bar {
         return outMetrics
     }
 
+    @Deprecated("isNavBarVisible")
     fun isSupperNavBar(ctx: Context?): Boolean {
         ctx ?: return false
         val wm = ctx.getSystemService(Context.WINDOW_SERVICE) as WindowManager? ?: return false
@@ -285,6 +296,43 @@ object Bar {
         display.getSize(size)
         display.getRealSize(realSize)
         return realSize.y != size.y || realSize.x != size.x
+    }
+
+    /*** 是否有导航栏, 导航栏是否可见 ***/
+    fun isNavBarVisible(context: Context?): Boolean {
+        context ?: return false
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val d = wm.defaultDisplay
+        val realDisplayMetrics = DisplayMetrics()
+
+        d.getRealMetrics(realDisplayMetrics)
+
+        val realHeight = realDisplayMetrics.heightPixels
+        val realWidth = realDisplayMetrics.widthPixels
+
+        val displayMetrics = DisplayMetrics()
+        d.getMetrics(displayMetrics)
+
+        val displayHeight = displayMetrics.heightPixels
+        val displayWidth = displayMetrics.widthPixels
+
+        return realWidth - displayWidth > 0 || realHeight - displayHeight > 0
+    }
+
+    /*** 全面屏手势是否开启
+     * 开启则导航栏不可见但又可以测量
+     * from ultimatebarx
+     * ***/
+    fun isFullScreenGestureOn(context: Context?): Boolean {
+        context ?: return false
+        return try {
+            val miui = Settings.Global.getInt(context.contentResolver, "force_fsg_nav_bar", -1) > 0
+            val emui = Settings.Global.getInt(context.contentResolver, "navigationbar_is_min", -1) > 0
+            val funtouch = Settings.Secure.getInt(context.contentResolver, "navigation_gesture_on", -1) > 0
+            return miui || emui || funtouch
+        } catch (e: Exception) {
+            false
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.P)

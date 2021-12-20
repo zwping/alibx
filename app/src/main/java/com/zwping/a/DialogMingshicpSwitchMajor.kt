@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.zackratos.ultimatebarx.ultimatebarx.navigationBarHeight
 import com.zwping.a.databinding.Test5Binding
 import com.zwping.a.databinding.Test6Binding
 import com.zwping.alibx.*
@@ -31,6 +32,7 @@ class DialogMingshicpSwitchMajor(context: Context?) : IDialog.Dialog(context) {
 
     init {
         setContentView(vb.root)
+
         Bar.immersive(this, darkMode = true)
         vb.recyclerView.addMarginTopStatusBarHeight()
         vb.lyRoot.background = createGradientDrawable {

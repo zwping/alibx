@@ -1,12 +1,15 @@
 package com.zwping.a
 
 import android.animation.ValueAnimator
+import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.Rect
 import android.os.Bundle
 import android.text.Html
+import android.util.DisplayMetrics
 import android.view.*
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
@@ -16,6 +19,8 @@ import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.zackratos.ultimatebarx.ultimatebarx.java.UltimateBarX
+import com.zackratos.ultimatebarx.ultimatebarx.navigationBarHeight
 import com.zwping.a.databinding.AcMainBinding
 import com.zwping.a.databinding.Test1Binding
 import com.zwping.a.databinding.TestBinding
@@ -24,6 +29,7 @@ import com.zwping.alibx.*
 import com.zwping.alibx.Util.logd
 import okio.ByteString.Companion.encode
 import org.json.JSONObject
+import java.lang.ClassCastException
 import java.security.Key
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
@@ -95,9 +101,34 @@ class AcMain : BaseAc<AcMainBinding>() {
 
         Dlg(this).show()
 
-
-
+        com.zwping.alibx.logd(
+            navigationBarHeight,
+            Bar.getNavBarHeight(this),
+            Bar.isNavBarVisible(this),
+            commonNavigationBarExist()
+        )
     }
+
+    fun Context.commonNavigationBarExist(): Boolean {
+        val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val d = wm.defaultDisplay
+        val realDisplayMetrics = DisplayMetrics()
+
+        d.getRealMetrics(realDisplayMetrics)
+
+        val realHeight = realDisplayMetrics.heightPixels
+        val realWidth = realDisplayMetrics.widthPixels
+
+        val displayMetrics = DisplayMetrics()
+        d.getMetrics(displayMetrics)
+
+        val displayHeight = displayMetrics.heightPixels
+        val displayWidth = displayMetrics.widthPixels
+
+        return realWidth - displayWidth > 0 || realHeight - displayHeight > 0
+    }
+
+
 
     class Dlg(context: Context) : IDialog.Dialog(context) {
 
@@ -132,7 +163,6 @@ class AcMain : BaseAc<AcMainBinding>() {
 
             val entity = EntityDialogVarFunc(ob)
 
-            showToast(entity.clickBgHide)
             setCanceledOnTouchOutside(entity.clickBgHide == true)
             val w = context.getScreenWidth() * 0.78F
             var h = w * 427F / 290 // 原本比例宽高
@@ -202,9 +232,6 @@ class AcMain : BaseAc<AcMainBinding>() {
 
 
         init {
-            logd(clickBgHide)
-            logd(ob)
-            logd(clickBgHide)
         }
 
         class Button(ob: JSONObject? = null): IJson(ob, true) {
