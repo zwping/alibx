@@ -53,6 +53,6 @@ dependencies {
     debugImplementation 'io.github.razerdp:BasePopup:3.2.0'
     debugImplementation 'com.github.Zackratos:UltimateBarX:v0.7.1'
 
-//    implementation 'com.zwping:alibx:0.6.8'
+//    implementation 'com.zwping:alibx:0.6.9'
     implementation project(':alibx')
 }

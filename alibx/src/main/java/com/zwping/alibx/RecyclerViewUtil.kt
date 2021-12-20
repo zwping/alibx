@@ -147,7 +147,17 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() 
     }
 
     // override fun getItemViewType(position: Int): Int { } // 多布局实现
-    override fun onBindViewHolder(holder: BaseViewHolder<E, View>, position: Int) { holder.bind(datas, position) }
+    override fun onBindViewHolder(holder: BaseViewHolder<E, View>, position: Int) {
+        holder.bind(datas, position)
+        onHolderItemClick?.invoke(holder.itemView, datas[position], position)
+        onItemClickListener?.also {
+            holder.itemView.setOnClickListener { view -> it(view, datas[position], position) }
+        }
+    }
+
+    // 长按, child item点击事件
+    var onHolderItemClick: ((view: View, entity: E, index: Int)->Unit)? = null
+    var onItemClickListener: ((view: View, entity: E, index: Int)->Unit)? = null
 
     override fun getItemCount(): Int = datas.size
 

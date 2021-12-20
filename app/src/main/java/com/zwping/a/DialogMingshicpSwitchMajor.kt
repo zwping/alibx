@@ -53,6 +53,25 @@ class DialogMingshicpSwitchMajor(context: Context?) : IDialog.Dialog(context) {
             }
         }
         vb.recyclerView.adapter = adp
+        adp.onItemClickListener = { view, entity, index ->
+            when (entity.itemViewType) {
+                Style.Dir -> {
+                    entity as Entity.Dir
+                    entity.selected = entity.selected != true
+                    adp.datas.filter { it.itemViewType == Style.Major && (it as Entity.Major).dirid == entity.id }
+                        .forEach { (it as Entity.Major).selected = entity.selected }
+                    adp.notifyDataSetChanged()
+                }
+                Style.Major -> {
+                    entity as Entity.Major
+                    entity.selected = entity.selected != true
+                    val data = adp.datas.filter { it.itemViewType == Style.Major && (it as Entity.Major).dirid == entity.dirid }
+                    adp.datas.filter { it.itemViewType == Style.Dir && (it as Entity.Dir).id == entity.dirid }
+                        .forEach { (it as Entity.Dir).selected = data.size == data.filter { (it as Entity.Major).selected == true }.size }
+                    adp.notifyDataSetChanged()
+                }
+            }
+        }
         setData()
     }
 
@@ -423,9 +442,6 @@ class DialogMingshicpSwitchMajor(context: Context?) : IDialog.Dialog(context) {
                 { vb, entity: Entity.Dir ->
                     vb.tvTitle.text = entity.name
                     vb.iv.setBackgroundColor(if (entity.selected == true) Color.RED else Color.YELLOW)
-                    itemView.setOnClickListener {
-
-                    }
                 }
             )
         },
@@ -452,9 +468,6 @@ class DialogMingshicpSwitchMajor(context: Context?) : IDialog.Dialog(context) {
                 }, { view, entity: Entity.Major ->
                     view.text = entity.name
                     view.isSelected = entity.selected == true
-                    itemView.setOnClickListener {
-                        entity.selected = true
-                    }
                 }
             )
         }
