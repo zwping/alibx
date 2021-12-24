@@ -1,5 +1,6 @@
 package com.zwping.alibx
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.res.Resources
@@ -16,6 +17,8 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.bitmap.TransformationUtils
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.FutureTarget
@@ -123,6 +126,7 @@ object ImageLoader {
 
     // --------------
 
+    @SuppressLint("CheckResult")
     private fun builder(iv: ImageView?, url: String?,
                         ctx: Context?=null,
                         option: ImgLoaderOpt.()->Unit={ }): RequestBuilder<*>? {
@@ -145,18 +149,30 @@ object ImageLoader {
         if (opt.errorDrw != null) reqBuilder.error(opt.errorDrw)
         else if (opt.error != null) reqBuilder.error(opt.error!!)
 
-        if (opt.scaleType != null) iv?.scaleType = opt.scaleType
+        val transforms = mutableListOf<BitmapTransformation>()
+        when(opt.scaleType) {
+            null -> {}
+            ImageView.ScaleType.CENTER_CROP -> {
+                // 常见的ImageView.center_crop存在placeholder也跟随铺满iv, 致placeholder变形
+                transforms.add(CenterCrop())
+            }
+            else -> iv?.scaleType = opt.scaleType
+        }
 
         if (opt.shapeType != ShapeType.Default || opt.radii != null || opt.stroke != null) {
-            reqBuilder.transform(
-                RoundTransformation(
-                    opt.radii ?: floatArrayOf(0F,0F, 0F,0F, 0F,0F, 0F,0F),
-                    opt.stroke?.color,
-                    opt.stroke?.wDp,
-                    opt.shapeType == ShapeType.Circle,
-                    opt.shapeType == ShapeType.Square
-                )
-            )
+            transforms.add(RoundTransformation(
+                opt.radii ?: floatArrayOf(0F,0F, 0F,0F, 0F,0F, 0F,0F),
+                opt.stroke?.color,
+                opt.stroke?.wDp,
+                opt.shapeType == ShapeType.Circle,
+                opt.shapeType == ShapeType.Square
+            ))
+        }
+
+        // reqBuilder.transform(*transforms) // transform方法导致如下调用
+        when(transforms.size){
+            1 -> reqBuilder.transform(transforms[0])
+            2 -> reqBuilder.transform(transforms[0], transforms[1])
         }
 
         if (opt.cacheType == CacheType.None || opt.cacheType == CacheType.Memory)

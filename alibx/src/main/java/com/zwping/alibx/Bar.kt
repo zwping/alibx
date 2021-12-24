@@ -102,7 +102,7 @@ object Bar {
     fun immersive(dialog: AppCompatDialog,
                   @ColorInt color: Int=Color.TRANSPARENT,
                   darkMode: Boolean?=null,
-                  navImmersive: Boolean=false,
+                  navImmersive: Boolean=true,
                   @ColorInt navColor: Int? = null,
                   navDarkMode: Boolean?=null){
         val window = dialog.window ?: return

@@ -52,7 +52,8 @@ dependencies {
     debugImplementation 'com.blankj:utilcodex:1.30.6'
     debugImplementation 'io.github.razerdp:BasePopup:3.2.0'
     debugImplementation 'com.github.Zackratos:UltimateBarX:v0.7.1'
+    debugImplementation 'io.github.youth5201314:banner:2.2.2'
 
-//    implementation 'com.zwping:alibx:0.7.0'
+//    implementation 'com.zwping:alibx:0.7.1'
     implementation project(':alibx')
 }

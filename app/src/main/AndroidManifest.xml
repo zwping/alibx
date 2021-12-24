@@ -23,6 +23,7 @@
         </activity>
         <activity android:name=".AcSecond" />
         <activity android:name=".AcThree" />
+        <activity android:name=".bug.AcBugVp2" />
     </application>
 
 </manifest>

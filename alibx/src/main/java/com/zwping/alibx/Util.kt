@@ -2,6 +2,11 @@ package com.zwping.alibx
 
 import android.util.Log
 import androidx.annotation.IntRange
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.io.Serializable
 
 /**
  * 精简工具
@@ -60,6 +65,21 @@ object Util {
             3 -> String.format("%.${sig}f%s", size/(1024*1024*1024F), units[index])
             else -> String.format("%.${sig}f%s", size/(1024*1024*1024*1024F), units[index])
         }
+    }
+
+    /**
+     * 深度拷贝, 要求T序列化[Serializable]
+     */
+    fun <T> deepCopy(t: T?): T?{
+        t ?: return null
+        return try {
+            val baos = ByteArrayOutputStream()
+            val oos = ObjectOutputStream(baos)
+            oos.writeObject(t)
+            val bais = ByteArrayInputStream(baos.toByteArray())
+            val ois = ObjectInputStream(bais)
+            ois.readObject() as T
+        } catch (e: Exception) { null }
     }
 
 }

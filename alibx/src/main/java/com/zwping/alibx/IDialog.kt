@@ -106,7 +106,6 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         var cancelabled = true              // 返回键 & 空白区域是否可以关闭
             private set(value) { field = value; canceledOnTouchOutSide = value }
         var canceledOnTouchOutSide = true   // 空白区域是否可以关闭
-            private set(value) { if (cancelabled) field = value }
         var canceledOnTouchOutSideSuper = false // 更强空白区域是否可以关闭, decorView两侧空白点击也可以关闭
             private set
         /*** 显示动画, 辅助类快捷调用[AnimHelper] ***/
