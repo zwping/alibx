@@ -103,7 +103,7 @@ class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             if (!hasLoop || adapter == null) return
             when(state) {
                 ViewPager2.SCROLL_STATE_DRAGGING -> {       // 滑动中衔接
-//                    loopCompensation()
+                    loopCompensation()
                 }
                 ViewPager2.SCROLL_STATE_SETTLING -> { }     // 手指滑动完成, 进入惯性滑动
                 ViewPager2.SCROLL_STATE_IDLE -> {           // 滑动闲置衔接
@@ -206,7 +206,6 @@ class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     fun destroy() { pause(); owner?.lifecycle?.removeObserver(this) }
 
     private val task: Runnable by lazy { Runnable {
-        logd(123)
         viewPager2.also { it.currentItem = it.currentItem+1 }
         postDelayed(task, loopInterval)
     } }
