@@ -17,6 +17,8 @@ import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
@@ -72,6 +74,8 @@ class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         }
     // 轮播间隔
     var loopInterval = 3000L
+    // 轮播速度
+    var scrollTime = 600
     // 默认指示器
     var defIndicator: BannerIndicator? = null
 
@@ -120,6 +124,7 @@ class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     }
 
     init {
+        ScrollSpeedManager.reflectLayoutManager(this)
         addView(viewPager2)
         viewPager2.unregisterOnPageChangeCallback(callback)
         viewPager2.registerOnPageChangeCallback(callback)
@@ -201,6 +206,7 @@ class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     fun destroy() { pause(); owner?.lifecycle?.removeObserver(this) }
 
     private val task: Runnable by lazy { Runnable {
+        logd(123)
         viewPager2.also { it.currentItem = it.currentItem+1 }
         postDelayed(task, loopInterval)
     } }
@@ -231,6 +237,60 @@ class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     }
 }
 
+class ScrollSpeedManager(val banner: Banner<*>, lm: LinearLayoutManager) :
+    LinearLayoutManager(banner.context, lm.orientation, false) {
+    // from youth banner
+
+    override fun smoothScrollToPosition(recyclerView: RecyclerView?, state: RecyclerView.State?, position: Int) {
+        val ctx = recyclerView?.context
+        if (ctx == null) {
+            super.smoothScrollToPosition(recyclerView, state, position); return
+        }
+        val linearSmoothScroller: LinearSmoothScroller = object : LinearSmoothScroller(ctx) {
+                override fun calculateTimeForDeceleration(dx: Int) = banner.scrollTime
+            }
+        linearSmoothScroller.targetPosition = position
+        startSmoothScroll(linearSmoothScroller)
+    }
+
+    companion object {
+        fun reflectLayoutManager(banner: Banner<*>) {
+            try {
+                val viewPager2 = banner.viewPager2
+                val recyclerView = viewPager2.getChildAt(0) as RecyclerView
+                recyclerView.overScrollMode = RecyclerView.OVER_SCROLL_NEVER
+
+                val speedManger = ScrollSpeedManager(banner, recyclerView.layoutManager as LinearLayoutManager)
+                recyclerView.layoutManager = speedManger
+
+                val LayoutMangerField = ViewPager2::class.java.getDeclaredField("mLayoutManager")
+                LayoutMangerField.isAccessible = true
+                LayoutMangerField[viewPager2] = speedManger
+
+                val pageTransformerAdapterField = ViewPager2::class.java.getDeclaredField("mPageTransformerAdapter")
+                pageTransformerAdapterField.isAccessible = true
+                val mPageTransformerAdapter = pageTransformerAdapterField[viewPager2]
+                if (mPageTransformerAdapter != null) {
+                    val aClass: Class<*> = mPageTransformerAdapter.javaClass
+                    val layoutManager = aClass.getDeclaredField("mLayoutManager")
+                    layoutManager.isAccessible = true
+                    layoutManager[mPageTransformerAdapter] = speedManger
+                }
+                val scrollEventAdapterField = ViewPager2::class.java.getDeclaredField("mScrollEventAdapter")
+                scrollEventAdapterField.isAccessible = true
+                val mScrollEventAdapter = scrollEventAdapterField[viewPager2]
+                if (mScrollEventAdapter != null) {
+                    val aClass: Class<*> = mScrollEventAdapter.javaClass
+                    val layoutManager = aClass.getDeclaredField("mLayoutManager")
+                    layoutManager.isAccessible = true
+                    layoutManager[mScrollEventAdapter] = speedManger
+                }
+            } catch (e: Exception) { }
+        }
+    }
+
+}
+
 abstract class BannerAdapter<T, VH: RecyclerView.ViewHolder> : RecyclerView.Adapter<VH>() {
 
     // 循环滚动(扩充4个Item)
@@ -255,6 +315,7 @@ abstract class BannerAdapter<T, VH: RecyclerView.ViewHolder> : RecyclerView.Adap
         onBindViewHolder2(holder, realPosition(position))
     }
     override fun getItemCount(): Int = datas.size + (if (hasLoop) 4 else 0)
+
 }
 
 class BannerIndicator @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : FrameLayout(context, attrs) {

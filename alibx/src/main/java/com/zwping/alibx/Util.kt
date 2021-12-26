@@ -31,6 +31,7 @@ object Util {
                 if (it.size >= (4+stackOffset)) { element = it[3+stackOffset]; return@also }
             }
         }
+        // Thread.currentThread().stackTrace.forEach { println(it) }
         element = if (element != null) "$element -> " else ""
         Log.d("System.out", "$element${msgs.map { "$it" }.toString().let { it.substring(1, it.length-1) }}")
     }

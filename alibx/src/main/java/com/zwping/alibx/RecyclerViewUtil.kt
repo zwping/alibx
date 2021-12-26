@@ -173,6 +173,14 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() 
             override fun getChangePayload(op: Int, np: Int): Any? = diffCallback?.getChangePayload(_od[op], _nd[np])
         }
     }
+
+    override fun onViewAttachedToWindow(holder: BaseViewHolder<E, View>) {
+        holder.onAttach()
+    }
+
+    override fun onViewDetachedFromWindow(holder: BaseViewHolder<E, View>) {
+        holder.onDetached()
+    }
 }
 /*** 一行代码代码实现Adapter ***/
 open class AdapterQuick<E>(val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>): BaseAdapter<E>(){
@@ -210,13 +218,20 @@ open class AdapterMulti<ENUM>(enums: Array<ENUM>): BaseAdapterMulti<ENUM>(enums)
 open class BaseViewHolder<E, out V: View>(
             val view: V,
             private val bindViewHolder: BaseViewHolder<E, V>.(view: V, entity: E) -> Unit):
-        RecyclerView.ViewHolder(view) {
+        RecyclerView.ViewHolder(view), IBaseViewHolder {
     var entity: E?=null
     private var _datas: MutableList<E>?=null
     fun bind(datas: MutableList<E>, position: Int) { _datas=datas; bind(datas[position]) }
     fun bind(entity: E) { this.entity=entity; bindViewHolder(this, view, entity) }
 
     fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
+
+    override fun onAttach() {  }
+    override fun onDetached() { }
+}
+interface IBaseViewHolder {
+    fun onAttach()
+    fun onDetached()
 }
 /*** ViewHolder ViewBinding支持 ***/
 open class BaseViewHolderVB<E, out VB: ViewBinding>(

@@ -45,7 +45,7 @@ class App : Application() {
     class LoginInterceptor: ISchemeInterceptor{
         override val weight: Int = 10
         override fun process(ctx: Context, scheme: SchemeStandard): Boolean {
-            logd(scheme)
+            // logd(scheme)
             return false
         }
     }
