@@ -9,23 +9,23 @@
     android:orientation="vertical"
     tools:context=".AcMain">
 
-<androidx.core.widget.NestedScrollView
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <LinearLayout
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager2"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent" />
 
-        <com.zwping.alibx.Banner
-            android:id="@+id/banner"
-            android:layout_width="match_parent"
-            android:layout_height="128dp" />
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1000dp" />
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="44dp">
+        <ImageView
+            android:id="@+id/iv_share"
+            android:background="?android:attr/actionBarItemBackground"
+            android:src="@drawable/ic_launcher_foreground"
+            android:layout_gravity="end"
+            android:layout_width="44dp"
+            android:layout_height="44dp" />
+    </androidx.appcompat.widget.Toolbar>
 
 
 </FrameLayout>

@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="../../.gradle/caches/transforms-2/files-2.1/1111bbd596edb3a729b63e336bbfabae/jetified-gsyVideoPlayer-java-v8.1.7-release-jitpack/res/layout/video_layout_normal.xml" value="0.1" />
         <entry key="../../.gradle/caches/transforms-2/files-2.1/72d4280f198069257c241d6b29aabce9/jetified-utilcodex-1.30.6/res/drawable/utils_toast_bg.xml" value="0.2635416666666667" />
         <entry key="../../.gradle/caches/transforms-2/files-2.1/72d4280f198069257c241d6b29aabce9/jetified-utilcodex-1.30.6/res/layout/utils_toast_view.xml" value="0.13496376811594202" />
         <entry key="../../Library/Android/sdk/platforms/android-30/data/res/layout-sw600dp/date_picker_dialog.xml" value="0.11133879781420765" />
@@ -10,7 +11,7 @@
         <entry key="alibx/src/main/res/xml/network_security_config.xml" value="0.1734375" />
         <entry key="app/src/main/res/drawable/progressbar.xml" value="0.2635416666666667" />
         <entry key="app/src/main/res/layout/ac_bug_vp2.xml" value="0.19972826086956522" />
-        <entry key="app/src/main/res/layout/ac_main.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/ac_main.xml" value="0.375" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.14206300185299567" />
         <entry key="app/src/main/res/layout/test.xml" value="0.165" />
         <entry key="app/src/main/res/layout/test1.xml" value="0.28286852589641437" />
@@ -18,6 +19,7 @@
         <entry key="app/src/main/res/layout/test4.xml" value="0.125" />
         <entry key="app/src/main/res/layout/test5.xml" value="0.25" />
         <entry key="app/src/main/res/layout/test6.xml" value="0.45" />
+        <entry key="app/src/main/res/layout/video_view_portrait.xml" value="0.16485507246376813" />
       </map>
     </option>
   </component>

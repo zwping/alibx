@@ -216,27 +216,33 @@ open class AdapterMulti<ENUM>(enums: Array<ENUM>): BaseAdapterMulti<ENUM>(enums)
     }
 }
 open class BaseViewHolder<E, out V: View>(
-            val view: V,
-            private val bindViewHolder: BaseViewHolder<E, V>.(view: V, entity: E) -> Unit):
-        RecyclerView.ViewHolder(view), IBaseViewHolder {
+    val view: V,
+    private val bindViewHolder: BaseViewHolder<E, V>.(view: V, entity: E) -> Unit
+): RecyclerView.ViewHolder(view), IBaseViewHolder<E> {
     var entity: E?=null
     private var _datas: MutableList<E>?=null
-    fun bind(datas: MutableList<E>, position: Int) { _datas=datas; bind(datas[position]) }
+    override fun bind(datas: MutableList<E>, position: Int) {
+        if (datas.isNullOrEmpty()) return
+        _datas=datas; bind(datas[position])
+    }
     fun bind(entity: E) { this.entity=entity; bindViewHolder(this, view, entity) }
 
-    fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
+    override fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
 
     override fun onAttach() {  }
     override fun onDetached() { }
 }
-interface IBaseViewHolder {
+interface IBaseViewHolder<E> {
+    fun bind(datas: MutableList<E>, position: Int)
+    fun isLastPosition(): Boolean
+
     fun onAttach()
     fun onDetached()
 }
 /*** ViewHolder ViewBinding支持 ***/
 open class BaseViewHolderVB<E, out VB: ViewBinding>(
             val vb: VB,
-            private val bindViewHolder: BaseViewHolderVB<E, VB>.(vb: VB, entity: E) -> Unit) :
+            private val bindViewHolder: BaseViewHolderVB<E, VB>.(vb: VB, entity: E) -> Unit):
         BaseViewHolder<E, View>(vb.root, {_, entity -> bindViewHolder(this as BaseViewHolderVB<E, VB>, vb, entity) })
 interface DiffCallback<E> {
     fun areItemsTheSame(od: E, nd: E): Boolean

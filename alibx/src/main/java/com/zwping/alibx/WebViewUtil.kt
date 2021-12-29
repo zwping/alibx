@@ -3,15 +3,13 @@ package com.zwping.alibx
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.graphics.drawable.ClipDrawable
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.*
 import android.net.Uri
 import android.os.Build
 import android.view.Gravity
 import android.webkit.*
 import android.widget.ProgressBar
+import androidx.annotation.Px
 
 /**
  * webview
@@ -87,17 +85,29 @@ object WebViewUtil {
     fun setProgressBarColor(progressBar: ProgressBar?,
                             bgColor: Int,
                             progressColor: Int,
-                            secondaryProgress: Int = -1){
+                            secondaryColor: Int = -1,
+                            @Px radius: Float = 0F,
+                            @Px height: Int = -1){
         progressBar ?: return
-        val bgClipDrawable = ClipDrawable(ColorDrawable(bgColor), Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        val bgClipDrawable = ClipDrawable(GradientDrawable().apply { setColor(bgColor); cornerRadius = radius },
+            Gravity.LEFT, ClipDrawable.HORIZONTAL)
         bgClipDrawable.level = 10000
-        val progressClip = ClipDrawable(ColorDrawable(progressColor), Gravity.LEFT, ClipDrawable.HORIZONTAL)
-        val secondaryClip = if (secondaryProgress == -1) null else ClipDrawable(ColorDrawable(secondaryProgress), Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        val progressClip = ClipDrawable(GradientDrawable().apply { setColor(progressColor); cornerRadius = radius },
+            Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        var secondaryClip: ClipDrawable? = null
+        if (secondaryColor != -1)
+            secondaryClip = ClipDrawable(GradientDrawable().apply { setColor(secondaryColor); cornerRadius = radius },
+                Gravity.LEFT, ClipDrawable.HORIZONTAL)
         val progressDrawables = arrayOf<Drawable>(bgClipDrawable, secondaryClip ?: progressClip, progressClip)
         val progressLayerDrawable = LayerDrawable(progressDrawables)
         progressLayerDrawable.setId(0, android.R.id.background)
         progressLayerDrawable.setId(1, android.R.id.secondaryProgress)
         progressLayerDrawable.setId(2, android.R.id.progress)
+        if (height != -1 && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            progressLayerDrawable.setLayerHeight(0, height)
+            progressLayerDrawable.setLayerHeight(1, height)
+            progressLayerDrawable.setLayerHeight(2, height)
+        }
         progressBar.progressDrawable = progressLayerDrawable
     }
 
@@ -160,8 +170,10 @@ fun WebView?.initClient(lis: (vc: WebViewClient, cc: WebChromeClient)->Unit,
 fun WebView?.goBack2(): Boolean = WebViewUtil.goBack2(this)
 fun ProgressBar?.setColors(bgColor: Int,
                            progressColor: Int,
-                           secondaryProgress: Int = -1) {
-    WebViewUtil.setProgressBarColor(this, bgColor, progressColor, secondaryProgress)
+                           secondaryProgress: Int = -1,
+                           @Px radius: Float = 0F,
+                           @Px height: Int = -1) {
+    WebViewUtil.setProgressBarColor(this, bgColor, progressColor, secondaryProgress, radius, height)
 }
 
 fun WebView?.android2Js(func: String, callback: ValueCallback<String>) {

@@ -1,6 +1,9 @@
 package com.zwping.alibx
 
+import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.drawable.Animatable
+import android.text.TextPaint
 import android.util.TypedValue
 import android.view.View
 import android.view.animation.CycleInterpolator
@@ -81,6 +84,17 @@ object ViewUtil{
      */
     fun focus(view: View?) {
         view?.apply { isFocusable = true; isFocusableInTouchMode = true; requestFocus() }
+    }
+
+    /**
+     * 获取字符宽、高
+     */
+    fun measureTextWidth(text: String, textSize: Float): IntArray {
+        val paint = Paint()
+        paint.textSize = textSize
+        val rect = Rect()
+        paint.getTextBounds(text, 0, text.length, rect)
+        return intArrayOf(rect.width(), rect.height())
     }
 
 }

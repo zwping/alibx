@@ -131,8 +131,8 @@ class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     }
 
     /**
-     *
      * @param bindView 记得类型强转
+     * @bug1 glide将图片设置了transform转换[圆角], 首尾衔接会有闪动。@Fix 使用ShapeableImageView设置IV圆角
      */
     fun setAdapterImage(bindView: (iv: ShapeableImageView, entity: T)->Unit,
                         owner: LifecycleOwner?=null,
