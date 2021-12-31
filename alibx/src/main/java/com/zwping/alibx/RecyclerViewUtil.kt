@@ -155,6 +155,10 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() 
         }
     }
 
+    override fun onBindViewHolder(holder: BaseViewHolder<E, View>, position: Int, payloads: MutableList<Any>) {
+        if (payloads.isNullOrEmpty()) onBindViewHolder(holder, position) // 有效拦截
+    }
+
     // 长按, child item点击事件
     var onHolderItemClick: ((view: View, entity: E, index: Int)->Unit)? = null
     var onItemClickListener: ((view: View, entity: E, index: Int)->Unit)? = null
@@ -183,7 +187,9 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() 
     }
 }
 /*** 一行代码代码实现Adapter ***/
-open class AdapterQuick<E>(val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>): BaseAdapter<E>(){
+open class AdapterQuick<E>(
+    val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>
+): BaseAdapter<E>(){
     final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
         return createViewHolder(parent)
     }
@@ -241,9 +247,12 @@ interface IBaseViewHolder<E> {
 }
 /*** ViewHolder ViewBinding支持 ***/
 open class BaseViewHolderVB<E, out VB: ViewBinding>(
-            val vb: VB,
-            private val bindViewHolder: BaseViewHolderVB<E, VB>.(vb: VB, entity: E) -> Unit):
-        BaseViewHolder<E, View>(vb.root, {_, entity -> bindViewHolder(this as BaseViewHolderVB<E, VB>, vb, entity) })
+    val vb: VB,
+    private val bindViewHolder: BaseViewHolderVB<E, VB>.(vb: VB, entity: E) -> Unit
+): BaseViewHolder<E, View>(
+    vb.root,
+    { _, entity -> bindViewHolder(this as BaseViewHolderVB<E, VB>, vb, entity) }
+)
 interface DiffCallback<E> {
     fun areItemsTheSame(od: E, nd: E): Boolean
     fun areContentsTheSame(od: E, nd: E): Boolean = false

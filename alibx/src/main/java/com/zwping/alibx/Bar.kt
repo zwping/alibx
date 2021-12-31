@@ -241,21 +241,23 @@ object Bar {
 
 
     /**
+     * status_bar_height
+     * navigation_bar_height
+     */
+    private fun Context.getBarHeight(name: String): Int
+            = resources.getDimensionPixelSize(resources.getIdentifier(name, "dimen", "android"))
+    /**
      * 获取状态栏高度/px
      */
     fun getStatusBarHeight(ctx: Context?): Int {
-        ctx ?: return 0
-        val resId = ctx.resources.getIdentifier("status_bar_height", "dimen", "android")
-        return ctx.resources.getDimensionPixelSize(resId)
+        return ctx?.getBarHeight("status_bar_height") ?: 0
     }
     fun getNavBarHeight(ctx: Context?): Int {
         ctx ?: return 0
         // if (!isSupperNavBar(ctx)) return 0
-        if (isFullScreenGestureOn(ctx)) return 0
+        if (isFullScreenGesture(ctx)) return 0
         if (!isNavBarVisible(ctx)) return 0
-        val resId = ctx.resources.getIdentifier("navigation_bar_height", "dimen", "android")
-        if (resId == 0) return 0
-        return ctx.resources.getDimensionPixelSize(resId)
+        return ctx.getBarHeight("navigation_bar_height")
     }
     fun getActionBarHeight(ctx: Context?): Int {
         ctx ?: return 0
@@ -319,17 +321,21 @@ object Bar {
         return realWidth - displayWidth > 0 || realHeight - displayHeight > 0
     }
 
-    /*** 全面屏手势是否开启
-     * 开启则导航栏不可见但又可以测量
+    /*** 是否开启全面屏手势
      * from ultimatebarx
      * ***/
-    fun isFullScreenGestureOn(context: Context?): Boolean {
+    fun isFullScreenGesture(context: Context?): Boolean {
         context ?: return false
         return try {
-            val miui = Settings.Global.getInt(context.contentResolver, "force_fsg_nav_bar", -1) > 0
+            var miui = Settings.Global.getInt(context.contentResolver, "force_fsg_nav_bar", -1) > 0
+            if (miui) { // miui指示线可以手动隐藏, 显示则判断其为未开启全面屏手势
+                val navh = context.getBarHeight("navigation_bar_height")
+                val screenh = context.getScreenHeight()
+                miui = navh>0 && screenh/navh<=30
+            }
             val emui = Settings.Global.getInt(context.contentResolver, "navigationbar_is_min", -1) > 0
             val funtouch = Settings.Secure.getInt(context.contentResolver, "navigation_gesture_on", -1) > 0
-            return miui || emui || funtouch
+            miui || emui || funtouch
         } catch (e: Exception) {
             false
         }

@@ -21,6 +21,7 @@ import com.shuyu.gsyvideoplayer.render.GSYRenderView
 import com.shuyu.gsyvideoplayer.utils.GSYVideoType
 import com.shuyu.gsyvideoplayer.video.StandardGSYVideoPlayer
 import com.zackratos.ultimatebarx.ultimatebarx.addStatusBarTopPadding
+import com.zackratos.ultimatebarx.ultimatebarx.java.UltimateBarX
 import com.zwping.a.databinding.AcMainBinding
 import com.zwping.a.databinding.Test1Binding
 import com.zwping.alibx.*
@@ -119,9 +120,24 @@ class AcMain : BaseAc<AcMainBinding>() {
         companion object {
             val TAG = "ViewPager2PlayerTag"
         }
+
     }
 
-    private val adp by lazy { AdapterQuick { Holder(it) } }
+    private val adp by lazy { object: AdapterQuick<VideoItem>( { Holder(it) }) {
+        override fun onBindViewHolder(
+            holder: BaseViewHolder<VideoItem, View>,
+            position: Int,
+            payloads: MutableList<Any>
+        ) {
+            super.onBindViewHolder(holder, position, payloads)
+            holder as Holder
+            payloads.forEach {
+                when("$it") {
+                    "payload" -> holder.vb.tvCollectNum.text = "123"
+                }
+            }
+        }
+    }}
 
     override fun initVB(inflater: LayoutInflater): AcMainBinding? {
         return AcMainBinding.inflate(inflater)
@@ -129,6 +145,8 @@ class AcMain : BaseAc<AcMainBinding>() {
 
     override fun initView() {
         immersive()
+        logd(Bar.isNavBarVisible(this), Bar.isFullScreenGesture(this), resources.getDimensionPixelSize(resources.getIdentifier("navigation_bar_height", "dimen", "android")))
+        logd(Bar.getNavBarHeight(this), UltimateBarX.getNavigationBarHeight())
         vb.toolbar.addStatusBarTopPadding()
         vb.toolbar.setNavigationIcon(R.drawable.video_small_close)
 
@@ -143,16 +161,20 @@ class AcMain : BaseAc<AcMainBinding>() {
                     playPosition(position)
                 }
                 //大于0说明有播放
-                val playPosition = GSYVideoManager.instance().playPosition
-                if (playPosition >= 0 &&
-                    GSYVideoManager.instance().playTag == Holder.TAG &&
-                    position != playPosition) {
-                    playPosition(position) }
+//                val playPosition = GSYVideoManager.instance().playPosition
+//                if (playPosition >= 0 &&
+//                    GSYVideoManager.instance().playTag == Holder.TAG &&
+//                    position != playPosition) {
+//                        playPosition(position)
+//                }
             }
         })
 
         adp.setDataOrNull(JSONArray(arr).optJSONArrayOrNull { VideoItem(it) })
         vb.viewPager2.post { playPosition(0) }
+        handler.postDelayed({
+                            adp.notifyItemChanged(0, "payload")
+        }, 2000)
     }
 
     override fun onBackPressed() {
