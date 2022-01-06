@@ -51,6 +51,7 @@ object ViewPager2Util {
 
 /**
  * 基于ViewPager2[BannerAdapter]实现banner功能
+ * @bug todo recyclerview 自动轮播 抢占焦点
  */
 class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null):
     FrameLayout(context, attrs), LifecycleEventObserver {

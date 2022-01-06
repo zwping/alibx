@@ -3,6 +3,7 @@ package com.zwping.alibx
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Animatable
+import android.graphics.drawable.RippleDrawable
 import android.text.TextPaint
 import android.util.TypedValue
 import android.view.View
@@ -10,6 +11,7 @@ import android.view.animation.CycleInterpolator
 import android.view.animation.TranslateAnimation
 import androidx.annotation.ColorInt
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.ripple.RippleDrawableCompat
 
 /**
  * View相关辅助操作
@@ -97,6 +99,19 @@ object ViewUtil{
         return intArrayOf(rect.width(), rect.height())
     }
 
+    /**
+     * 水波纹
+     * @param circle true -> actionBar Navigation点击圆圈效果 / false -> 默认水波纹
+     */
+    fun setRipple(view: View?, circle: Boolean=false) {
+        view ?: return
+        val typed = TypedValue()
+        val rid = if (circle) android.R.attr.actionBarItemBackground else android.R.attr.selectableItemBackground
+        view.context.theme.resolveAttribute(rid, typed, true)
+        if (typed.resourceId != 0) view.setBackgroundResource(typed.resourceId)
+        else view.setBackgroundColor(typed.data)
+    }
+
 }
 /* ---------KTX----------- */
 
@@ -129,4 +144,12 @@ fun MaterialButton?.hideLoading(enabled: Boolean?=true) {
  */
 fun View?.focus() {
     ViewUtil.focus(this)
+}
+
+/**
+ * 水波纹
+ * @param circle true -> actionBar Navigation点击圆圈效果 / false -> 默认水波纹
+ */
+fun View?.setRipple(circle: Boolean=false) {
+    ViewUtil.setRipple(this, circle)
 }

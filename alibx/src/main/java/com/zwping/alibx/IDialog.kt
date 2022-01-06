@@ -32,6 +32,7 @@ import androidx.appcompat.app.AppCompatDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.cardview.widget.CardView
 import androidx.core.animation.addListener
+import androidx.core.view.WindowCompat
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
@@ -86,16 +87,8 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         val rootLayout = FrameLayout(context).apply {
             layoutParams = ViewGroup.LayoutParams(-1, -1)
             setBackgroundColor(getBlackWithAlpha(0.5F))
-            setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
+            setOnClickListener { logd(canceledOnTouchOutSide); if (canceledOnTouchOutSide) dismiss() }
         }
-//        var rootLayout: FrameLayout? = null
-//            get() {
-//                if (field == null) field = FrameLayout(context).apply {
-//                        setBackgroundColor(getBlackWithAlpha(0.5F))
-//                        setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
-//                    }
-//                return field
-//            }
 
 
         val decorView: View?
@@ -106,6 +99,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         var cancelabled = true              // 返回键 & 空白区域是否可以关闭
             private set(value) { field = value; canceledOnTouchOutSide = value }
         var canceledOnTouchOutSide = true   // 空白区域是否可以关闭
+            private set
         var canceledOnTouchOutSideSuper = false // 更强空白区域是否可以关闭, decorView两侧空白点击也可以关闭
             private set
         /*** 显示动画, 辅助类快捷调用[AnimHelper] ***/
@@ -156,6 +150,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             resetThemeCfg()
             rootLayout.removeAllViews()
             val view = inflater(rootLayout)
+            view.setOnClickListener {  } // 空占用, 避免点击内容区域也关闭dialog
             if (view.parent == null) rootLayout.addView(view)
             super.setContentView(rootLayout)
             customView = view
@@ -194,6 +189,13 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                 return
             }
             super.dismiss()
+        }
+
+        /**
+         * @param disabledAnim 禁止使用关闭动画
+         */
+        fun dismiss(disabledAnim: Boolean) {
+
         }
 
         /*** 自定义view时, 恢复部分theme设置 ***/
@@ -245,116 +247,133 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         }
     }
 
-//    final class DialogIOS(
-//        context: Context,
-//        block: DialogIOS.() -> Unit = {},
-//    ) : Dialog(context) {
-//
-//        private val view by lazy { IOS(context) }
-//
-//        init {
-//            setView(view)
-//            val dplr = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-////            impl.setViewMarginLR(dplr, dplr)
-//            view.title.visibility = View.GONE
-//            view.message.visibility = View.GONE
-//            view.btnConfirm.visibility = View.GONE
-//            view.btnCancel.visibility = View.GONE
-//            view.line.visibility = View.GONE
-//        }
-//
-//        fun setIOSTitle(txt: CharSequence): DialogIOS {
-//            view.title.visibility = View.VISIBLE; view.title.text = txt; return this
-//        }
-//        fun setIOSMessage(txt: CharSequence): DialogIOS {
-//            view.message.visibility = View.VISIBLE; view.message.text = txt; return this
-//        }
-//        fun setIOSBtnCancel(txt: CharSequence="取消", lis: (DialogIOS)->Unit={}): DialogIOS {
-//            view.line.visibility = View.VISIBLE
-//            view.btnCancel.also {
-//                it.visibility = View.VISIBLE; it.text = txt
-//                it.setOnClickListener { dismiss(); lis(this) }
-//            }
-//            return this
-//        }
-//        fun setIOSBtnConfirm(txt: CharSequence="确认", lis: (DialogIOS)->Unit): DialogIOS {
-//            view.btnConfirm.also {
-//                it.visibility = View.VISIBLE; it.text = txt
-//                it.setOnClickListener { lis(this) }
-//            }
-//            return this
-//        }
-//
-//        private class IOS @JvmOverloads constructor(
-//            context: Context, attrs: AttributeSet? = null
-//        ) : CardView(context, attrs) {
-//
-//            val title by lazy { TextView(context).apply {
-//                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-//                dp05*40.also{ setPadding(it, 0, it, 0) }
-//                setTextColor(Color.BLACK); textSize = 18F
-//                typeface = Typeface.defaultFromStyle(Typeface.BOLD)
-//            } }
-//            val message by lazy { TextView(context).apply {
-//                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).also { it.topMargin = dp05*5 }
-//                dp05*40.also{ setPadding(it, 0, it, 0) }
-//                setTextColor(Color.BLACK); textSize = 15F
-//            } }
-//            val btnConfirm by lazy { TextView(context).apply {
-//                layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
-//                background = StateListDrawable().apply {
-//                    addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
-//                    addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
-//                }
-//                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
-//                gravity=Gravity.CENTER; text = "确认"
-//            }  }
-//            val btnCancel by lazy { TextView(context).apply {
-//                layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
-//                background = StateListDrawable().apply {
-//                    addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
-//                    addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
-//                }
-//                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
-//                typeface = Typeface.defaultFromStyle(Typeface.BOLD)
-//                gravity=Gravity.CENTER; text = "取消"
-//            }  }
-//            val line by lazy { View(context).apply {
-//                setBackgroundColor((0xffb3b3b3).toInt())
-//                layoutParams = LinearLayout.LayoutParams(dp05, LayoutParams.MATCH_PARENT)
-//            } }
-//
-//            val dp05 = (0.5*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-//            val dpRadius = 16*Resources.getSystem().displayMetrics.density+0.5F
-//            val dpPadding = (26*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-//            val dpBottomHeight = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-//
-//            init {
-//                setCardBackgroundColor((0xe6f9f9f9).toInt())
-//                radius = dpRadius; elevation = 0F
-//                val lyRoot = LinearLayout(context).apply {
-//                    orientation = LinearLayout.VERTICAL
-//                    gravity = Gravity.CENTER
-//                    setPadding(0, dpPadding, 0, 0)
-//                    addView(title)
-//                    addView(message)
-//                    addView(View(context).also {
-//                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp05).also { it.topMargin = dpPadding }
-//                        it.setBackgroundColor((0xffb3b3b3).toInt())
-//                    })
-//                    addView(LinearLayout(context).also {
-//                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dpBottomHeight)
-//                        it.orientation = LinearLayout.HORIZONTAL
-//                        it.addView(btnCancel)
-//                        it.addView(line)
-//                        it.addView(btnConfirm)
-//                    })
-//                }
-//                addView(lyRoot)
-//            }
-//        }
-//
-//    }
+    /**
+     * Ios风格常用对话Dialog
+     */
+    class DialogIOS(
+        context: Context,
+        block: DialogIOS.() -> Unit = {},
+    ) : Dialog(context) {
+
+        private val view by lazy { IOSLayout(rootLayout.context).apply {
+            layoutParams = FrameLayout.LayoutParams(-1, -2).also {
+                it.gravity = Gravity.CENTER
+                val dplr = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
+                it.leftMargin = dplr; it.rightMargin = dplr
+            }
+        } }
+
+        init {
+            block(this)
+            setContentView(view)
+            immersive()
+            view.title.visibility = View.GONE
+            view.message.visibility = View.GONE
+            view.btnConfirm.visibility = View.GONE
+            view.btnCancel.visibility = View.GONE
+            view.line.visibility = View.GONE
+        }
+
+        private fun immersive() {
+            val window = window ?: return
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            window.statusBarColor = Color.TRANSPARENT
+            window.navigationBarColor = Color.TRANSPARENT
+        }
+
+        fun setTitleIOS(txt: CharSequence): DialogIOS {
+            view.title.visibility = View.VISIBLE; view.title.text = txt; return this
+        }
+        fun setMessageIOS(txt: CharSequence): DialogIOS {
+            view.message.visibility = View.VISIBLE; view.message.text = txt; return this
+        }
+        fun setBtnCancelIOS(txt: CharSequence="取消", lis: (DialogIOS)->Unit={}): DialogIOS {
+            view.line.visibility = view.btnConfirm.visibility
+            view.btnCancel.also {
+                it.visibility = View.VISIBLE; it.text = txt
+                it.setOnClickListener { dismiss(); lis(this) }
+            }
+            return this
+        }
+        fun setBtnConfirmIOS(txt: CharSequence="确认", lis: (DialogIOS)->Unit): DialogIOS {
+            view.line.visibility = view.btnCancel.visibility
+            view.btnConfirm.also {
+                it.visibility = View.VISIBLE; it.text = txt
+                it.setOnClickListener { lis(this) }
+            }
+            return this
+        }
+
+        private class IOSLayout @JvmOverloads constructor(
+            context: Context, attrs: AttributeSet? = null
+        ) : CardView(context, attrs) {
+
+            val title by lazy { TextView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+                dp05*40.also{ setPadding(it, 0, it, 0) }
+                setTextColor(Color.BLACK); textSize = 18F
+                typeface = Typeface.defaultFromStyle(Typeface.BOLD)
+            } }
+            val message by lazy { TextView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).also { it.topMargin = dp05*5 }
+                dp05*40.also{ setPadding(it, 0, it, 0) }
+                setTextColor(Color.BLACK); textSize = 15F
+            } }
+            val btnConfirm by lazy { TextView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
+                background = StateListDrawable().apply {
+                    addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
+                    addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
+                }
+                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
+                gravity=Gravity.CENTER; text = "确认"
+            }  }
+            val btnCancel by lazy { TextView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
+                background = StateListDrawable().apply {
+                    addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
+                    addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
+                }
+                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
+                typeface = Typeface.defaultFromStyle(Typeface.BOLD)
+                gravity=Gravity.CENTER; text = "取消"
+            }  }
+            val line by lazy { View(context).apply {
+                setBackgroundColor((0xffb3b3b3).toInt())
+                layoutParams = LinearLayout.LayoutParams(dp05, LayoutParams.MATCH_PARENT)
+            } }
+
+            val dp05 = (0.5*Resources.getSystem().displayMetrics.density+0.5F).toInt()
+            val dpRadius = 16*Resources.getSystem().displayMetrics.density+0.5F
+            val dpPadding = (26*Resources.getSystem().displayMetrics.density+0.5F).toInt()
+            val dpBottomHeight = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
+
+            init {
+                setCardBackgroundColor((0xe6f9f9f9).toInt())
+                radius = dpRadius; elevation = 0F
+                val lyRoot = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                    setPadding(0, dpPadding, 0, 0)
+                    addView(title)
+                    addView(message)
+                    addView(View(context).also {
+                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp05).also { it.topMargin = dpPadding }
+                        it.setBackgroundColor((0xffb3b3b3).toInt())
+                    })
+                    addView(LinearLayout(context).also {
+                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dpBottomHeight)
+                        it.orientation = LinearLayout.HORIZONTAL
+                        it.addView(btnCancel)
+                        it.addView(line)
+                        it.addView(btnConfirm)
+                    })
+                }
+                addView(lyRoot)
+            }
+        }
+
+    }
 
     open class DialogBottomSheet(context: Context,
                                  theme: Int = 0) :
