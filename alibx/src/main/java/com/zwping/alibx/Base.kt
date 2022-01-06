@@ -83,7 +83,18 @@ class MainActivity: BaseAc<ActivityMainBinding>() {
     }
 }
  */
-/*** ac基类 ***/
+/**
+ * ac基类
+ *  模块ViewBinding开启方法
+ *      <pre>
+           android {
+               ...
+               buildFeatures {
+                   viewBinding true
+               }
+           }
+ *      </pre>
+ */
 abstract class BaseAc<VB: ViewBinding> : AppCompatActivity, IBaseAc<VB> {
 
     constructor()
