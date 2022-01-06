@@ -65,31 +65,31 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
      */
     open class Dialog : AppCompatDialog, LifecycleEventObserver {
 
-        constructor(context: Context?) : super(context, -1) { init() }
-        constructor(context: Context,
-                    block: Dialog.() -> Unit = { },
-                    themeResId: Int = -1) : super(context, themeResId) {
-                        init(); block(this)
-                    }
+        constructor(
+            context: Context?
+        ) : super(context, -1) { init() }
+        constructor(
+            context: Context,
+            block: Dialog.() -> Unit = { },
+            themeResId: Int = -1
+        ) : super(context, themeResId) { init(); block(this) }
 
         private fun init() {
             requestWindowFeature(Window.FEATURE_NO_TITLE)
-            setGravity(Gravity.CENTER)
+            // setGravity(Gravity.CENTER)
         }
 
+        /*** 自定义view根布局 ***/
+        val rootLayout = FrameLayout(context).apply {
+            layoutParams = ViewGroup.LayoutParams(-1, -1)
+            setBackgroundColor(getBlackWithAlpha(0.5F))
+            setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
+        }
 
         private val animView: View?
             get() = customView ?: decorView
         var customView: View? = null
             private set
-
-        /*** 根布局, 自定义view时使用 ***/
-        val rootLayout = FrameLayout(context).apply {
-            layoutParams = ViewGroup.LayoutParams(-1, -1)
-            setBackgroundColor(getBlackWithAlpha(0.5F))
-            setOnClickListener { logd(canceledOnTouchOutSide); if (canceledOnTouchOutSide) dismiss() }
-        }
-
 
         val decorView: View?
             get() = window?.decorView
@@ -105,8 +105,6 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         /*** 显示动画, 辅助类快捷调用[AnimHelper] ***/
         var showAnimator: ((View)->AnimatorSet)? = null
         var hideAnimator: ((View)->AnimatorSet)? = null
-
-
 
         private fun fixCanceledOnTouchOutSide() {
             var last = 0L
@@ -128,9 +126,6 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                 keyCode == KeyEvent.KEYCODE_BACK && !cancelabled
             }
         }
-
-
-
 
         // 自定义布局使用跟布局承载
 
@@ -236,9 +231,8 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {  }
 
         /**
-         * 给color添加透明度
+         * 透明度黑色
          * @param alpha 透明度 0f～1f
-         * @return
          */
         private fun getBlackWithAlpha(alpha: Float): Int {
             val a = Math.min(255, Math.max(0, (alpha * 255).toInt())) shl 24
