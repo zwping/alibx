@@ -1,16 +1,32 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.Androidlibx" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.Androidlibx" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <!-- 主要颜色, 标题栏(actionbar)/Btn颜色 使用: ?attr?colorPrimary -->
+        <item name="colorPrimary">#fff</item>
+        <!-- 主要颜色的较浅颜色, 类比色, 用于状态栏/上下文应用栏 -->
+        <item name="colorPrimaryVariant">#fff</item>
+        <!-- 主要颜色上方的颜色, 相反色, btn文本颜色 -->
+        <item name="colorOnPrimary">#333</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <!-- 状态栏颜色, 建议深色 -->
+        <item name="android:statusBarColor" tools:targetApi="l">#fff</item>
         <!-- Customize your theme here. -->
+        <!-- 状态栏文本颜色, true->黑色 false->白色, 默认白色, 存在<M兼容性问题-->
+        <item name="android:windowLightStatusBar" tools:targetApi="M">true</item>
+        <!-- navbar颜色 -->
+        <item name="android:navigationBarColor">#fff</item>
+        <!-- navbar divider颜色 -->
+        <!-- <item name="android:navigationBarDividerColor" tools:targetApi='O_MR1'>@android:color/black</item> -->
+        <!-- 控件文本颜色 -->
+        <item name="android:textColor">#333</item>
+        <!-- 控件示意文本颜色 -->
+        <item name="android:textColorHint">@android:color/darker_gray</item>
+        <!-- 控件激活颜色 focus -->
+        <item name="android:colorControlActivated">@android:color/darker_gray</item>
     </style>
 </resources>
