@@ -9,3 +9,4 @@
 rootProject.name = "androidlibx"
 include ':app'
 include ':alibx'
+include ':demo'
