@@ -15,17 +15,11 @@ import android.view.WindowManager.LayoutParams.*
 import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDialog
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat.Type.*
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.*
 import androidx.fragment.app.Fragment
-import android.view.ViewGroup
-
-import androidx.annotation.NonNull
-
-
 
 
 /**
@@ -98,26 +92,6 @@ object Bar {
         if (navImmersive && navColor == null) setNavBarColor(ac, Color.TRANSPARENT)
         navDarkMode?.also { setNavBarDarkMode(ac, it) }
     }
-
-    fun immersive(dialog: AppCompatDialog,
-                  @ColorInt color: Int=Color.TRANSPARENT,
-                  darkMode: Boolean?=null,
-                  navImmersive: Boolean=true,
-                  @ColorInt navColor: Int? = null,
-                  navDarkMode: Boolean?=null){
-        val window = dialog.window ?: return
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        if (!navImmersive) { // 不考虑二次逆向调用
-            val content = dialog.findViewById<ViewGroup?>(android.R.id.content)?.getChildAt(0)
-            addMarginBottomNavBarHeight(content)
-        }
-        setStatusBarColor(window, color)
-        darkMode?.also { setStatusBarDarkMode(window, it) }
-        navColor?.also { setNavBarColor(window, it) }
-        if (navImmersive && navColor == null) setNavBarColor(window, Color.TRANSPARENT)
-        navDarkMode?.also { setNavBarDarkMode(window, it) }
-    }
-
 
     /**
      * 设置状态栏深色模式

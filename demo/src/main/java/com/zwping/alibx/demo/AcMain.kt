@@ -75,7 +75,7 @@ class AcMain : BaseAc<AcMainBinding>() {
         init {
             layoutManager = LinearLayoutManager(context)
             setBackgroundColor(Color.WHITE)
-            addItemDecorationLine(Color.DKGRAY, 1F.dp2px())
+            addItemDecorationLine(Color.DKGRAY, 0.5F.dp2px())
             adapter = adp
             adp.setData(datas())
         }
@@ -91,26 +91,13 @@ class AcMain : BaseAc<AcMainBinding>() {
             }
             Dialog -> {
                 vb.lyContainer.addView(line("自定义dialog"))
-                vb.lyContainer.addView(btn("AlertDialog"){
-                    IDialog.DialogAlert(this)
-                        .setCanceledOnTouchOutside(true)
-                        .setIcon(R.mipmap.ic_launcher)
-                        .setTitle("Title")
-                        .setMessage("Message")
-                        .setPositiveButton { showToast("拦截了默认关闭") }
-                        .setNegativeButton {  }
-                        .setNeutralButton { showToast("只保留取消的默认关闭"); it.dismiss() }
-                        .show()
-                })
-                vb.lyContainer.addView(btn("IOS风格空调用"){
-                    IDialog.DialogIOS(this).show()
-                })
                 vb.lyContainer.addView(btn("底部上升"){
                     IDialog.Dialog(this)
                         .setContentView { CommRecyclerView(it.context) }
                         .apply {
-//                            disableHideAnim = true
+                            disableHideAnim = true
                         }
+                        .setLightBar(false)
                         .setGravity(Gravity.BOTTOM)
                         .setShowAnimator { AnimHelper.slideBottomTopIn(it) }
                         .setHideAnimator { AnimHelper.slideTopBottomOut(it) }
