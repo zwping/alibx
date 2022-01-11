@@ -9,31 +9,28 @@ import android.app.TimePickerDialog
 import android.app.TimePickerDialog.OnTimeSetListener
 import android.content.Context
 import android.content.DialogInterface
+import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.StateListDrawable
+import android.graphics.drawable.*
 import android.os.Build
 import android.os.Bundle
 import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.*
 import android.view.animation.*
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.TextView
-import androidx.annotation.DrawableRes
+import android.widget.*
+import androidx.annotation.ColorInt
 import androidx.annotation.FloatRange
+import androidx.annotation.Px
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.cardview.widget.CardView
-import androidx.core.animation.addListener
+import androidx.core.animation.doOnEnd
 import androidx.core.view.WindowCompat
-import androidx.core.view.updateLayoutParams
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -59,163 +56,178 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         catch (e: IllegalStateException) { e.printStackTrace() }
     }
 
-    /**
-     * AppCompatDialog复写, 支持继承/快速调用使用
-     * @param block 快速调用具体实现操作
-     */
-    open class Dialog : AppCompatDialog, LifecycleEventObserver {
 
-        constructor(
-            context: Context?
-        ) : super(context, -1) { init() }
-        constructor(
-            context: Context,
-            block: Dialog.() -> Unit = { },
-            themeResId: Int = -1
-        ) : super(context, themeResId) { init(); block(this) }
+    open class AbsDialog<D: AppCompatDialog> : AppCompatDialog, LifecycleEventObserver {
 
-        private fun init() {
+        constructor(context: Context?, themeResId: Int) : super(context, themeResId) {
+            window?.setBackgroundDrawableResource(android.R.color.transparent)
+            window?.attributes?.also {
+                it.width = -1; it.height = -1
+                it.flags = WindowManager.LayoutParams.FLAG_DIM_BEHIND; it.dimAmount=0.5F
+            }
+            decorView?.setPadding(0, 0, 0, 0)
             requestWindowFeature(Window.FEATURE_NO_TITLE)
-            // setGravity(Gravity.CENTER)
+            immersive()
         }
-
-        /*** 自定义view根布局 ***/
-        val rootLayout = FrameLayout(context).apply {
-            layoutParams = ViewGroup.LayoutParams(-1, -1)
-            setBackgroundColor(getBlackWithAlpha(0.5F))
-            setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
-        }
-
-        private val animView: View?
-            get() = customView ?: decorView
-        var customView: View? = null
-            private set
 
         val decorView: View?
             get() = window?.decorView
-        val wlp: WindowManager.LayoutParams?
-            get() = window?.attributes
+        val rootLayout: FrameLayout = initRootLayout(context)     // 根布局, 改写outSide方式
+        var customView: View? = null                              // 自定义布局
+        val animView: View?                                       // 动画视图, 改写anim方式
+            get() = customView ?: decorView
 
-        var cancelabled = true              // 返回键 & 空白区域是否可以关闭
-            private set(value) { field = value; canceledOnTouchOutSide = value }
-        var canceledOnTouchOutSide = true   // 空白区域是否可以关闭
-            private set
-        var canceledOnTouchOutSideSuper = false // 更强空白区域是否可以关闭, decorView两侧空白点击也可以关闭
-            private set
-        /*** 显示动画, 辅助类快捷调用[AnimHelper] ***/
-        var showAnimator: ((View)->AnimatorSet)? = null
-        var hideAnimator: ((View)->AnimatorSet)? = null
+        var cancelabled = true                                    // 返回键 & 空白区域是否可以关闭
+        var canceledOnTouchOutSide = true                         // 空白区域是否可以关闭
+            get() = if (!cancelabled) false else field
 
-        private fun fixCanceledOnTouchOutSide() {
-            var last = 0L
-            decorView?.also {
-                if (it is ViewGroup)   // 屏幕点击事件, 转移dialog原有canceledOnTouchOutSide功能
-                    repeat(it.childCount) { i -> it.getChildAt(i).setOnClickListener {  } }
-                it.setOnTouchListener { _, event ->
-                    if (!canceledOnTouchOutSideSuper) false
-                    when(event?.action) {
-                        MotionEvent.ACTION_DOWN -> last = System.currentTimeMillis()
-                        MotionEvent.ACTION_UP -> if (System.currentTimeMillis() - last < 300) cancel()
-                    }
-                    true
-                }
-            }
-        }
-        private fun fixCancelabled() {
-            setOnKeyListener { _, keyCode, _ ->
-                keyCode == KeyEvent.KEYCODE_BACK && !cancelabled
-            }
-        }
+        var showAnimator = { it: View -> AnimHelper.fadeIn(it) }  // 显示动画
+        var hideAnimator: ((View)->AnimatorSet)? = null           // 隐藏动画
+        var disableHideAnim = false                               // 禁用隐藏动画
 
-        // 自定义布局使用跟布局承载
+        var gravity: Int? = null                                  // customView位置, 使用rootLayout.inflater可直接使用布局的gravity
+        var useLightBar = true                                    // 使用light bar, 背景默认0.5黑, 默认高亮bar, false使用默认
 
-        /**
-         * 自定义view, 建议使用[rootLayout]inflater View保留xml中的样式
-         * bug ConstraintLayout不友好
-         */
         override fun setContentView(view: View) {
             setContentView { view }
         }
 
-        /**
-         * 自定义view, 保留xml中的样式
-         * bug ConstraintLayout不友好
-         */
-        fun setContentView(inflater: (root: FrameLayout) -> View){
-            resetThemeCfg()
+        fun setContentView(inflater: (root: FrameLayout) -> View): D {
             rootLayout.removeAllViews()
-            val view = inflater(rootLayout)
-            view.setOnClickListener {  } // 空占用, 避免点击内容区域也关闭dialog
+            val view = inflater.invoke(rootLayout)
+            view.setOnClickListener {  }                                // 拦截outSide事件
+            if (view.layoutParams == null)
+                view.layoutParams = FrameLayout.LayoutParams(-1, -2)    // 常用布局lp
             if (view.parent == null) rootLayout.addView(view)
+            gravity?.also { (view.layoutParams as FrameLayout.LayoutParams).gravity = it }
             super.setContentView(rootLayout)
             customView = view
+            return this as D
+        }
+
+        fun setGravity(gravity: Int): D {
+            this.gravity = gravity
+            val lp = customView?.layoutParams ?: return this as D
+            if (lp is FrameLayout.LayoutParams) lp.gravity = gravity
+            return this as D
+        }
+
+        fun setShowAnimator(anim: (View)->AnimatorSet): D {
+            this.showAnimator = anim
+            return this as D
+        }
+        fun setHideAnimator(anim: (View)->AnimatorSet): D {
+            this.hideAnimator = anim
+            return this as D
+        }
+
+        fun setDimAmount(@FloatRange(from=0.0, to=1.0) amount: Float): D {
+            // rootLayout.setBackgroundColor(blackAlpha(amount))
+            window?.attributes?.dimAmount = amount              // window控制透明度更自然
+            return this as D
+        }
+
+        fun setLightBar(use: Boolean): D {
+            this.useLightBar = use
+            return this as D
+        }
+
+        override fun setCanceledOnTouchOutside(cancel: Boolean) {
+            super.setCanceledOnTouchOutside(cancel)
+            canceledOnTouchOutSide = cancel
+        }
+
+        override fun setCancelable(flag: Boolean) {
+            super.setCancelable(flag)
+            cancelabled = flag
+        }
+
+        override fun show() {
+            if (null == customView) {
+                Toast.makeText(context, "只支持自定义view使用", Toast.LENGTH_SHORT).show()
+                return
+            }
             animView?.visibility = View.INVISIBLE
+            super.show()
+            val view = animView ?: return
+            view.post {
+                view.visibility = View.VISIBLE
+                showAnimator.invoke(view).start()
+            }
+            if (useLightBar) immersiveLightBar()                 // 细节处理
         }
 
-        fun setDimAmount(@FloatRange(from=0.0, to=1.0) amount: Float) {
-            window?.setDimAmount(amount)
-            rootLayout?.setBackgroundColor(getBlackWithAlpha(amount))
-        }
-
-        fun setGravity(gravity: Int) {
-            window?.setGravity(gravity)
-//            customView?.layoutParams?.also {
-//                if (it is FrameLayout.LayoutParams) it.gravity = gravity
-//                customView?.layoutParams = it
-//            }
-        }
-
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-        }
-        override fun onStart() {
-            super.onStart()
-            animView?.post { animView?.visibility = View.VISIBLE; showAnimator?.invoke(animView!!)?.start() }
-        }
-
-        private var lockDismiss = false
         override fun dismiss() {
-            if (lockDismiss) return
-            if (animView != null && hideAnimator != null) {
-                hideAnimator!!(animView!!).also {
-                    it.addListener(onEnd = { lockDismiss = false; super.dismiss() })
-                }.start()
-                lockDismiss = true
+            if (disableHideAnim) { super.dismiss(); return }
+            if (animView == null) { super.dismiss(); return }
+            hideAnimator?.invoke(animView!!)?.also {
+                it.doOnEnd { super.dismiss() }
+                it.start()
                 return
             }
             super.dismiss()
         }
 
+        fun dismiss(disableAnim: Boolean): D {
+            this.disableHideAnim = disableAnim
+            dismiss()
+            return this as D
+        }
+
+        private fun initRootLayout(context: Context) = FrameLayout(context).apply {
+            layoutParams = ViewGroup.LayoutParams(-1, -1)
+            // setBackgroundColor(blackAlpha(0.6F))
+            setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
+        }
+
         /**
-         * @param disabledAnim 禁止使用关闭动画
+         * 透明度黑色
+         * @param alpha 透明度 0f～1f
          */
-        fun dismiss(disabledAnim: Boolean) {
+//        private fun blackAlpha(alpha: Float): Int {
+//            val a = Math.min(255, Math.max(0, (alpha * 255).toInt())) shl 24
+//            val rgb = 0x00ffffff and Color.BLACK
+//            return a + rgb
+//        }
 
+        private fun immersive() {
+            val window = window ?: return
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            window.statusBarColor = Color.TRANSPARENT
+            window.navigationBarColor = Color.TRANSPARENT
         }
-
-        /*** 自定义view时, 恢复部分theme设置 ***/
-        private fun resetThemeCfg() {
-            window?.setBackgroundDrawableResource(android.R.color.transparent)
-            // setGravity(Gravity.CENTER)
-            wlp?.also {
-                it.width = WindowManager.LayoutParams.MATCH_PARENT
-                it.height = WindowManager.LayoutParams.MATCH_PARENT
-                window?.attributes = it
+        private fun immersiveLightBar() {
+            val window = window ?: return
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                val wic = WindowInsetsControllerCompat(window, window.decorView)
+                wic.isAppearanceLightStatusBars = false
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O)
+                    wic.isAppearanceLightNavigationBars = false
             }
-            decorView?.setPadding(0, 0, 0, 0)
         }
 
-        /*** 返回键 & 空白区域是否可以关闭, show之前调用无效 ***/
-        override fun setCancelable(flag: Boolean) {
-            super.setCancelable(flag); cancelabled = flag
+        protected fun Float.dpToPx() = this*Resources.getSystem().displayMetrics.density+0.5F
+
+        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
         }
-        /*** 空白区域是否可以关闭, show之前调用无效 ***/
-        override fun setCanceledOnTouchOutside(cancel: Boolean) {
-            super.setCanceledOnTouchOutside(cancel); canceledOnTouchOutSide = cancel
-        }
-        override fun show() { create(); super.show() }
+
+    }
+
+    /**
+     * AppCompatDialog复写, 支持继承/快速调用使用
+     * @param block 快速调用具体实现操作
+     */
+    open class Dialog : AbsDialog<Dialog>, LifecycleEventObserver {
+
+        constructor(context: Context?) : super(context, -1)
+        constructor(
+            context: Context?,
+            block: Dialog.() -> Unit = { },
+            themeResId: Int = -1
+        ) : super(context, themeResId) { block(this) }
+
         /**
-         * 显示DialogFragment, 支持[onStateChanged], 同时支持[IDialogImpl.onStateChanged]
+         * 显示DialogFragment, 支持[onStateChanged]
          */
         @Deprecated("未调试")
         fun show(fragmentManager: FragmentManager): IDialog {
@@ -227,18 +239,6 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                 it.lifecycle.addObserver(this)
             }
         }
-        /*** 生命周期感知, 继承使用 ***/
-        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {  }
-
-        /**
-         * 透明度黑色
-         * @param alpha 透明度 0f～1f
-         */
-        private fun getBlackWithAlpha(alpha: Float): Int {
-            val a = Math.min(255, Math.max(0, (alpha * 255).toInt())) shl 24
-            val rgb = 0x00ffffff and Color.BLACK
-            return a + rgb
-        }
     }
 
     /**
@@ -249,18 +249,18 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         block: DialogIOS.() -> Unit = {},
     ) : Dialog(context) {
 
+        private val lyMargin = 50F.dpToPx().toInt() // 布局两侧排挤
+
         private val view by lazy { IOSLayout(rootLayout.context).apply {
             layoutParams = FrameLayout.LayoutParams(-1, -2).also {
                 it.gravity = Gravity.CENTER
-                val dplr = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-                it.leftMargin = dplr; it.rightMargin = dplr
+                it.leftMargin = lyMargin; it.rightMargin = lyMargin
             }
         } }
 
         init {
             block(this)
             setContentView(view)
-            immersive()
             view.title.visibility = View.GONE
             view.message.visibility = View.GONE
             view.btnConfirm.visibility = View.GONE
@@ -268,13 +268,9 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             view.line.visibility = View.GONE
         }
 
-        private fun immersive() {
-            val window = window ?: return
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.statusBarColor = Color.TRANSPARENT
-            window.navigationBarColor = Color.TRANSPARENT
+        override fun setTitle(title: CharSequence?) {
+            super.setTitle(title)
         }
-
         fun setTitleIOS(txt: CharSequence): DialogIOS {
             view.title.visibility = View.VISIBLE; view.title.text = txt; return this
         }
@@ -298,19 +294,24 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             return this
         }
 
-        private class IOSLayout @JvmOverloads constructor(
-            context: Context, attrs: AttributeSet? = null
-        ) : CardView(context, attrs) {
+        private class IOSLayout @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : CardView(context, attrs) {
+
+            private fun Float.dpToPx() = this*Resources.getSystem().displayMetrics.density+0.5F
+
+            private val btnHigh = 44F.dpToPx().toInt()      // btn高度
+            private val lineHigh = 0.5F.dpToPx().toInt()    // line高度
+            val lyRadius = 10F.dpToPx()                     // 布局圆角
+
 
             val title by lazy { TextView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-                dp05*40.also{ setPadding(it, 0, it, 0) }
-                setTextColor(Color.BLACK); textSize = 18F
+                setPadding(btnHigh, 0, btnHigh, 0)
+                setTextColor(Color.BLACK); textSize = 16F
                 typeface = Typeface.defaultFromStyle(Typeface.BOLD)
             } }
             val message by lazy { TextView(context).apply {
-                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).also { it.topMargin = dp05*5 }
-                dp05*40.also{ setPadding(it, 0, it, 0) }
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).also { it.topMargin = lineHigh }
+                setPadding(btnHigh, 0, btnHigh, 0)
                 setTextColor(Color.BLACK); textSize = 15F
             } }
             val btnConfirm by lazy { TextView(context).apply {
@@ -319,7 +320,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                     addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
                     addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
                 }
-                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
+                setTextColor((0xff2e7cf7).toInt()); textSize = 15F
                 gravity=Gravity.CENTER; text = "确认"
             }  }
             val btnCancel by lazy { TextView(context).apply {
@@ -328,35 +329,30 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                     addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
                     addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
                 }
-                setTextColor((0xff2e7cf7).toInt()); textSize = 16F
+                setTextColor((0xff2e7cf7).toInt()); textSize = 15F
                 typeface = Typeface.defaultFromStyle(Typeface.BOLD)
                 gravity=Gravity.CENTER; text = "取消"
             }  }
             val line by lazy { View(context).apply {
                 setBackgroundColor((0xffb3b3b3).toInt())
-                layoutParams = LinearLayout.LayoutParams(dp05, LayoutParams.MATCH_PARENT)
+                layoutParams = LinearLayout.LayoutParams(lineHigh, LayoutParams.MATCH_PARENT)
             } }
-
-            val dp05 = (0.5*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-            val dpRadius = 16*Resources.getSystem().displayMetrics.density+0.5F
-            val dpPadding = (26*Resources.getSystem().displayMetrics.density+0.5F).toInt()
-            val dpBottomHeight = (50*Resources.getSystem().displayMetrics.density+0.5F).toInt()
 
             init {
                 setCardBackgroundColor((0xe6f9f9f9).toInt())
-                radius = dpRadius; elevation = 0F
+                radius = lyRadius; elevation = 0F
                 val lyRoot = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
                     gravity = Gravity.CENTER
-                    setPadding(0, dpPadding, 0, 0)
+                    setPadding(0, btnHigh/2, 0, 0)
                     addView(title)
                     addView(message)
                     addView(View(context).also {
-                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp05).also { it.topMargin = dpPadding }
+                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, lineHigh).also { it.topMargin = btnHigh/2 }
                         it.setBackgroundColor((0xffb3b3b3).toInt())
                     })
                     addView(LinearLayout(context).also {
-                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dpBottomHeight)
+                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, btnHigh)
                         it.orientation = LinearLayout.HORIZONTAL
                         it.addView(btnCancel)
                         it.addView(line)
@@ -371,25 +367,107 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
     open class DialogBottomSheet(context: Context,
                                  theme: Int = 0) :
-            BottomSheetDialog(context, theme) {
+        BottomSheetDialog(context, theme) {
         // http://blog.csdn.net/yanzhenjie1003/article/details/51938400
     }
 
+    /**
+     * AlertDialog
+     *  优化链式调用, 增加链式[setCanceledOnTouchOutside]
+     *  复写Button点击事件, 默认不关闭
+     */
+    open class DialogAlert(
+        context: Context,
+        themeResId: Int = android.R.style.Theme_Material_Light_Dialog_Alert
+    ) : AlertDialog.Builder(context, themeResId) {
+
+        override fun setIcon(iconId: Int): DialogAlert {
+            super.setIcon(iconId); return this
+        }
+        override fun setTitle(title: CharSequence?): DialogAlert {
+            super.setTitle(title); return this
+        }
+        override fun setMessage(message: CharSequence?): DialogAlert {
+            super.setMessage(message); return this
+        }
+
+        // 点击事件重置
+        private var positiveClickListener: ((DialogAlert) -> Unit)? = null
+        private var negativeClickListener: ((DialogAlert) -> Unit)? = null
+        private var neutralClickListener: ((DialogAlert) -> Unit)? = null
+        fun setPositiveButton(text: CharSequence = "确认", listener: (DialogAlert) -> Unit): DialogAlert {
+            positiveClickListener = listener; setPositiveButton(text) { _, _ -> }
+            return this
+        }
+        fun setNegativeButton(text: CharSequence = "取消", listener: (DialogAlert) -> Unit): DialogAlert {
+            negativeClickListener = listener; setNegativeButton(text) { _, _ -> }
+            return this
+        }
+        fun setNeutralButton(text: CharSequence = "不确定", listener: (DialogAlert) -> Unit): DialogAlert {
+            neutralClickListener = listener; setNeutralButton(text) { _, _ -> }
+            return this
+        }
+
+        private var canceledOnTouchOutside: Boolean? = null
+        fun setCanceledOnTouchOutside(cancel: Boolean): DialogAlert {
+            canceledOnTouchOutside = cancel; _dialog?.setCanceledOnTouchOutside(cancel); return this;
+        }
+        override fun setCancelable(cancelable: Boolean): DialogAlert {
+            super.setCancelable(cancelable); return this
+        }
+
+        fun dismiss() {
+            _dialog?.dismiss()
+            _dialog?.setCanceledOnTouchOutside(true)
+        }
+
+        private var _dialog: AlertDialog? = null
+
+        override fun create(): AlertDialog {
+            return super.create().also { dialog ->
+                _dialog = dialog
+                canceledOnTouchOutside?.also { dialog.setCanceledOnTouchOutside(it) }
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            }
+        }
+        override fun show(): AlertDialog {
+            return super.show().also { dialog ->
+                dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.also {
+                    it.setOnClickListener { positiveClickListener?.invoke(this) }
+                }
+                dialog.getButton(DialogInterface.BUTTON_NEGATIVE)?.also {
+                    it.setOnClickListener { dialog.dismiss(); negativeClickListener?.invoke(this) }
+                }
+                dialog.getButton(DialogInterface.BUTTON_NEUTRAL)?.also {
+                    it.setOnClickListener { neutralClickListener?.invoke(this) }
+                }
+            }
+        }
+    }
 
     /**
      * 日期选择器
+     * @param callback 选中回执, 已处理月份-1
+     * @param month 注意月份起始下标为0
      */
-    open class DialogDatePicker(context: Context,
-                                lis: (year: Int, month: Int, dayOfMonth: Int) -> Unit,
-                                year: Int = Calendar.getInstance().get(Calendar.YEAR),
-                                monthOfYear: Int = Calendar.getInstance().get(Calendar.MONTH),
-                                dayOfMonth: Int = Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
-                                themeResId: Int = DialogDefaultTheme) :
-            DatePickerDialog(context, themeResId,
-                OnDateSetListener { _, y, month, dm -> lis(y, month+1, dm) },
-                year, monthOfYear, dayOfMonth), LifecycleEventObserver {
+    open class DialogDatePicker(
+        context: Context,
+        callback: (year: Int, month: Int, day: Int) -> Unit,
+        year: Int = Calendar.getInstance().get(Calendar.YEAR),
+        month: Int = Calendar.getInstance().get(Calendar.MONTH),
+        day: Int = Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+        themeResId: Int = DialogDefaultTheme
+    ) : DatePickerDialog(
+        context,
+        themeResId,
+        OnDateSetListener { _, y, m, d -> callback(y, m+1, d) },
+        year,
+        month,
+        day
+    ), LifecycleEventObserver {
 
-        override fun updateDate(year: Int, month: Int, dayOfMonth: Int) { // 修改当前选中日期, month-1
+        /*** 修改当前选中日期, month-1 ***/
+        override fun updateDate(year: Int, month: Int, dayOfMonth: Int) {
             super.updateDate(year, month, dayOfMonth)
         }
         override fun getDatePicker(): android.widget.DatePicker {
@@ -401,47 +479,65 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         fun setMinDate(date: Long): DialogDatePicker {
             datePicker.minDate = date; return this
         }
-//        override fun show() { super.show() }
-//        private var idialog: IDialog? = null
-//        fun show(fragmentManager: FragmentManager): IDialog {
-//            val idialog = IDialog(this)
-//            idialog.show(fragmentManager, javaClass.simpleName)
-//            idialog.lifecycle.addObserver(this)
-//            return idialog
-//        }
-        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-//            if (event == Lifecycle.Event.ON_DESTROY) idialog?.lifecycle?.removeObserver(this)
+
+        private val btnColor by lazy {
+            val attr = intArrayOf(R.attr.colorPrimary)
+            val typed = context.theme.obtainStyledAttributes(attr)
+            typed.getColor(0, Color.BLACK).also { typed.recycle() }
         }
+
+        override fun show() {
+            super.show().also {
+                getButton(DialogInterface.BUTTON_POSITIVE)?.also {
+                    it.setTextColor(btnColor)
+                }
+                getButton(DialogInterface.BUTTON_NEGATIVE)?.also {
+                    it.setTextColor(btnColor)
+                }
+            }
+        }
+
+        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+        }
+
     }
 
     /**
      * 时间选择器
      * @param is24HourView [DateFormat.is24HourFormat]
      */
-    open class DialogTimePicker(context: Context?,
-                                lis: (hourOfDay: Int, minute: Int) -> Unit,
-                                hourOfDay: Int = Calendar.getInstance().get(Calendar.HOUR_OF_DAY),
-                                minute: Int = Calendar.getInstance().get(Calendar.MINUTE),
-                                is24HourView: Boolean = true,
-                                themeResId: Int = DialogDefaultTheme):
-            TimePickerDialog(context, themeResId,
-                OnTimeSetListener { _, hd, m -> lis(hd, m)  },
-                hourOfDay, minute, is24HourView), LifecycleEventObserver {
+    open class DialogTimePicker(
+        context: Context?,
+        lis: (hourOfDay: Int, minute: Int) -> Unit,
+        hourOfDay: Int = Calendar.getInstance().get(Calendar.HOUR_OF_DAY),
+        minute: Int = Calendar.getInstance().get(Calendar.MINUTE),
+        is24HourView: Boolean = true,
+        themeResId: Int = DialogDefaultTheme
+    ): TimePickerDialog(
+        context,
+        themeResId,
+        OnTimeSetListener { _, hd, m -> lis(hd, m)  },
+        hourOfDay, minute, is24HourView
+    ), LifecycleEventObserver {
 
         override fun updateTime(hourOfDay: Int, minuteOfHour: Int) {
             super.updateTime(hourOfDay, minuteOfHour)
         }
 
-//        override fun show() { super.show() }
-//        private var idialog: IDialog? = null
-//        fun show(fragmentManager: FragmentManager): IDialog {
-//            val idialog = IDialog(this)
-//            idialog.show(fragmentManager, javaClass.simpleName)
-//            idialog.lifecycle.addObserver(this)
-//            return idialog
-//        }
+        private val btnColor by lazy {
+            val attr = intArrayOf(R.attr.colorPrimary)
+            val typed = getContext().theme.obtainStyledAttributes(attr)
+            typed.getColor(0, Color.BLACK).also { typed.recycle() }
+        }
+
+        override fun show() {
+            super.show().also {
+                getButton(DialogInterface.BUTTON_POSITIVE)?.setTextColor(btnColor)
+                getButton(DialogInterface.BUTTON_NEGATIVE)?.setTextColor(btnColor)
+            }
+        }
+
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-//            if (event == Lifecycle.Event.ON_DESTROY) idialog?.lifecycle?.removeObserver(this)
         }
     }
 
@@ -449,11 +545,13 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
      * 进度
      * @param loadingMode 转圈 / 进度条
      */
-    open class DialogProgress(context: Context?,
-                              message: CharSequence,
-                              loadingMode: Boolean = true,
-                              theme: Int = DialogDefaultTheme) :
-            ProgressDialog(context, theme), LifecycleEventObserver {
+    open class DialogProgress(
+        context: Context?,
+        message: CharSequence,
+        private val loadingMode: Boolean = true,
+        theme: Int = DialogDefaultTheme
+    ) : ProgressDialog(context, theme),
+        LifecycleEventObserver {
 
         init {
             setMessage(message)
@@ -461,10 +559,44 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             setCanceledOnTouchOutside(false)
         }
 
-        // loading mode 背景
+        // loading mode 圆圈颜色
         override fun setIndeterminateDrawable(d: Drawable?) { super.setIndeterminateDrawable(d) }
-        // 进度mode背景
+        private var indeterminateTint: Int? = null
+        fun setIndeterminateDrawable(@ColorInt color: Int): DialogProgress {
+            this.indeterminateTint = color; return this
+        }
+        // 进度mode 三重颜色
         override fun setProgressDrawable(d: Drawable?) { super.setProgressDrawable(d) }
+        fun setProgressBarColor(bgColor: Int,
+                                progressColor: Int,
+                                secondaryColor: Int = -1,
+                                @Px radius: Float = 0F,
+                                @Px height: Int = -1): DialogProgress {
+            val bgClipDrawable = ClipDrawable(
+                GradientDrawable().apply { setColor(bgColor); cornerRadius = radius },
+                Gravity.LEFT, ClipDrawable.HORIZONTAL)
+            bgClipDrawable.level = 10000
+            val progressClip = ClipDrawable(
+                GradientDrawable().apply { setColor(progressColor); cornerRadius = radius },
+                Gravity.LEFT, ClipDrawable.HORIZONTAL)
+            var secondaryClip: ClipDrawable? = null
+            if (secondaryColor != -1)
+                secondaryClip = ClipDrawable(
+                    GradientDrawable().apply { setColor(secondaryColor); cornerRadius = radius },
+                    Gravity.LEFT, ClipDrawable.HORIZONTAL)
+            val progressDrawables = arrayOf<Drawable>(bgClipDrawable, secondaryClip ?: progressClip, progressClip)
+            val progressLayerDrawable = LayerDrawable(progressDrawables)
+            progressLayerDrawable.setId(0, android.R.id.background)
+            progressLayerDrawable.setId(1, android.R.id.secondaryProgress)
+            progressLayerDrawable.setId(2, android.R.id.progress)
+            if (height != -1 && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                progressLayerDrawable.setLayerHeight(0, height)
+                progressLayerDrawable.setLayerHeight(1, height)
+                progressLayerDrawable.setLayerHeight(2, height)
+            }
+            setProgressDrawable(progressLayerDrawable)
+            return this
+        }
         // 进度最大值
         override fun setMax(max: Int) { super.setMax(max) }
         // 进度值
@@ -473,10 +605,18 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         override fun incrementSecondaryProgressBy(diff: Int) { super.incrementSecondaryProgressBy(diff) }
         // 进度值的格式, 默认 %1d/%2d / 直接输出值 String.format("%.2fkb/%.2fM, cur, total)
         override fun setProgressNumberFormat(format: String?) { super.setProgressNumberFormat(format) }
-        // 进度百分比 null->隐藏
+        // 进度百分比 null=>隐藏
         override fun setProgressPercentFormat(format: NumberFormat?) { super.setProgressPercentFormat(format) }
 
-//        override fun show() { super.show() }
+        override fun show() {
+            super.show().also {
+                if (loadingMode && indeterminateTint != null) {
+                    findViewById<ProgressBar>(android.R.id.progress)
+                        .indeterminateTintList = ColorStateList.valueOf(indeterminateTint!!)
+                }
+            }
+        }
+        //        override fun show() { super.show() }
 //        private var idialog: IDialog? = null
 //        fun show(fragmentManager: FragmentManager): IDialog {
 //            val idialog = IDialog(this)
@@ -489,192 +629,204 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         }
     }
 
+
+
     /**
-     * 简单列表, 支持T Entity & bindView
+     * 改写AlertDialog.Builder, 支持子类链式调用
      */
-    open class DialogItemsBuilder<T>(context: Context,
-                                     val datas: MutableList<T?>,
-                                     themeResId: Int = DialogDefaultTheme) :
-            AlertDialog.Builder(context, themeResId), LifecycleEventObserver {
+    open class AbsAlertDialogBuilder<T, B: AlertDialog.Builder> : AlertDialog.Builder, LifecycleEventObserver {
+        constructor(context: Context, themeResId: Int) : super(context, themeResId)
 
-        private val opt by lazy { IDialogImpl(create2()) }
-        fun setimpl(block: (IDialogImpl<AlertDialog>) -> Unit): DialogItemsBuilder<T>{
-            block(opt); return this
+        protected var _dialog: AlertDialog? = null
+
+        val positiveButton: Button? = _dialog?.getButton(DialogInterface.BUTTON_POSITIVE)
+        val negativeButton: Button? = _dialog?.getButton(DialogInterface.BUTTON_NEGATIVE)
+        val neutralButton: Button? = _dialog?.getButton(DialogInterface.BUTTON_NEUTRAL)
+
+        var positiveButtonTxt: CharSequence = "确认"
+            set(value) { field = value; positiveButton?.text = value }
+        var negativeButtonTxt: CharSequence = "取消"
+            set(value) { field = value; positiveButton?.text = value }
+        var neutralButtonTxt: CharSequence = "不确定"
+            set(value) { field = value; positiveButton?.text = value }
+        private var canceledOnTouchOutside: Boolean? = null
+        // private var cancelable: Boolean? = null
+
+        protected var bindView: (tv: TextView?, i: Int, it: T?) -> Unit = { tv, _, it -> tv?.text = "$it"; tv?.setTextColor(Color.BLACK) }
+        fun setBindView(bindView: (tv: TextView?, i: Int, it: T?) -> Unit): B {
+            this.bindView = bindView; return this as B
         }
 
-        private var itemsClickLis: (dialog: DialogInterface, index: Int, item: T?) -> Unit = {_,_,_->}
-        fun setItemsClickLis(lis: (dialog: DialogInterface, index: Int, item: T?) -> Unit): DialogItemsBuilder<T> {
-            this.itemsClickLis = lis; return this
+        override fun setIcon(iconId: Int): B {
+            super.setIcon(iconId); return this as B
         }
-        private var bindView: (tv: TextView?, i: Int, it: T?) -> Unit = { tv, _, it -> tv?.text = "$it"; tv?.setTextColor(Color.BLACK) }
-        fun setBindView(bindView: (tv: TextView?, i: Int, it: T?) -> Unit): DialogItemsBuilder<T> {
-            this.bindView = bindView; return this
+        override fun setTitle(title: CharSequence?): B {
+            super.setTitle(title); return this as B
+        }
+        override fun setMessage(message: CharSequence?): B {
+            super.setMessage(message); return this as B
         }
 
-        private fun create2(): AlertDialog{
-            val lis = { dialog: DialogInterface, which: Int ->
-                itemsClickLis.invoke(dialog, which, datas[which])
+        override fun setPositiveButton(text: CharSequence?, listener: DialogInterface.OnClickListener?): B {
+            super.setPositiveButton(text, listener); return this as B
+        }
+        override fun setNegativeButton(text: CharSequence?, listener: DialogInterface.OnClickListener?): B {
+            super.setNegativeButton(text, listener); return this as B
+        }
+        override fun setNeutralButton(text: CharSequence?, listener: DialogInterface.OnClickListener?): B {
+            super.setNeutralButton(text, listener); return this as B
+        }
+
+        fun setCanceledOnTouchOutside(cancel: Boolean): B {
+            _dialog?.setCanceledOnTouchOutside(cancel)
+            canceledOnTouchOutside = cancel
+            return this as B
+        }
+        override fun setCancelable(cancelable: Boolean): B {
+            // this.cancelable = cancelable
+            super.setCancelable(cancelable); return this as B
+        }
+        override fun setOnDismissListener(onDismissListener: DialogInterface.OnDismissListener?): B {
+            super.setOnDismissListener(onDismissListener); return this as B
+        }
+
+        fun dismiss(): B {
+            _dialog?.dismiss(); return this as B
+        }
+
+        override fun create(): AlertDialog {
+            return super.create().also {
+                it.requestWindowFeature(Window.FEATURE_NO_TITLE)
+                _dialog = it
+                canceledOnTouchOutside?.also { _dialog?.setCanceledOnTouchOutside(it) }
             }
-            val dialog = setItems(datas.map { "$it" }.toTypedArray(), lis)
-                .create()
-            dialog.listView.post {
-                repeat(dialog.listView.childCount) { i -> // 适配DialogDefaultTheme
-                    bindView(dialog.listView.getChildAt(i).findViewById(android.R.id.text1), i, datas[i])
-                }
-            }
-            dialog.setCanceledOnTouchOutside(false)
-            return dialog
         }
 
-        private var idialog: IDialog? = null
-        override fun show(): AlertDialog { return opt.init().also { it.show(); opt.resetCLickListener() } }
-        fun show(fragmentManager: FragmentManager): IDialog {
-            val idialog = IDialog(opt.init())
-            idialog.show(fragmentManager, javaClass.simpleName)
-            idialog.lifecycle.addObserver(this)
-            return idialog
+        override fun show(): AlertDialog {
+            return super.show()
         }
+
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-            when(event) {
-                Lifecycle.Event.ON_RESUME -> opt.resetCLickListener()
-                Lifecycle.Event.ON_DESTROY -> idialog?.lifecycle?.removeObserver(this)
-            }
         }
+
     }
 
     /**
-     * 简单单选列表, 支持T Entity & bindView
+     * 简单列表, 支持T Entity & bindView
      */
-    open class DialogSingleChoiceBuilder<T>(context: Context,
-                                            val datas: MutableList<T?>,
-                                            themeResId: Int = DialogDefaultTheme) :
-            AlertDialog.Builder(context, themeResId), LifecycleEventObserver {
+    open class DialogItems<T>(
+        context: Context,
+        private val datas: MutableList<T>,
+        private val itemClickListener: (dialog: DialogItems<T>, index: Int, item: T)-> Unit,
+        themeResId: Int = DialogDefaultTheme
+    ) : AbsAlertDialogBuilder<T, DialogItems<T>>(context, themeResId) {
 
-        var datasIsCheck: T? = null
-            private set
-
-        private val opt by lazy { IDialogImpl(create2()) }
-        fun setimpl(block: (IDialogImpl<AlertDialog>) -> Unit): DialogSingleChoiceBuilder<T>{
-            block(opt); return this
+        override fun create(): AlertDialog {
+            setItems(datas.map { "$it" }.toTypedArray()) { _, which ->
+                itemClickListener.invoke(this, which, datas[which])
+            }
+            return super.create().apply {
+                listView.post {
+                    repeat(listView.childCount) { i ->
+                        bindView(listView.getChildAt(i).findViewById(android.R.id.text1), i, datas[i])
+                    }
+                }
+            }
         }
 
+    }
+
+    /**
+     * 单选列表, 支持T Entity & bindView
+     */
+    open class DialogSingleChoiceBuilder<T>(
+        context: Context,
+        private val datas: MutableList<T>,
+        private var choiceListener: (dialog: DialogSingleChoiceBuilder<T>, index: Int, item: T)-> Unit,
+        themeResId: Int = DialogDefaultTheme
+    ) : AbsAlertDialogBuilder<T, DialogSingleChoiceBuilder<T>>(context, themeResId) {
+
+        var chechData: T? = null
+            private set
+
         private var checkItem: Int = -1
-            set(value) { if (value > 0 && value < datas.size) { field=value; datasIsCheck=datas[value] } }
+            set(value) { if (value >= 0 && value < datas.size) { field=value; chechData=datas[value] } }
         fun setCheckItem(checkItem: Int): DialogSingleChoiceBuilder<T> {
             this.checkItem = checkItem; return this
         }
-        private var singleChoiceClickLis: (dialog: DialogInterface, index: Int, item: T?) -> Unit = {_,_,_->}
-        fun setSingleChoiceClickLis(lis: (dialog: DialogInterface, index: Int, item: T?) -> Unit): DialogSingleChoiceBuilder<T> {
-            this.singleChoiceClickLis = lis; return this
-        }
-        private var bindView: (tv: TextView?, i: Int, it: T?) -> Unit = { tv, _, it -> tv?.text = "$it"; tv?.setTextColor(Color.BLACK) }
-        fun setBindView(bindView: (tv: TextView?, i: Int, it: T?) -> Unit): DialogSingleChoiceBuilder<T> {
-            this.bindView = bindView; return this
-        }
-        fun setPositiveButton(txt: CharSequence="确认", lis: (dialog: AlertDialog, builder: DialogSingleChoiceBuilder<T>) -> Unit): DialogSingleChoiceBuilder<T> {
-            opt.setPositiveButton(txt) { lis(it, this) }; return this
-        }
 
-        private fun create2(): AlertDialog{
-            val lis = { dialog: DialogInterface, which: Int ->
-                datasIsCheck = datas[which]
-                singleChoiceClickLis.invoke(dialog, which, datas[which])
+        override fun create(): AlertDialog {
+            setSingleChoiceItems(datas.map { "$it" }.toTypedArray(), checkItem) { _, which ->
+                _dialog?.getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = true
+                checkItem = which
             }
-            val dialog = setSingleChoiceItems(datas.map { "$it" }.toTypedArray(), checkItem, lis)
-                .create()
-            dialog.listView.post {
-                repeat(dialog.listView.childCount) { i -> // 适配DialogDefaultTheme
-                    bindView(dialog.listView.getChildAt(i).findViewById(android.R.id.text1), i, datas[i])
+            setPositiveButton(positiveButtonTxt) { _, _ ->
+                choiceListener(this, checkItem, datas[checkItem])
+            }
+            setNegativeButton(negativeButtonTxt){ _, _ -> }
+            return super.create().apply {
+                listView.post {
+                    repeat(listView.childCount) { i ->
+                        bindView(listView.getChildAt(i).findViewById(android.R.id.text1), i, datas[i])
+                    }
                 }
             }
-            dialog.setCanceledOnTouchOutside(false)
-            return dialog
         }
 
-//        private var idialog: IDialog? = null
-//        override fun show(): AlertDialog { return opt.init().also { it.show(); opt.resetCLickListener() } }
-//        fun show(fragmentManager: FragmentManager): IDialog {
-//            val idialog = IDialog(opt.init())
-//            idialog.show(fragmentManager, javaClass.simpleName)
-//            idialog.lifecycle.addObserver(this)
-//            return idialog
-//        }
-        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-//            when(event) {
-//                Lifecycle.Event.ON_RESUME -> opt.resetCLickListener()
-//                Lifecycle.Event.ON_DESTROY -> idialog?.lifecycle?.removeObserver(this)
-//            }
+        override fun show(): AlertDialog {
+            return super.show().apply {
+                getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = chechData != null
+            }
         }
+
     }
 
     /**
      * 简单多选列表, 支持T Entity & bindView
      */
-    open class DialogMultiChoiceBuilder<T>(context: Context,
-                                           val datas: MutableList<T?>,
-                                           themeResId: Int = DialogDefaultTheme) :
-            AlertDialog.Builder(context, themeResId), LifecycleEventObserver {
+    open class DialogMultiChoiceBuilder<T>(
+        context: Context,
+        private val datas: MutableList<T>,
+        private val choiceListener: (dialog: DialogMultiChoiceBuilder<T>, items: MutableList<T>) -> Unit,
+        themeResId: Int = DialogDefaultTheme
+    ) : AbsAlertDialogBuilder<T, DialogMultiChoiceBuilder<T>>(context, themeResId) {
 
         /*** 选中的数据 ***/
-        var datasIsCheck: MutableList<T?> = mutableListOf()
+        var checkDatas: MutableList<T> = mutableListOf()
             private set
-
-        private val impl by lazy { IDialogImpl(create2()) }
-        fun setImpl(implBlock: (IDialogImpl<AlertDialog>) -> Unit): DialogMultiChoiceBuilder<T>{
-            implBlock(impl); return this
-        }
 
         private var checkItems: BooleanArray? = null
             set(value) {
                 if (value?.size ?: 0 == datas.size) {
-                    field = value; value?.forEachIndexed { index, it -> if (it) datasIsCheck.add(datas[index]) }
+                    field = value; value?.forEachIndexed { index, it -> if (it) checkDatas.add(datas[index]) }
                 }
             }
         fun setCheckItems(checkItems: BooleanArray): DialogMultiChoiceBuilder<T>{
             this.checkItems = checkItems; return this
         }
-        private var multiChoiceClickLis: (dialog: DialogInterface, index: Int, isChecked: Boolean, item: T?) -> Unit = {_,_,_,_->}
-        fun setMultiChoiceClickLis(lis: (dialog: DialogInterface, index: Int, isChecked: Boolean, item: T?) -> Unit): DialogMultiChoiceBuilder<T> {
-            this.multiChoiceClickLis = lis; return this
-        }
-        private var bindView: (tv: TextView?, i: Int, it: T?) -> Unit = { tv, _, it -> tv?.text = "$it"; tv?.setTextColor(Color.BLACK) }
-        fun setBindView(bindView: (tv: TextView?, i: Int, it: T?) -> Unit): DialogMultiChoiceBuilder<T> {
-            this.bindView = bindView; return this
-        }
-        fun setPositiveButton(txt: CharSequence="确认", lis: (dialog: AlertDialog, builder: DialogMultiChoiceBuilder<T>) -> Unit): DialogMultiChoiceBuilder<T> {
-            impl.setPositiveButton(txt) { lis(it, this) }; return this
-        }
 
-        private fun create2(): AlertDialog{
-            val lis = { dialog: DialogInterface, which: Int, isChecked: Boolean ->
-                if (isChecked) datasIsCheck.add(datas[which])
-                else datasIsCheck.remove(datas[which])
-                multiChoiceClickLis.invoke(dialog, which, isChecked, datas[which])
+        override fun create(): AlertDialog {
+            setMultiChoiceItems(datas.map { "$it" }.toTypedArray(), checkItems) { _, which, isChecked ->
+                if (isChecked) checkDatas.add(datas[which]) else checkDatas.remove(datas[which])
+                _dialog?.getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = !checkDatas.isNullOrEmpty()
             }
-            val dialog = setMultiChoiceItems(datas.map { "$it" }.toTypedArray(), checkItems, lis)
-                .create()
-            dialog.listView.post {
-                repeat(dialog.listView.childCount) { i -> // 适配DialogDefaultTheme
-                    bindView(dialog.listView.getChildAt(i).findViewById(android.R.id.text1), i, datas[i])
+            setPositiveButton(positiveButtonTxt) { _, _ ->
+                choiceListener(this, checkDatas)
+            }
+            setNegativeButton(negativeButtonTxt){ _, _ -> }
+            return super.create().apply {
+                listView.post {
+                    repeat(listView.childCount) { i ->
+                        bindView(listView.getChildAt(i).findViewById(android.R.id.text1), i, datas[i])
+                    }
                 }
             }
-            dialog.setCanceledOnTouchOutside(false)
-            return dialog
         }
 
-//        private var idialog: IDialog? = null
-//        override fun show(): AlertDialog { return impl.init().also { it.show(); impl.resetCLickListener() } }
-//        fun show(fragmentManager: FragmentManager): IDialog {
-//            val idialog = IDialog(impl.init())
-//            idialog.show(fragmentManager, javaClass.simpleName)
-//            idialog.lifecycle.addObserver(this)
-//            return idialog
-//        }
-        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-//            when(event) {
-//                Lifecycle.Event.ON_RESUME -> impl.resetCLickListener()
-//                Lifecycle.Event.ON_DESTROY -> idialog?.lifecycle?.removeObserver(this)
-//            }
+        override fun show(): AlertDialog {
+            return super.show().apply {
+                positiveButton?.isEnabled = checkItems?.isNotEmpty() == true
+            }
         }
     }
 
@@ -692,146 +844,8 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
          */
         private val DialogDefaultTheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
             android.R.style.Theme_DeviceDefault_Light_Dialog_Alert
-            else android.R.style.Theme_Material_Light_Dialog_Alert
+        else android.R.style.Theme_Material_Light_Dialog_Alert
     }
-}
-
-/**
- * [IDialog]实现类
- */
-@Deprecated("只维护AppCompatDialog则不需要这么多兼容写法")
-class IDialogImpl<T: AlertDialog>(private val dialog: T): LifecycleEventObserver {
-
-    private val window: Window? by lazy { dialog.window }
-    private val decorView: View? by lazy { window?.decorView }
-    private val layoutParams: WindowManager.LayoutParams? by lazy { window?.attributes }
-
-    val context by lazy { dialog.context }
-    // 声明周期感知上传至父类
-    private var onInitLifecycleStateChanged: ((source: LifecycleOwner, event: Lifecycle.Event)->Unit)? = null
-    var canceledOnTouchOutSide = true   // 空白区域是否可以关闭
-        set(value) { if (!isShowLock && cancelabled) field = value } // isShowLock 在dialogFragment中失效
-    var cancelabled = true              // 返回键 & 空白区域是否可以关闭
-        set(value) { if (!isShowLock) { field = value; canceledOnTouchOutSide = value} }
-    var animView: View? = null                      // 记录custom view, 在显示隐藏动画中使用
-        private set
-        get() = field ?: decorView
-    var showAnimator: ((View)->AnimatorSet)? = null
-    var hideAnimator: ((View)->AnimatorSet)? = null
-
-    /**
-     * @param changed [IDialogImpl.show]套入DialogFragment显示, dialog支持Lifecycle, [changed]透传至use类
-     */
-    fun init(changed: ((source: LifecycleOwner, event: Lifecycle.Event)->Unit)?=null): T {
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        onInitLifecycleStateChanged = changed
-        var last = 0L
-        val dv = decorView
-        if (dv is ViewGroup) { // 屏幕点击事件, 转移dialog原有canceledOnTouchOutSide功能
-            repeat(dv.childCount) { dv.getChildAt(it).setOnClickListener {  } }
-        }
-        decorView?.setOnTouchListener { _, event ->
-            when(event?.action) {
-                MotionEvent.ACTION_DOWN -> last = System.currentTimeMillis()
-                MotionEvent.ACTION_UP ->
-                    if (canceledOnTouchOutSide && System.currentTimeMillis() - last < 300) dialog.cancel()
-            }
-            true
-        }
-        dialog.setOnKeyListener { _, keyCode, _ ->
-            keyCode == KeyEvent.KEYCODE_BACK && !cancelabled
-        }
-        return dialog
-    }
-
-
-    fun setView(view: View) {
-        dialog.setView(view)
-    }
-    fun initOfCustomView(view: View?) {
-        this.animView = view
-        setViewBg(android.R.color.transparent)
-        decorView?.setPadding(0, 0, 0, 0)
-        layoutParams?.width = WindowManager.LayoutParams.MATCH_PARENT
-        window?.attributes = layoutParams
-    }
-
-    /**
-     * 重置PositiveButton点击默认关闭事件
-     */
-    fun resetCLickListener() {
-        getPositiveButton()?.setOnClickListener { positiveClickLis(dialog) } // 禁用掉主动dismiss
-    }
-
-    var title: CharSequence? = null
-        set(value) { field=value; dialog.setTitle(field) }
-    var message: CharSequence? = null
-        set(value) { field=value; dialog.setMessage(field) }
-    @DrawableRes var icon: Int? = null
-        set(value) { field=value; field?.also { dialog.setIcon(it) } }
-    var customTitleView: View? = null
-        set(value) { field=value; dialog.setCustomTitle(field) }
-
-    private var positiveClickLis: (dialog: T) -> Unit = {}
-    fun setPositiveButton(txt: CharSequence="确认", clickLis: (dialog: T) -> Unit) {
-        positiveClickLis = clickLis // 复制重置点击即dismiss功能
-        dialog.setButton(DialogInterface.BUTTON_POSITIVE, txt) { _, _ -> positiveClickLis(dialog) }
-    }
-    fun getPositiveButton(): Button? = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
-    fun setNegativeButton(txt: CharSequence="取消", clickLis: (dialog: T) -> Unit) {
-        dialog.setButton(DialogInterface.BUTTON_NEGATIVE, txt) { _, _ -> clickLis(dialog) }
-    }
-    fun getNegativeButton(): Button? = dialog.getButton(DialogInterface.BUTTON_NEGATIVE)
-    fun setNeutralButton(txt: CharSequence="不知道", clickLis: (dialog: T) -> Unit) {
-        dialog.setButton(DialogInterface.BUTTON_NEUTRAL, txt) { _, _ -> clickLis(dialog) }
-    }
-    fun getNeutralButton(): Button? = dialog.getButton(DialogInterface.BUTTON_NEUTRAL)
-
-    fun setViewBg(@DrawableRes resId: Int) {
-        window?.setBackgroundDrawableResource(resId)
-    }
-    fun setViewBg(bg: Drawable) {
-        window?.setBackgroundDrawable(bg)
-    }
-    fun setViewMarginLR(l: Int, r: Int) {
-        decorView?.setPadding(l, decorView?.paddingTop ?: 0, r, decorView?.paddingBottom ?: 0)
-    }
-
-    fun setDimAmount(@FloatRange(from = 0.0, to = 1.0) dimAmount: Float) {
-        window?.setDimAmount(dimAmount)
-    }
-
-    fun dismiss() {
-        dialog.dismiss()
-    }
-
-    var isShowLock = false // show是个异步过程, 禁止循环执行show
-    fun show() {
-        isShowLock = true
-        dialog.create(); dialog.show()
-        resetCLickListener()
-    }
-    var idialog: IDialog? = null
-    fun show(fragmentManager: FragmentManager): IDialog {
-        isShowLock = true
-        dialog.create()
-        val idialog = IDialog(dialog)
-        idialog.show(fragmentManager, javaClass.simpleName)
-        dialog.setCanceledOnTouchOutside(canceledOnTouchOutSide)
-        // idialog.isCancelable = cancelabled
-        // DialogFragment.prepareDialog 重置了setCancelable
-        idialog.lifecycle.addObserver(this)
-        return idialog
-    }
-    override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-        onInitLifecycleStateChanged?.invoke(source, event)
-        onStateChanged?.invoke(event)
-        when(event) {
-            Lifecycle.Event.ON_RESUME -> resetCLickListener()
-            Lifecycle.Event.ON_DESTROY -> idialog?.lifecycle?.removeObserver(this)
-        }
-    }
-    var onStateChanged: ((event: Lifecycle.Event)->Unit)? = null
 }
 
 /**
@@ -846,6 +860,7 @@ class IDialogImpl<T: AlertDialog>(private val dialog: T): LifecycleEventObserver
  *  [DecelerateInterpolator]            在动画开始的地方快然后慢
  *  [LinearInterpolator]                以常量速率改变
  *  [OvershootInterpolator]             向前甩一定值后再回到原来位置
+ *  [TimeInterpolator]                  该接口用于实现您自己的插值器
  */
 object AnimHelper {
 
@@ -903,4 +918,3 @@ object AnimHelper {
         duration = 300L
     }
 }
-

@@ -3,15 +3,12 @@ package com.zwping.alibx
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Animatable
-import android.graphics.drawable.RippleDrawable
-import android.text.TextPaint
 import android.util.TypedValue
 import android.view.View
 import android.view.animation.CycleInterpolator
 import android.view.animation.TranslateAnimation
 import androidx.annotation.ColorInt
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.ripple.RippleDrawableCompat
 
 /**
  * View相关辅助操作

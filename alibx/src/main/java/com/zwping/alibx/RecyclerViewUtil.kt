@@ -238,7 +238,7 @@ open class BaseViewHolder<E, out V: View>(
     override fun onAttach() {  }
     override fun onDetached() { }
 }
-interface IBaseViewHolder<E> {
+internal interface IBaseViewHolder<E> {
     fun bind(datas: MutableList<E>, position: Int)
     fun isLastPosition(): Boolean
 
