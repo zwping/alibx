@@ -154,7 +154,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                 view.visibility = View.VISIBLE
                 showAnimator.invoke(view).start()
             }
-            if (useLightBar) immersiveLightBar()                 // 细节处理
+            if (useLightBar) immersiveLightBar()                 // 体验优化
         }
 
         override fun dismiss() {
