@@ -2,12 +2,12 @@
     <!-- Base application theme. -->
     <style name="Theme.Androidlibx" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <!-- 主要颜色, 标题栏(actionbar)/Btn颜色 使用: ?attr?colorPrimary -->
-        <item name="colorPrimary">#fff</item>
+        <!-- 主要颜色, 标题栏(actionbar)/Btn背景颜色 使用: ?attr?colorPrimary -->
+        <item name="colorPrimary">#0a84ff</item>
         <!-- 主要颜色的较浅颜色, 类比色, 用于状态栏/上下文应用栏 -->
-        <item name="colorPrimaryVariant">#fff</item>
+        <item name="colorPrimaryVariant">#800a84ff</item>
         <!-- 主要颜色上方的颜色, 相反色, btn文本颜色 -->
-        <item name="colorOnPrimary">#333</item>
+        <item name="colorOnPrimary">#fff</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
