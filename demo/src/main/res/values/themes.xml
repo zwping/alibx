@@ -20,6 +20,7 @@
         <item name="android:windowLightStatusBar" tools:targetApi="M">true</item>
         <!-- navbar颜色 -->
         <item name="android:navigationBarColor">#fff</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
         <!-- navbar divider颜色 -->
         <!-- <item name="android:navigationBarDividerColor" tools:targetApi='O_MR1'>@android:color/black</item> -->
         <!-- 控件文本颜色 -->

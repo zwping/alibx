@@ -16,10 +16,26 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+
+    signingConfigs {
+        release {
+            storeFile file('./key.jks')
+            storePassword '123456'
+            keyAlias 'alibx_demo'
+            keyPassword '123456'
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "alibx_demo_v${variant.versionName}_${variant.versionCode}_${variant.buildType.name}.apk"
+            // alibx_demo_v1.0_1_release.apk
         }
     }
     compileOptions {
@@ -36,8 +52,8 @@ android {
 
 dependencies {
 
-    implementation 'com.zwping:alibx:0.7.7'
-//    implementation project(':alibx')
+//    implementation 'com.zwping:alibx:0.7.7'
+    implementation project(':alibx')
 
 //    implementation 'androidx.core:core-ktx:1.3.2'
 //    implementation 'androidx.appcompat:appcompat:1.2.0'
@@ -46,4 +62,8 @@ dependencies {
 //    testImplementation 'junit:junit:4.+'
 //    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
 //    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    debugImplementation 'com.blankj:utilcodex:1.31.0'
+    debugImplementation 'com.gitee.zackratos:UltimateBarX:0.8.0'
+    // debugImplementation 'io.github.razerdp:BasePopup:3.2.0'
 }

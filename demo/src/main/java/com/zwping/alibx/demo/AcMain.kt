@@ -1,24 +1,24 @@
 package com.zwping.alibx.demo
 
 import android.content.Context
-import android.content.DialogInterface
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.text.TextUtils
+import android.view.*
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.zwping.alibx.*
+import com.zwping.alibx.Bar
 import com.zwping.alibx.demo.AcMain.Type.*
 import com.zwping.alibx.demo.databinding.AcMainBinding
+import com.zwping.alibx.demo.databinding.DialogCommentBinding
+import com.zwping.alibx.demo.databinding.DialogLoginBinding
 
 class AcMain : BaseAc<AcMainBinding>() {
 
@@ -26,6 +26,8 @@ class AcMain : BaseAc<AcMainBinding>() {
     private enum class Type{
         Default,
         Dialog,
+        FormInput,
+        Bar,
     }
 
     private fun Context.openAcMain(enum: Enum<*>){
@@ -36,12 +38,13 @@ class AcMain : BaseAc<AcMainBinding>() {
         return AcMainBinding.inflate(inflater)
     }
 
-    private fun btn(name: String, click: (v: View)->Unit) = Button(this).apply {
+    private fun btn(name: CharSequence, click: (v: Button)->Unit) = Button(this).apply {
         layoutParams = ViewGroup.LayoutParams(-2, -2)
         minWidth = 200F.dp2px()
         isAllCaps = false
         text = name
-        setOnClickListener { click(it) }
+        setOnClickListener { click(this) }
+        backgroundTintList = ColorStateList2((0xffdddddd).toInt()) { unEnabled((0xff999999).toInt()) }.create()
     }
 
     private fun line(name: String) = LinearLayout(this).apply {
@@ -91,13 +94,67 @@ class AcMain : BaseAc<AcMainBinding>() {
             }
             Dialog -> {
                 vb.lyContainer.addView(line("自定义dialog"))
-                vb.lyContainer.addView(btn("底部上升"){
+                vb.lyContainer.addView(btn("输入框-发评论"){
+                    IDialog.Dialog(this, {
+                        val vb = DialogCommentBinding.inflate(rootLayout.getLayoutInflater(), rootLayout, false)
+                        // vb.root.layoutParams.width = getScreenWidth()-(30F*2).dp2px()
+                        setContentView(vb.root)
+                        setLightBar(false)
+                        Bar.setStatusBarDarkMode(window, false)
+                        Bar.setNavBarDarkMode(window, true)
+                        Bar.setNavBarColor(window, Color.WHITE)
+                        Bar.addMarginBottomNavBarHeight(rootLayout)
+
+                         onOutSideClickListener {
+                             if (Bar.isKeyboardVisible(rootLayout)) Bar.hideKeyboard(rootLayout)
+                             else dismiss()
+                         }
+
+                        showAnimator = { AnimHelper.slideBottomTopIn(it) }
+                        hideAnimator = { AnimHelper.slideTopBottomOut(it) }
+
+                        setInputFocus(vb.etComment)
+                        window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+                        Bar.registerKeyboardChangeListener(window, progress = { show, high ->
+                            rootLayout.translationY = high*1F
+                        })
+                    })
+                        .show()
+                })
+                vb.lyContainer.addView(btn("输入框-登录") {
+                    IDialog.Dialog(this, {
+                        val vb = DialogLoginBinding.inflate(rootLayout.getLayoutInflater(), rootLayout, false)
+                        setContentView(vb.root)
+
+                        setInputFocus(vb.etAcc)
+                        window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+                        Bar.registerKeyboardChangeListener(window, progress = { show, high ->
+                            rootLayout.translationY = high/2F
+                        })
+                    })
+                        .show()
+                })
+                vb.lyContainer.addView(btn("右侧滑入"){
                     IDialog.Dialog(this)
-                        .setContentView { CommRecyclerView(it.context) }
-                        .apply {
-                            disableHideAnim = true
-                        }
+                        .setContentView { CommRecyclerView(it.context).apply {
+                            layoutParams = ViewGroup.LayoutParams(300F.dp2px(), -1)
+                            adp.setData(datas(30))
+                        } }
                         .setLightBar(false)
+                        .setGravity(Gravity.RIGHT)
+                        .setShowAnimator { AnimHelper.slideRightLeftIn(it) }
+                        .setHideAnimator { AnimHelper.slideLeftRightOut(it) }
+                        .show()
+                })
+                vb.lyContainer.addView(btn("底部上升"){
+                    IDialog.Dialog(this, {
+                        rootLayout.addMarginBottomNavBarHeight()
+                        Bar.setNavBarColor(window, Color.WHITE)
+                        setLightBar(false)
+                        Bar.setStatusBarDarkMode(window, false)
+                        Bar.setNavBarDarkMode(window, true)
+                    })
+                        .setContentView { CommRecyclerView(it.context) }
                         .setGravity(Gravity.BOTTOM)
                         .setShowAnimator { AnimHelper.slideBottomTopIn(it) }
                         .setHideAnimator { AnimHelper.slideTopBottomOut(it) }
@@ -112,10 +169,10 @@ class AcMain : BaseAc<AcMainBinding>() {
                 })
                 vb.lyContainer.addView(btn("IOS风格"){
                     IDialog.DialogIOS(this)
-                        .setTitleIOS("Title")
-                        .setMessageIOS("Message")
-                        .setBtnCancelIOS {  }
-                        .setBtnConfirmIOS { showToast("confirm") }
+                        .setTitleIOS("电池电量不足")
+                        .setMessageIOS("还剩20%电量")
+                        .setBtnCancelIOS("关闭") {  }
+                        .setBtnConfirmIOS("低电量模式") { showToast("confirm") }
                         .show()
                 })
                 vb.lyContainer.addView(btn("IOS风格正常使用1"){
@@ -213,6 +270,94 @@ class AcMain : BaseAc<AcMainBinding>() {
                         .show()
                 })
             }
+            FormInput -> {
+                // 表单输入良好的用户体验:
+                // 外层滚动布局
+                // window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                // isSingleLine = true; imeOptions = EditorInfo.IME_ACTION_NEXT // 连续输入
+                val p1_1 = vb.lyContainer.parent.parent as ViewGroup
+                (vb.lyContainer.parent as NestedScrollView).removeAllViews()
+                p1_1.addView(vb.lyContainer)
+                vb.lyContainer.addView(line("最外层布局不同"))
+                val container = LinearLayout(vb.lyContainer.context).apply { setBackgroundColor(Color.DKGRAY);layoutParams = ViewGroup.LayoutParams(-1,-1); orientation = LinearLayout.VERTICAL }
+                vb.lyContainer.addView(btn(SpanUtils().append("LinearLayout").setStrikethrough().create()) {
+                    window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                    container.removeAllViews()
+                    repeat(20) { i-> container.addView(HolderEt(container).let { it.view.hint="输入框${i}"; it.itemView }) }
+                })
+                vb.lyContainer.addView(btn("NestedScrollView") {
+                    window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                    container.removeAllViews()
+                    val sv = NestedScrollView(container.context)
+                    val cont =  LinearLayout(vb.lyContainer.context).apply { layoutParams = ViewGroup.LayoutParams(-1,-1); orientation = LinearLayout.VERTICAL }
+                    sv.addView(cont)
+                    repeat(20) { i-> cont.addView(HolderEt(container).let { it.view.hint="输入框${i}"; it.itemView }) }
+                    container.addView(sv)
+                })
+                vb.lyContainer.addView(btn("RecyclerView") {
+                    window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                    container.removeAllViews()
+                    val rv = RecyclerView(container.context).apply { layoutManager = LinearLayoutManager(container.context) }
+                    rv.adapter = AdapterQuick { HolderEt(it) }.apply { setData(mutableListOf<Int>().apply { repeat(20) { add(it) } }) }
+                    container.addView(rv)
+                })
+                vb.lyContainer.addView(container)
+            }
+            Type.Bar -> {
+                vb.lyContainer.addView(line("常见bar控制"))
+                vb.lyContainer.addView(btn("全屏[×]") {
+                    var state = it.text.toString().contains("√")
+                    state = !state
+                    it.text = "全屏[${if (state) "√" else "×"}]"
+                    setFullScreen(state)
+                })
+                vb.lyContainer.addView(btn("StatusBar DarkMode[默认]") {
+                    var state = it.text.toString().contains("√")
+                    state = !state
+                    it.text = "StatusBar DarkMode[${if (state) "√" else "×"}]"
+                    setStatusBarDarkMode(state)
+                })
+                vb.lyContainer.addView(btn("NavBar DarkMode[默认]") {
+                    var state = it.text.toString().contains("√")
+                    state = !state
+                    it.text = "NavBar DarkMode[${if (state) "√" else "×"}]"
+                    setNavBarDarkMode(state)
+                })
+                vb.lyContainer.addView(btn("隐藏状态栏[×]") {
+                    var state = it.text.toString().contains("√")
+                    state = !state
+                    it.text = "隐藏状态栏[${if (state) "√" else "×"}]"
+                    setStatusBarHide(state)
+                })
+                vb.lyContainer.addView(line("只可activity设置沉浸式, fm只能操控bar"))
+                vb.lyContainer.addView(btn("immersive") { immersive(); it.isEnabled = false })
+            }
         }
     }
+
+    private class HolderEt(parent: ViewGroup): BaseViewHolder<Int, EditText>(
+        EditText(parent.context).apply {
+            /*
+            actionNone：[没有动作]（有下个输入框则跳入，否则收起软键盘）
+            actionUnspecified：[未指定]/下一项（有下个输入框则跳入，否则收起软键盘）
+            actionPrevious：上一项（光标跳到上一个输入框，如果已是第一个则跳到最后一个输入框）
+            actionNext：下一项（光标跳到下一个输入框，如果已是最后一个则跳到第一个输入框）
+            actionDone：完成（收起软键盘）
+            actionGo：前往（有下个输入框则跳入，否则收起软键盘）
+            actionSearch：搜索（有下个输入框则跳入，否则收起软键盘）
+            actionSend：发送（有下个输入框则跳入，否则收起软键盘）
+             */
+            isSingleLine = true; imeOptions = EditorInfo.IME_ACTION_NEXT // 连续输入
+            setOnEditorActionListener { textView, i, keyEvent ->
+                if (textView.hint.toString().contains("19")) {
+                    showToast("最后一个了, 手动提交表单")
+                    return@setOnEditorActionListener true
+                }
+                false
+            }
+        },
+        { view, entity ->
+            view.hint = "输入框${entity}"
+        }
+    )
 }

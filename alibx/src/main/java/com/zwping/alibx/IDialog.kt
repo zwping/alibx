@@ -1,6 +1,5 @@
 package com.zwping.alibx
 
-import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.app.DatePickerDialog
@@ -19,23 +18,19 @@ import android.os.Build
 import android.os.Bundle
 import android.text.format.DateFormat
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.*
 import android.view.animation.*
 import android.widget.*
 import androidx.annotation.ColorInt
-import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
 import androidx.annotation.Px
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.cardview.widget.CardView
-import androidx.core.animation.addListener
 import androidx.core.animation.doOnEnd
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -159,7 +154,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                 view.visibility = View.VISIBLE
                 showAnimator.invoke(view).start()
             }
-            if (useLightBar) immersiveLightBar()                 // 细节处理
+            if (useLightBar) immersiveLightBar()                 // 体验优化
         }
 
         override fun dismiss() {
@@ -210,17 +205,6 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                     wic.isAppearanceLightNavigationBars = false
             }
         }
-//        private fun ViewPropertyAnimator.doOnEnd(lis: (animation: Animator?)->Unit):ViewPropertyAnimator{
-//            setListener(object: Animator.AnimatorListener{
-//                override fun onAnimationStart(animation: Animator?) {}
-//                override fun onAnimationEnd(animation: Animator?) {
-//                    lis.invoke(animation)
-//                }
-//                override fun onAnimationCancel(animation: Animator?) {}
-//                override fun onAnimationRepeat(animation: Animator?) {}
-//            })
-//            return this
-//        }
 
         protected fun Float.dpToPx() = this*Resources.getSystem().displayMetrics.density+0.5F
 
@@ -383,7 +367,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
     open class DialogBottomSheet(context: Context,
                                  theme: Int = 0) :
-            BottomSheetDialog(context, theme) {
+        BottomSheetDialog(context, theme) {
         // http://blog.csdn.net/yanzhenjie1003/article/details/51938400
     }
 
@@ -632,7 +616,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                 }
             }
         }
-//        override fun show() { super.show() }
+        //        override fun show() { super.show() }
 //        private var idialog: IDialog? = null
 //        fun show(fragmentManager: FragmentManager): IDialog {
 //            val idialog = IDialog(this)
@@ -860,7 +844,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
          */
         private val DialogDefaultTheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
             android.R.style.Theme_DeviceDefault_Light_Dialog_Alert
-            else android.R.style.Theme_Material_Light_Dialog_Alert
+        else android.R.style.Theme_Material_Light_Dialog_Alert
     }
 }
 
@@ -934,4 +918,3 @@ object AnimHelper {
         duration = 300L
     }
 }
-
