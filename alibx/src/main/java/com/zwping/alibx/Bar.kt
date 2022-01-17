@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Point
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.provider.Settings
@@ -12,32 +13,42 @@ import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.*
 import android.view.WindowManager.LayoutParams.*
+import android.view.inputmethod.InputMethodManager
+import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.*
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsControllerCompat.*
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 
 
 /**
  * 基于Android 5.0 状态栏/导航栏 散装方法
+ * @to-do 小屏模式未兼容
  * zwping @ 2021/10/22
  */
 object Bar {
 
-    /*** android 11 flags大量废弃 ***/
-    fun isAndroidR() = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R
+    /*** android 11 window.flags大量废弃 ***/
+    val isR by lazy { android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R }
 
     /*** insets compat简化了insets操作 ***/
-    fun insetsController(ac: Activity): WindowInsetsControllerCompat? {
-        return insetsController(ac.window)
-    }
-    private fun insetsController(window: Window?): WindowInsetsControllerCompat? {
+    fun insetsController(window: Window?): WindowInsetsControllerCompat? {
         window?.decorView ?: return null
         return WindowInsetsControllerCompat(window, window.decorView)
+    }
+    fun insets(view: View?): WindowInsetsCompat? {
+        view ?: return null
+        return ViewCompat.getRootWindowInsets(view)
     }
 
     /**
@@ -53,18 +64,25 @@ object Bar {
      *  2 -> [LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER]  不允许延伸
      *
      */
-    @SuppressLint("NewApi")
-    fun setFullScreen(ac: Activity,
+    fun setFullScreen(window: Window?,
                       full: Boolean=true,
                       behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
                       cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
-        val window = ac.window ?: return
+        window ?: return
         setCutoutMode(window, cutoutMode)
         WindowCompat.setDecorFitsSystemWindows(window, !full)
-        insetsController(ac)?.also {
-            systemBars().also { t -> if (full) it.hide(t) else it.show(t) }
+        insetsController(window)?.also {
+            statusBars().also { t -> if (full) it.hide(t) else it.show(t) }
+            navigationBars().also { t -> if (full) it.hide(t) else it.show(t) }
             it.systemBarsBehavior = behavior
         }
+    }
+
+    fun setFullScreen(ac: Activity?,
+                      full: Boolean=true,
+                      behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
+                      cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
+        setFullScreen(ac?.window, full, behavior, cutoutMode)
     }
 
     /**
@@ -75,68 +93,55 @@ object Bar {
      * @param navColor 导航栏颜色
      * @param navDarkMode 导航栏文本颜色, 部分手机会根据背景色自动显示反色
      */
-    fun immersive(ac: Activity,
+    fun immersive(window: Window?,
                   @ColorInt color: Int=Color.TRANSPARENT,
                   darkMode: Boolean?=null,
                   navImmersive: Boolean=false,
                   @ColorInt navColor: Int? = null,
-                  navDarkMode: Boolean?=null){
-        val window = ac.window ?: return
+                  navDarkMode: Boolean?=null) {
+        window ?: return
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        if (!navImmersive) { // 不考虑二次逆向调用
-            addMarginBottomNavBarHeight(getContentView(ac))
+        setStatusBarColor(window, color)
+        if (navImmersive && navColor == null) { // nav bar 默认透明
+            setNavBarColor(window, Color.TRANSPARENT)
         }
-        setStatusBarColor(ac, color)
-        darkMode?.also { setStatusBarDarkMode(ac, it) }
-        navColor?.also { setNavBarColor(ac, it) }
-        if (navImmersive && navColor == null) setNavBarColor(ac, Color.TRANSPARENT)
-        navDarkMode?.also { setNavBarDarkMode(ac, it) }
+        if (!navImmersive) { // 不考虑二次逆向调用
+            addMarginBottomNavBarHeight(getContentView(window))
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // 关闭导航栏默认阴影
+            window.isNavigationBarContrastEnforced = false
+        }
+        navColor?.also { setNavBarColor(window, it) }
+        darkMode?.also { setStatusBarDarkMode(window, it) }
+        navDarkMode?.also { setNavBarDarkMode(window, it) }
+    }
+    fun immersive(ac: Activity?,
+                  @ColorInt color: Int=Color.TRANSPARENT,
+                  darkMode: Boolean?=null,
+                  navImmersive: Boolean=false,
+                  @ColorInt navColor: Int? = null,
+                  navDarkMode: Boolean?=null) {
+        immersive(ac?.window, color, darkMode, navImmersive, navColor, navDarkMode)
     }
 
     /**
      * 设置状态栏深色模式
      * @param darkMode true -> 字体电池黑色 false -> 字体电池白色
      */
-    private fun setStatusBarDarkMode(window: Window?, darkMode: Boolean=true) {
+    fun setStatusBarDarkMode(window: Window?, darkMode: Boolean=true) {
         window ?: return
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
-        if (Build.VERSION.SDK_INT != Build.VERSION_CODES.R) {  // android 11不生效
-            insetsController(window)?.isAppearanceLightStatusBars = darkMode
-            return
-        }
-        var uiflag = window.decorView.systemUiVisibility
-        uiflag = if (darkMode) { uiflag or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR }
-        else { uiflag and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() }
-        window.decorView.systemUiVisibility = uiflag
+        insetsController(window)?.isAppearanceLightStatusBars = darkMode
     }
-    fun setStatusBarDarkMode(ac: Activity, darkMode: Boolean=true) {
-        setStatusBarDarkMode(ac.window, darkMode)
-//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
-//        if (Build.VERSION.SDK_INT != Build.VERSION_CODES.R) {  // android 11不生效
-//            insetsController(ac)?.isAppearanceLightStatusBars = darkMode
-//            return
-//        }
-//        var uiflag = ac.window?.decorView?.systemUiVisibility ?: return
-//        uiflag = if (darkMode) { uiflag or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR }
-//        else { uiflag and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() }
-//        ac.window?.decorView?.systemUiVisibility = uiflag
-    }
+    fun setStatusBarDarkMode(ac: Activity?, darkMode: Boolean=true) { setStatusBarDarkMode(ac?.window, darkMode) }
+    fun setStatusBarDarkMode(fm: Fragment?, darkMode: Boolean=true) { setStatusBarDarkMode(fm?.activity, darkMode) }
 
     fun setNavBarDarkMode(window: Window?, darkMode: Boolean=false) {
-        window ?: return
+        // 部分手机会自动取navBar颜色的反色
+        // 提示线无法控制 pixel 4a android 12 2022-01-17
         insetsController(window)?.isAppearanceLightNavigationBars = darkMode
     }
-    fun setNavBarDarkMode(ac: Activity, darkMode: Boolean=false) {
-        setNavBarDarkMode(ac.window) // 部分手机会自动取navBar颜色的反色
-    }
-
-    fun setStatusBarDarkMode(fm: Fragment, darkMode: Boolean=true) {
-        fm.activity?.also { setStatusBarDarkMode(it, darkMode) }
-    }
-
-    fun setNavBarDarkMode(fm: Fragment, darkMode: Boolean=false) {
-        fm.activity?.also { setNavBarDarkMode(it, darkMode) }
-    }
+    fun setNavBarDarkMode(ac: Activity?, darkMode: Boolean=false) { setNavBarDarkMode(ac?.window, darkMode) }
+    fun setNavBarDarkMode(fm: Fragment?, darkMode: Boolean=false) { setNavBarDarkMode(fm?.activity, darkMode) }
 
 
     /**
@@ -144,65 +149,65 @@ object Bar {
      * @param behavior 隐藏后bar显示的行为
      * @param cutoutMode 异形屏兼容模式
      */
-    @SuppressLint("NewApi")
-    fun setStatusBarHide(ac: Activity,
+    fun setStatusBarHide(window: Window?,
                          hide: Boolean=true,
                          behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
-                         cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
-        val window = ac.window ?: return
-        insetsController(ac)?.also {
-            statusBars().also { t -> if (hide) it.hide(t) else it.show(t) }
+                         @SuppressLint("InlinedApi") cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
+        window ?: return
+        insetsController(window)?.also {
+            if (hide) it.hide(statusBars()) else it.show(statusBars())
             it.systemBarsBehavior = behavior
         }
         setCutoutMode(window, cutoutMode)
         WindowCompat.setDecorFitsSystemWindows(window, !hide)
-        if (hide) addMarginBottomNavBarHeight(getContentView(ac))
-        else subtractMarginBottomNavBarHeight(getContentView(ac))
+        if (hide) addMarginBottomNavBarHeight(getContentView(window))
+        else subtractMarginBottomNavBarHeight(getContentView(window))
     }
-
-    fun setNavBarHide(ac: Activity,
-                      hide: Boolean=true,
-                      behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE) {
-        insetsController(ac)?.also {
-            navigationBars().also { t -> if (hide) it.hide(t) else it.show(t) }
-            it.systemBarsBehavior = behavior
-        }
-    }
-
-    fun setStatusBarHide(fm: Fragment,
+    fun setStatusBarHide(ac: Activity?,
                          hide: Boolean=true,
                          behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
                          @SuppressLint("InlinedApi") cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
-        fm.activity?.also { setStatusBarHide(it, hide, behavior, cutoutMode) }
+        setStatusBarHide(ac?.window, hide, behavior, cutoutMode)
+    }
+    fun setStatusBarHide(fm: Fragment?,
+                         hide: Boolean=true,
+                         behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE,
+                         @SuppressLint("InlinedApi") cutoutMode: Int=LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
+        setStatusBarHide(fm?.activity, hide, behavior, cutoutMode)
     }
 
-    fun setNavBarHide(fm: Fragment,
+    fun setNavBarHide(window: Window?,
                       hide: Boolean=true,
                       behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE) {
-        fm.activity?.also { setNavBarHide(it, hide, behavior) }
+        insetsController(window)?.also {
+            if (hide) it.hide(navigationBars()) else it.show(navigationBars())
+            it.systemBarsBehavior = behavior
+        }
+    }
+    fun setNavBarHide(ac: Activity?,
+                      hide: Boolean=true,
+                      behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE) {
+        setNavBarHide(ac?.window, hide, behavior)
+    }
+    fun setNavBarHide(fm: Fragment?,
+                      hide: Boolean=true,
+                      behavior: Int=BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE) {
+        setNavBarHide(fm?.activity, hide, behavior)
     }
 
     /**
      * 设置状态栏颜色
      */
-    private fun setStatusBarColor(window: Window?, @ColorInt color: Int) {
+    fun setStatusBarColor(window: Window?, @ColorInt color: Int) {
         window?.statusBarColor = color
     }
-    fun setStatusBarColor(ac: Activity, @ColorInt color: Int) {
-        setStatusBarColor(ac.window, color)
-    }
-    fun setStatusBarColor(fm: Fragment, @ColorInt color: Int) {
-        fm.activity?.also { setStatusBarColor(it, color) }
-    }
-    private fun setNavBarColor(window: Window?, @ColorInt color: Int) {
+    fun setStatusBarColor(ac: Activity?, @ColorInt color: Int) { setStatusBarColor(ac?.window, color) }
+    fun setStatusBarColor(fm: Fragment?, @ColorInt color: Int) { setStatusBarColor(fm?.activity, color) }
+    fun setNavBarColor(window: Window?, @ColorInt color: Int) {
         window?.navigationBarColor = color
     }
-    fun setNavBarColor(ac: Activity, @ColorInt color: Int) {
-        setNavBarColor(ac.window, color)
-    }
-    fun setNavBarColor(fm: Fragment, @ColorInt color: Int) {
-        fm.activity?.also { setNavBarColor(it, color) }
-    }
+    fun setNavBarColor(ac: Activity?, @ColorInt color: Int) { setNavBarColor(ac?.window, color) }
+    fun setNavBarColor(fm: Fragment?, @ColorInt color: Int) { setNavBarColor(fm?.activity, color) }
 
     @RequiresApi(Build.VERSION_CODES.P)
     fun setNavBarDividerColor(ac: Activity, @ColorInt color: Int) {
@@ -228,9 +233,18 @@ object Bar {
     }
     fun getNavBarHeight(ctx: Context?): Int {
         ctx ?: return 0
-        // if (!isSupperNavBar(ctx)) return 0
-        if (isFullScreenGesture(ctx)) return 0
-        if (!isNavBarVisible(ctx)) return 0
+        /* // 并不能兼容国产rom 2022-01-17
+        if (ctx is Activity) {
+            val view = ctx.findViewById<View>(android.R.id.content)
+            val high = ViewCompat.getRootWindowInsets(view)?.getInsets(navigationBars())?.bottom
+            if (high != null) {
+                return high
+            }
+        }
+        */
+        // if (!isSupperNavBar(ctx)) return 0   // 不支持nav bar
+        if (isFullScreenGesture(ctx)) return 0  // 开启了全面屏
+        if (!isNavBarVisible(ctx)) return 0     // nav bar不可见
         return ctx.getBarHeight("navigation_bar_height")
     }
     fun getActionBarHeight(ctx: Context?): Int {
@@ -241,22 +255,15 @@ object Bar {
         }
         return 0
     }
-    fun getScreenHeight(ctx: Context?): Int {
-        ctx ?: return 0
-        return getDisplayOutMetrics(ctx).heightPixels
-    }
-    fun getScreenWidth(ctx: Context?): Int {
-        ctx ?: return 0
-        return getDisplayOutMetrics(ctx).widthPixels
-    }
-
-    private fun getDisplayOutMetrics(ctx: Context): DisplayMetrics {
+    fun getScreenHeight(ctx: Context?): Int = getDisplayOutMetrics(ctx).heightPixels
+    fun getScreenWidth(ctx: Context?): Int = getDisplayOutMetrics(ctx).widthPixels
+    private fun getDisplayOutMetrics(ctx: Context?): DisplayMetrics {
         val outMetrics = DisplayMetrics()
+        ctx ?: return outMetrics
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             ctx.display?.getRealMetrics(outMetrics)
         } else {
             val vm = ctx.getSystemService(Context.WINDOW_SERVICE) as WindowManager?
-            @Suppress("DEPRECATION")
             vm?.defaultDisplay?.getRealMetrics(outMetrics)
         }
         return outMetrics
@@ -301,11 +308,18 @@ object Bar {
     fun isFullScreenGesture(context: Context?): Boolean {
         context ?: return false
         return try {
+            // adb shell settings list global  // 查看数据库，寻找是否隐藏 navigation
             var miui = Settings.Global.getInt(context.contentResolver, "force_fsg_nav_bar", -1) > 0
-            if (miui) { // miui指示线可以手动隐藏, 显示则判断其为未开启全面屏手势
-                val navh = context.getBarHeight("navigation_bar_height")
-                val screenh = context.getScreenHeight()
-                miui = navh>0 && screenh/navh<=30
+            if (miui) { // miui指示线可以手动隐藏, 如隐藏则判断其为未开启全面屏手势
+                // k40 pro miui 12.5.8 新增隐藏手势线标识
+                val hideLine = Settings.Global.getInt(context.contentResolver, "hide_gesture_line", 0)
+                miui = if (hideLine == 1) {
+                    true
+                } else {
+                    val navh = context.getBarHeight("navigation_bar_height")
+                    val screenh = context.getScreenHeight()
+                    navh>0 && screenh/navh<=30
+                }
             }
             val emui = Settings.Global.getInt(context.contentResolver, "navigationbar_is_min", -1) > 0
             val funtouch = Settings.Secure.getInt(context.contentResolver, "navigation_gesture_on", -1) > 0
@@ -315,17 +329,20 @@ object Bar {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     fun setCutoutMode(window: Window, cutoutMode: Int) { // android9兼容刘海屏方案, 可在AppTheme中全局配置
-        window.attributes = window.attributes.also { it.layoutInDisplayCutoutMode = cutoutMode }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = cutoutMode }
+        }
     }
 
     /**
      * 手动补偿沉浸式后bar的空缺高度
      */
-    fun getContentView(ac: Activity): View? {
-        return ac.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
+    fun getContentView(window: Window?): View? {
+        return window?.findViewById<ViewGroup?>(Window.ID_ANDROID_CONTENT)
     }
+    fun getContentView(ac: Activity?): View? = getContentView(ac?.window)
+
     fun addMarginBottomNavBarHeight(view: View?) {
         view ?: return
         val lp = view.layoutParams as ViewGroup.MarginLayoutParams
@@ -354,6 +371,145 @@ object Bar {
         lp.topMargin = if (lp.topMargin < statusH) statusH else lp.topMargin-statusH
         view.layoutParams = lp
     }
+
+    /* ---------- ime insets ------------ */
+
+    fun isKeyboardVisible(view: View?): Boolean {
+        return insets(view)?.isVisible(ime()) ?: false
+    }
+
+    fun showKeyboard(view: View?) {
+        view ?: return
+        view.isFocusable = true
+        view.isFocusableInTouchMode = true
+        if (!view.requestFocus()) return
+        val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager ?: return
+        imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+    }
+
+    fun hideKeyboard(view: View?) {
+        view ?: return
+        val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager ?: return
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    /**
+     * 监听键盘改变事件
+     * @param listener 直接显示ime结果
+     * @param progress ime过程, 条件苛刻, 体验更好。[其window需具备沉浸式 & ADJUST_NOTHING]
+     *
+     * @see Bar.registerKeyboardChangeListener
+     * @see Bar.unregisterKeyboardChangeListener
+     */
+    fun registerKeyboardChangeListener(
+        window: Window?,
+        listener: (show: Boolean, high: Int)-> Unit = {_, _ -> },
+        progress: ((show: Boolean, diff: Int)-> Unit)? = null
+    ) {
+        window ?: return
+        val contentView = window.findViewById<FrameLayout?>(android.R.id.content) ?: return
+
+        if (progress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // https://github.com/android/user-interface-samples/tree/master/WindowInsetsAnimation
+            contentView.setWindowInsetsAnimationCallback(object: WindowInsetsAnimation.Callback(0){
+                var insets: WindowInsets? = null
+                // #1: 首先 onPrepare 被调用，这允许应用记录下当前布局中的任何视图状态
+                override fun onPrepare(animation: WindowInsetsAnimation) {
+                    super.onPrepare(animation)
+                }
+                // #2: 接下来我们实现 onStart() 方法，这会让我们先记录下这个视图结束时候的位置
+                override fun onStart(animation: WindowInsetsAnimation, bounds: WindowInsetsAnimation.Bounds): WindowInsetsAnimation.Bounds {
+                    val show = if (insets==null) true else insets?.isVisible(ime()) == false
+                    val high = if (show) bounds.upperBound.bottom - getNavBarHeight(window.decorView.context) else 0
+                    listener(show, high)
+                    getDecorViewInvisibleHigh(window)
+                    // progress?.invoke(show, high)
+                    return bounds
+                }
+                // #3: 它会在动画中每次视窗属性改变的时候被调用
+                override fun onProgress(insets: WindowInsets, p1: MutableList<WindowInsetsAnimation>): WindowInsets {
+                    this.insets = insets
+                    val typesInset = insets.getInsets(ime())
+                    val otherInset = insets.getInsets(systemBars())
+                    val subtract = android.graphics.Insets.subtract(typesInset, otherInset)
+                    val diff = android.graphics.Insets.max(subtract, android.graphics.Insets.NONE).let { it.top - it.bottom }
+                    progress?.invoke(insets.isVisible(ime()), diff)
+                    return insets
+                }
+                // #4: 最后 onEnd 在动画已经结束的时候被调用。使用这个来清理任何旧的状态
+                override fun onEnd(animation: WindowInsetsAnimation) { }
+            })
+            // ViewCompat.setWindowInsetsAnimationCallback()并未兼容<R @2022-01-14
+            // ViewCompat.setWindowInsetsAnimationCallback(contentView, object: WindowInsetsAnimationCompat.Callback(0){
+            //     override fun onProgress(insets: WindowInsetsCompat, p1: MutableList<WindowInsetsAnimationCompat>): WindowInsetsCompat {
+            //         return insets
+            //     }
+            // })
+            return
+        }
+
+        if (window.attributes.softInputMode == SOFT_INPUT_ADJUST_NOTHING) {
+            window.setSoftInputMode(SOFT_INPUT_ADJUST_RESIZE)
+        }
+
+        var preHigh = getDecorViewInvisibleHigh(window)
+        val onGlobalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
+            val high = getDecorViewInvisibleHigh(window)
+            if (preHigh != high) {
+                listener(high!=0, high)
+                progress?.invoke(high!=0, high*-1)
+                preHigh = high
+            }
+        }
+        contentView.viewTreeObserver.addOnGlobalLayoutListener(onGlobalLayoutListener)
+        contentView.setTag(TAG_Keyboard, onGlobalLayoutListener)
+    }
+    private const val TAG_Keyboard = -8
+
+    fun unregisterKeyboardChangeListener(window: Window?) {
+        window ?: return
+        val contentView = window.findViewById<FrameLayout?>(android.R.id.content) ?: return
+        val tag = contentView.getTag(TAG_Keyboard)
+        if (tag is ViewTreeObserver.OnGlobalLayoutListener) {
+            contentView.viewTreeObserver.removeOnGlobalLayoutListener(tag)
+            contentView.setTag(TAG_Keyboard, null)
+        }
+    }
+
+    fun registerKeyboardChangeListener(
+        activity: FragmentActivity?,
+        listener: (show: Boolean, high: Int)-> Unit = {_, _ -> },
+        progress: ((show: Boolean, diff: Int)-> Unit)? = null
+    ) {
+        activity ?: return
+        registerKeyboardChangeListener(activity.window, listener, progress)
+        activity.lifecycle.addObserver(object: LifecycleEventObserver{
+            override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+                when(event) {
+                    Lifecycle.Event.ON_DESTROY -> {
+                        unregisterKeyboardChangeListener(activity.window)
+                        activity.lifecycle.removeObserver(this)
+                    }
+                }
+            }
+        })
+    }
+
+    /**
+     * decorView可视高度
+     */
+    fun getDecorViewInvisibleHigh(window: Window?): Int {
+        window ?: return 0
+        val decorView = window.decorView
+        val outRect = Rect()
+        decorView.getWindowVisibleDisplayFrame(outRect)
+        val high = Math.abs(decorView.bottom - outRect.bottom)
+        if (high <= getStatusBarHeight(decorView.context) + getNavBarHeight(decorView.context)) {
+            sDecorViewDiff = high; return 0
+        }
+        return high - sDecorViewDiff // 获取两次差值得出键盘高度, 键盘不包含导航栏高度
+    }
+    private var sDecorViewDiff = 0
 
 }
 /* ---------KTX----------- */
@@ -457,7 +613,6 @@ fun Context?.getScreenHeight(): Int = Bar.getScreenHeight(this)
 
 fun Context?.isSupperNavBar(): Boolean = Bar.isSupperNavBar(this)
 
-@RequiresApi(Build.VERSION_CODES.P)
 fun Window.setCutoutMode(cutoutMode: Int) { Bar.setCutoutMode(this, cutoutMode) }
 
 /**
