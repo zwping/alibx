@@ -20,6 +20,7 @@ import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.*
 import android.view.animation.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.annotation.ColorInt
 import androidx.annotation.FloatRange
@@ -31,10 +32,12 @@ import androidx.cardview.widget.CardView
 import androidx.core.animation.doOnEnd
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.viewbinding.ViewBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.text.NumberFormat
 import java.util.*
@@ -56,13 +59,25 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         catch (e: IllegalStateException) { e.printStackTrace() }
     }
 
+    internal interface IAbsDialog<D: AppCompatDialog> {
+        // 具备xml根布局参数的setContentView
+        // fun setContentView(view: View)
+        // fun setContentView(layoutId: Int)
+        fun <VB: ViewBinding> setContentView(vb: VB): D
+        fun setContentView(inflater: (root: FrameLayout) -> View): D
 
-    open class AbsDialog<D: AppCompatDialog> : AppCompatDialog, LifecycleEventObserver {
+        fun setGravity(gravity: Int): D
+
+        fun onOutSideClickListener(rootLayoutClick: D.() -> Unit): D
+    }
+
+    open class AbsDialog<D: AppCompatDialog> : AppCompatDialog, LifecycleEventObserver, IAbsDialog<D> {
 
         constructor(context: Context?, themeResId: Int) : super(context, themeResId) {
+            // 清空dialog window
             window?.setBackgroundDrawableResource(android.R.color.transparent)
-            window?.attributes?.also {
-                it.width = -1; it.height = -1
+            window?.attributes?.also { it.width = -1; it.height = -1
+                // 默认暗度
                 it.flags = WindowManager.LayoutParams.FLAG_DIM_BEHIND; it.dimAmount=0.5F
             }
             decorView?.setPadding(0, 0, 0, 0)
@@ -70,12 +85,11 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             immersive()
         }
 
-        val decorView: View?
-            get() = window?.decorView
         val rootLayout: FrameLayout = initRootLayout(context)     // 根布局, 改写outSide方式
         var customView: View? = null                              // 自定义布局
-        val animView: View?                                       // 动画视图, 改写anim方式
-            get() = customView ?: decorView
+        val animView: View? get() = customView ?: decorView       // 动画视图, 改写anim方式
+        val decorView: View? get() = window?.decorView
+
 
         var cancelabled = true                                    // 返回键 & 空白区域是否可以关闭
         var canceledOnTouchOutSide = true                         // 空白区域是否可以关闭
@@ -86,18 +100,20 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         var disableHideAnim = false                               // 禁用隐藏动画
 
         var gravity: Int? = null                                  // customView位置, 使用rootLayout.inflater可直接使用布局的gravity
-        var useLightBar = true                                    // 使用light bar, 背景默认0.5黑, 默认高亮bar, false使用默认
+        var useLightBar = true                                    // 使用light bar, 背景默认0.5黑, 默认高亮bar, false为Activity默认
 
-        override fun setContentView(view: View) {
-            setContentView { view }
-        }
+        var inputFocusEt: EditText? = null                        // 预设et自动打开键盘
+        // var inputModel: InputMode? = null                      // 键盘适配 Bar.registerKeyboardChangeListener
 
-        fun setContentView(inflater: (root: FrameLayout) -> View): D {
+        override fun setContentView(layoutResID: Int) { setContentView(LayoutInflater.from(context).inflate(layoutResID, rootLayout, false)) }
+        override fun setContentView(view: View) { setContentView { view } }
+        override fun <VB: ViewBinding> setContentView(vb: VB): D { setContentView(vb.root); return this as D }
+        override fun setContentView(inflater: (root: FrameLayout) -> View): D {
             rootLayout.removeAllViews()
             val view = inflater.invoke(rootLayout)
             view.setOnClickListener {  }                                // 拦截outSide事件
             if (view.layoutParams == null)
-                view.layoutParams = FrameLayout.LayoutParams(-1, -2)    // 常用布局lp
+                view.layoutParams = FrameLayout.LayoutParams(-1, -2)    // 默认lp
             if (view.parent == null) rootLayout.addView(view)
             gravity?.also { (view.layoutParams as FrameLayout.LayoutParams).gravity = it }
             super.setContentView(rootLayout)
@@ -105,10 +121,24 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             return this as D
         }
 
-        fun setGravity(gravity: Int): D {
+        override fun setGravity(gravity: Int): D {
             this.gravity = gravity
             val lp = customView?.layoutParams ?: return this as D
             if (lp is FrameLayout.LayoutParams) lp.gravity = gravity
+            return this as D
+        }
+
+        private var outSideClickListener: (D) -> Unit = { dismiss() }
+        override fun onOutSideClickListener(rootLayoutClick: (D) -> Unit): D {
+            outSideClickListener = rootLayoutClick
+            return this as D
+        }
+
+        /**
+         * 自动获取焦点&打开键盘, 使用[Bar.registerKeyboardChangeListener]中progress体验更佳
+         */
+        fun setInputFocus(et: EditText?): D {
+            this.inputFocusEt = et
             return this as D
         }
 
@@ -127,6 +157,10 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             return this as D
         }
 
+        /**
+         * 兼容默认背景为灰色, 自动设置status bar & nav bar 颜色为高亮
+         * @see Bar 中可便捷二次操作insets
+         */
         fun setLightBar(use: Boolean): D {
             this.useLightBar = use
             return this as D
@@ -142,6 +176,10 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             cancelabled = flag
         }
 
+        override fun create() {
+            super.create()
+        }
+
         override fun show() {
             if (null == customView) {
                 Toast.makeText(context, "只支持自定义view使用", Toast.LENGTH_SHORT).show()
@@ -152,9 +190,12 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             val view = animView ?: return
             view.post {
                 view.visibility = View.VISIBLE
-                showAnimator.invoke(view).start()
+                showAnimator(view).apply {
+                    doOnEnd { openKeyboard(inputFocusEt) }
+                    start()
+                }
             }
-            if (useLightBar) immersiveLightBar()                 // 体验优化
+            if (useLightBar) immersiveLightBar()        // 体验优化
         }
 
         override fun dismiss() {
@@ -168,6 +209,10 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             super.dismiss()
         }
 
+        /**
+         * 关闭dialog
+         * @param disableAnim 禁止关闭/隐藏动画
+         */
         fun dismiss(disableAnim: Boolean): D {
             this.disableHideAnim = disableAnim
             dismiss()
@@ -175,9 +220,16 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
         }
 
         private fun initRootLayout(context: Context) = FrameLayout(context).apply {
-            layoutParams = ViewGroup.LayoutParams(-1, -1)
+            layoutParams = FrameLayout.LayoutParams(-1, -1)
             // setBackgroundColor(blackAlpha(0.6F))
-            setOnClickListener { if (canceledOnTouchOutSide) dismiss() }
+            setOnClickListener { if (canceledOnTouchOutSide) outSideClickListener.invoke(this@AbsDialog as D) }
+        }
+
+        private fun openKeyboard(et: EditText?) {
+            et ?: return
+            et.apply { isFocusable = true; isFocusableInTouchMode = true; requestFocus() }
+            (et.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+                .showSoftInput(et, 0)
         }
 
         /**
@@ -190,20 +242,22 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 //            return a + rgb
 //        }
 
+        /**
+         * 沉浸式dialog
+         */
         private fun immersive() {
             val window = window ?: return
             WindowCompat.setDecorFitsSystemWindows(window, false)
             window.statusBarColor = Color.TRANSPARENT
             window.navigationBarColor = Color.TRANSPARENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                window.isNavigationBarContrastEnforced = false
         }
-        private fun immersiveLightBar() {
+        private fun immersiveLightBar(darkMode: Boolean = false) {
             val window = window ?: return
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                val wic = WindowInsetsControllerCompat(window, window.decorView)
-                wic.isAppearanceLightStatusBars = false
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O)
-                    wic.isAppearanceLightNavigationBars = false
-            }
+            val wic = WindowInsetsControllerCompat(window, window.decorView)
+            wic.isAppearanceLightStatusBars = darkMode
+            wic.isAppearanceLightNavigationBars = darkMode
         }
 
         protected fun Float.dpToPx() = this*Resources.getSystem().displayMetrics.density+0.5F
@@ -272,10 +326,12 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             super.setTitle(title)
         }
         fun setTitleIOS(txt: CharSequence): DialogIOS {
-            view.title.visibility = View.VISIBLE; view.title.text = txt; return this
+            view.title.visibility = View.VISIBLE
+            view.title.text = txt; return this
         }
         fun setMessageIOS(txt: CharSequence): DialogIOS {
-            view.message.visibility = View.VISIBLE; view.message.text = txt; return this
+            view.message.visibility = View.VISIBLE
+            view.message.text = txt; return this
         }
         fun setBtnCancelIOS(txt: CharSequence="取消", lis: (DialogIOS)->Unit={}): DialogIOS {
             view.line.visibility = view.btnConfirm.visibility
@@ -302,17 +358,20 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             private val lineHigh = 0.5F.dpToPx().toInt()    // line高度
             val lyRadius = 10F.dpToPx()                     // 布局圆角
 
+            private val bigSize = 15F
+            private val norSize = 12F
+
 
             val title by lazy { TextView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
                 setPadding(btnHigh, 0, btnHigh, 0)
-                setTextColor(Color.BLACK); textSize = 16F
+                setTextColor(Color.BLACK); textSize = bigSize
                 typeface = Typeface.defaultFromStyle(Typeface.BOLD)
             } }
             val message by lazy { TextView(context).apply {
-                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).also { it.topMargin = lineHigh }
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
                 setPadding(btnHigh, 0, btnHigh, 0)
-                setTextColor(Color.BLACK); textSize = 15F
+                setTextColor(Color.BLACK); textSize = norSize
             } }
             val btnConfirm by lazy { TextView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT).apply { weight=1F }
@@ -320,7 +379,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                     addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
                     addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
                 }
-                setTextColor((0xff2e7cf7).toInt()); textSize = 15F
+                setTextColor((0xff2e7cf7).toInt()); textSize = bigSize
                 gravity=Gravity.CENTER; text = "确认"
             }  }
             val btnCancel by lazy { TextView(context).apply {
@@ -329,7 +388,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                     addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable((0x1a000000).toInt()))
                     addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
                 }
-                setTextColor((0xff2e7cf7).toInt()); textSize = 15F
+                setTextColor((0xff2e7cf7).toInt()); textSize = bigSize
                 typeface = Typeface.defaultFromStyle(Typeface.BOLD)
                 gravity=Gravity.CENTER; text = "取消"
             }  }
