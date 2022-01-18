@@ -91,14 +91,14 @@ function autoAddLibVersion() {
             var code, code1, name, name1
             var lines = content.split('\n')
             for (var line of lines) {
-                if (line.indexOf('versionCode') !== -1) {
+                if (!cfg.vcode && line.indexOf('versionCode') !== -1) {
                     cfg.vcode = line.replace('versionCode', '').trim()
                     cfg.newVCode = cfg.vcode*1 + 1
                     code = line
                     code1 = line.replace(cfg.vcode, cfg.newVCode)
                     continue
                 }
-                if (line.indexOf('versionName "') !== -1) {
+                if (!cfg.vname && line.indexOf('versionName "') !== -1) {
                     cfg.vname = line.replace('versionName', '').replace(/\"/g, '').trim()
                     var n = cfg.vname.split('.')
                     // n = (n[0]*100 + n[1]*10 + n[2]*1)*1 + 1 // x.y.z
