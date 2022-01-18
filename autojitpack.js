@@ -101,8 +101,18 @@ function autoAddLibVersion() {
                 if (line.indexOf('versionName "') !== -1) {
                     cfg.vname = line.replace('versionName', '').replace(/\"/g, '').trim()
                     var n = cfg.vname.split('.')
-                    n = (n[0]*100 + n[1]*10 + n[2]*1)*1 + 1
-                    cfg.newVName = n.toString().padStart(3, '0').split('').join('.')
+                    // n = (n[0]*100 + n[1]*10 + n[2]*1)*1 + 1 // x.y.z
+                    // cfg.newVName = n.toString().padStart(3, '0').split('').join('.')
+                    var x = n[0]*1
+                    var y = n[1]*1
+                    var z = n[2]*1 + 1 // zz
+                    if (z > 99) {
+                        z = 0; y += 1
+                    }
+                    if (y > 9) {
+                        y = 0; x += 1
+                    }
+                    cfg.newVName = `${x}.${y}.${z.toString().padStart(2, '0')}`
                     name = line
                     name1 = line.replace(cfg.vname, cfg.newVName)
                     continue
@@ -119,6 +129,7 @@ function autoAddLibVersion() {
     }
 }
 autoAddLibVersion()
+// return
 
 shell.exec('git add .')
 shell.exec("git commit -m 'auto sync code'")
