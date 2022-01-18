@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk 21
         targetSdk 30
-        versionCode 82
-        versionName "0.8.02"
+        versionCode 83
+        versionName "0.8.03"
         consumerProguardFiles 'consumer-rules.pro'
     }
     android.libraryVariants.all { variant ->

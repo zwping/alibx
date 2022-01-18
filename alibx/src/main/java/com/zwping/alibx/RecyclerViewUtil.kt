@@ -187,7 +187,7 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() 
     }
 }
 /*** 一行代码代码实现Adapter ***/
-open class AdapterQuick<E>(
+open class BaseAdapterQuick<E>(
     val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>
 ): BaseAdapter<E>(){
     final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
@@ -216,7 +216,7 @@ interface IViewHolderEnum : IEnumViewHolder
  *  enum类实现[IEnumViewHolder]ViewHolder
  *  entity类实现[ItemViewType]类型标注
  */
-open class AdapterMulti<ENUM>(enums: Array<ENUM>): BaseAdapterMulti<ENUM>(enums) where ENUM: Enum<*>, ENUM: IEnumViewHolder {
+open class BaseAdapterMultiQuick<ENUM>(enums: Array<ENUM>): BaseAdapterMulti<ENUM>(enums) where ENUM: Enum<*>, ENUM: IEnumViewHolder {
     override fun onCreateViewHolder(parent: ViewGroup, enum: ENUM): BaseViewHolder<out ItemViewType, View> {
         return enum.holder(parent)
     }
