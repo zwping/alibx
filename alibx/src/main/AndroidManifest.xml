@@ -8,6 +8,8 @@
     <application
         android:networkSecurityConfig="@xml/network_security_config"
         >
+        <meta-data android:name="alibx_version_code" android:value="${versionCode}" />
+        <meta-data android:name="alibx_version_name" android:value="${versionName}" />
     </application>
 
 </manifest>
