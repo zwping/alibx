@@ -46,6 +46,7 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                 javaClass.declaredFields.forEach { f -> // 当前类(最终的派生类)的所有变量
                     _log.append("${f.name}\t${f.type}\t${f.genericType}\t \n")
                     try {
+                        if (!obj.has(f.name)) return@forEach
                         f.isAccessible=true
                         when (f.type) {
                             String::class.java -> f.set(this, obj.optString(f.name))

@@ -37,7 +37,14 @@ class AcMain : BaseAc<AcMainBinding>() {
         return AcMainBinding.inflate(inflater)
     }
 
+    class Data(ob: JSONObject?): IJson(ob, true) {
+        var s: String? = null
+        var data: Data?= null
+    }
+
     override fun initView() {
+        showToast("${Data(JSONObject("{}")).data} --")
+
         vb.tv1.setOnClickListener {
             IDialog.DialogIOS(this).show()
         }
@@ -48,7 +55,10 @@ class AcMain : BaseAc<AcMainBinding>() {
         vb.recyclerView1.adapter = BaseAdapterQuick{ Holder1(it) }.also { it.setData(data) }
 
         val data1 = mutableListOf<ItemViewType>()
-        repeat(10) { data1.add(D1(it, Style.s1)) }
+        repeat(10) {
+            if (it == 5) return@repeat
+            data1.add(D1(it, Style.s1))
+        }
         repeat(10) { data1.add(D1(it, Style.s2)) }
         vb.recyclerView2.adapter = BaseAdapterMultiQuick(Style.values()).apply { setData(data1) }
     }

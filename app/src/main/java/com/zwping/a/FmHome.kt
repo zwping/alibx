@@ -21,7 +21,7 @@ class FmHome: BaseFm<Test1Binding>() {
     }
 
     override fun initView() {
-
+        vb.tvCollectNum
     }
 
     override fun onDestroyView() {
