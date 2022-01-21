@@ -43,7 +43,9 @@ class AcMain : BaseAc<AcMainBinding>() {
     }
 
     override fun initView() {
-        showToast("${Data(JSONObject("{}")).data} --")
+        IDialog.DialogIOS(this).setTitleIOS("1233123312331233123312331233123312331233123312331233123312331233")
+            .setBtnConfirmIOS {  }
+            .show()
 
         vb.tv1.setOnClickListener {
             IDialog.DialogIOS(this).show()
