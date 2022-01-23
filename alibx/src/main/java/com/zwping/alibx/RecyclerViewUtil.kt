@@ -227,12 +227,12 @@ open class BaseViewHolder<E, out V: View>(
 ): RecyclerView.ViewHolder(view), IBaseViewHolder<E> {
     var entity: E?=null
     private var _datas: MutableList<E>?=null
+
     override fun bind(datas: MutableList<E>, position: Int) {
         if (datas.isNullOrEmpty() || position >= datas.size) return
-        _datas=datas; entity = datas[position]
-        bindViewHolder(this, view, entity!!)
+        _datas=datas; bind(datas[position])
     }
-    // fun bind(entity: E) { this.entity=entity; bindViewHolder(this, view, entity) }
+    override fun bind(entity: E) { this.entity = entity; bindViewHolder(this, view, entity) }
 
     override fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
 
@@ -241,6 +241,7 @@ open class BaseViewHolder<E, out V: View>(
 }
 internal interface IBaseViewHolder<E> {
     fun bind(datas: MutableList<E>, position: Int)
+    fun bind(entity: E)
     fun isLastPosition(): Boolean
 
     fun onAttach()
