@@ -228,10 +228,11 @@ open class BaseViewHolder<E, out V: View>(
     var entity: E?=null
     private var _datas: MutableList<E>?=null
     override fun bind(datas: MutableList<E>, position: Int) {
-        if (datas.isNullOrEmpty()) return
-        _datas=datas; bind(datas[position])
+        if (datas.isNullOrEmpty() || position >= datas.size) return
+        _datas=datas; entity = datas[position]
+        bindViewHolder(this, view, entity!!)
     }
-    fun bind(entity: E) { this.entity=entity; bindViewHolder(this, view, entity) }
+    // fun bind(entity: E) { this.entity=entity; bindViewHolder(this, view, entity) }
 
     override fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
 
