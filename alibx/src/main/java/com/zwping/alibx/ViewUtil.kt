@@ -1,10 +1,12 @@
 package com.zwping.alibx
 
+import android.animation.Animator
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Animatable
 import android.util.TypedValue
 import android.view.View
+import android.view.ViewPropertyAnimator
 import android.view.animation.CycleInterpolator
 import android.view.animation.TranslateAnimation
 import androidx.annotation.ColorInt
@@ -149,4 +151,23 @@ fun View?.focus() {
  */
 fun View?.setRipple(circle: Boolean=false) {
     ViewUtil.setRipple(this, circle)
+}
+
+/**
+ * [View.animate].setListener扩展, @see [Animator.addListener]
+ */
+inline fun ViewPropertyAnimator.setListener(
+    crossinline onEnd: (animator: Animator) -> Unit = {},
+    crossinline onStart: (animator: Animator) -> Unit = {},
+    crossinline onCancel: (animator: Animator) -> Unit = {},
+    crossinline onRepeat: (animator: Animator) -> Unit = {}
+): ViewPropertyAnimator {
+    val listener = object : Animator.AnimatorListener {
+        override fun onAnimationRepeat(animator: Animator) = onRepeat(animator)
+        override fun onAnimationEnd(animator: Animator) = onEnd(animator)
+        override fun onAnimationCancel(animator: Animator) = onCancel(animator)
+        override fun onAnimationStart(animator: Animator) = onStart(animator)
+    }
+    setListener(listener)
+    return this
 }

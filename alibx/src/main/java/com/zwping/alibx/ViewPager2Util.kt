@@ -145,6 +145,7 @@ class Banner<T> @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         setAdapter(object: BannerAdapter<T, RecyclerView.ViewHolder>(){
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = Holder(parent)
             override fun onBindViewHolder2(holder: RecyclerView.ViewHolder, position: Int) {
+                if (position < 0 || position >= datas.size) return
                 bindView(holder.itemView as ShapeableImageView, datas[position])
             }
         }, owner, useIndicator, hasLoop)

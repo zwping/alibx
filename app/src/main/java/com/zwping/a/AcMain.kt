@@ -1,5 +1,6 @@
 package com.zwping.a
 
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Paint
@@ -10,6 +11,7 @@ import android.util.AttributeSet
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.animation.addListener
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -43,9 +45,9 @@ class AcMain : BaseAc<AcMainBinding>() {
     }
 
     override fun initView() {
-        IDialog.DialogIOS(this).setTitleIOS("1233123312331233123312331233123312331233123312331233123312331233")
-            .setBtnConfirmIOS {  }
-            .show()
+//        IDialog.DialogIOS(this).setTitleIOS("1233123312331233123312331233123312331233123312331233123312331233")
+//            .setBtnConfirmIOS {  }
+//            .show()
 
         vb.tv1.setOnClickListener {
             IDialog.DialogIOS(this).show()
@@ -63,6 +65,10 @@ class AcMain : BaseAc<AcMainBinding>() {
         }
         repeat(10) { data1.add(D1(it, Style.s2)) }
         vb.recyclerView2.adapter = BaseAdapterMultiQuick(Style.values()).apply { setData(data1) }
+
+        (vb.banner as Banner<String>).setAdapterImage({iv, it ->
+            iv.glide(it)
+        })
     }
 
     data class D1(var s1: Int, override val itemViewType: Enum<*>): IItemViewType
