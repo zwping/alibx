@@ -11,4 +11,7 @@
 # 合并文件夹
 git status
 git checkout demo alibx/src
+
+# 脚本自动push async 升级jitpack版本
+node autojitpack.js
 ```
