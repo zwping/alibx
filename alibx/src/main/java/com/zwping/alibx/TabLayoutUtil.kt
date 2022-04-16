@@ -15,9 +15,11 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.ImageViewCompat
+import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 
 /**
  * tabLayout扩展
@@ -70,6 +72,20 @@ object TabLayoutUtil {
             it.removeBadge()
         }
     }
+
+    /* ======================== */
+    fun TabLayout?.attach(
+        vp2: ViewPager2?,
+        autoRefresh: Boolean = false,
+        smoothScroll: Boolean = true,
+        callback: TabLayoutMediator.TabConfigurationStrategy)
+    {
+        if (this == null || vp2 == null) return
+        TabLayoutMediator(this, vp2, autoRefresh, smoothScroll, callback).attach()
+    }
+
+
+
 
 }
 
@@ -128,6 +144,7 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
         badgeTv.setTextColor(Color.WHITE)
     }
 
+    fun showBadge(num: Int?=null) { setBadge(num) }
     fun setBadge(num: Int?=null) {
         initBadgeStyle(num == null || num < 1)
         when (num) {
@@ -140,6 +157,9 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
             badgeTv.animate().scaleX(1F).scaleY(1F).start()
         }
         badgeTv.visibility = View.VISIBLE
+        if (badgeTv.text == "") {
+            badgeTv.updateLayoutParams { width = height }
+        }
     }
 
     fun removeBadge() {

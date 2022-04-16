@@ -111,6 +111,10 @@ object ViewUtil{
         else view.setBackgroundColor(typed.data)
     }
 
+    /* ====================== */
+    fun View?.setGone(gone: Boolean) { this?.apply { visibility = if (gone) View.GONE else View.VISIBLE } }
+    fun View?.setInvisible(invisible: Boolean) { this?.apply { visibility = if (invisible) View.INVISIBLE else View.VISIBLE } }
+
 }
 /* ---------KTX----------- */
 
