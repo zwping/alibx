@@ -1,6 +1,7 @@
 package com.zwping.alibx
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
@@ -88,6 +89,14 @@ object RecyclerViewUtil {
                     val r = parent.width.toFloat() - parent.paddingRight - (dividerMarginRight ?: dividerMargin)
                     c.drawRect(l, t, r, b, paint)
                 }
+            }
+        })
+    }
+    fun addItemDecorationTop(recyclerView: RecyclerView?, firstDp: Float) {
+        recyclerView?.addItemDecoration(object: RecyclerView.ItemDecoration(){
+            override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+                super.getItemOffsets(outRect, view, parent, state)
+                outRect.top = if(parent.indexOfChild(view) == 0) (0.5f + firstDp * Resources.getSystem().displayMetrics.density).toInt() else 0
             }
         })
     }
@@ -429,6 +438,9 @@ fun RecyclerView?.addItemDecorationLine(@ColorInt color: Int,
                                         lastPositionOffset: Int=0,
                                         adp: BaseAdapter<*>?=null) {
     RecyclerViewUtil.addItemDecorationLine(this, color, dividerHeight, dividerMargin, dividerMarginLeft, dividerMarginRight, lastPositionOffset, adp)
+}
+fun RecyclerView?.addItemDecorationTop(firstDp: Float) {
+    RecyclerViewUtil.addItemDecorationTop(this, firstDp)
 }
 
 fun ViewGroup.getLayoutInflater(): LayoutInflater = RecyclerViewUtil.getLayoutInflater(this)

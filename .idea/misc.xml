@@ -13,6 +13,8 @@
         <entry key="app/src/main/res/layout/ac_bug_vp2.xml" value="0.19972826086956522" />
         <entry key="app/src/main/res/layout/ac_main.xml" value="0.375" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.14206300185299567" />
+        <entry key="app/src/main/res/layout/dialog_navi.xml" value="0.16847826086956522" />
+        <entry key="app/src/main/res/layout/dialog_navi_723.xml" value="0.335" />
         <entry key="app/src/main/res/layout/test.xml" value="0.165" />
         <entry key="app/src/main/res/layout/test1.xml" value="0.28286852589641437" />
         <entry key="app/src/main/res/layout/test3.xml" value="0.335" />
@@ -20,10 +22,8 @@
         <entry key="app/src/main/res/layout/test5.xml" value="0.25" />
         <entry key="app/src/main/res/layout/test6.xml" value="0.45" />
         <entry key="app/src/main/res/layout/video_view_portrait.xml" value="0.16485507246376813" />
-        <entry key="demo/src/main/res/layout/ac_bar_insets.xml" value="0.1" />
         <entry key="demo/src/main/res/layout/ac_main.xml" value="0.13722826086956522" />
-        <entry key="demo/src/main/res/layout/dialog_comment.xml" value="0.375" />
-        <entry key="demo/src/main/res/layout/dialog_login.xml" value="0.24365942028985507" />
+        <entry key="demo/src/main/res/layout/layer_tab_layout.xml" value="0.375" />
       </map>
     </option>
   </component>

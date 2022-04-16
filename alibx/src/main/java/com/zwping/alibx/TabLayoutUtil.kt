@@ -87,6 +87,7 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
 
     init {
         addView(LinearLayout(context).apply {
+            setBackgroundColor((0x1a000000).toInt())
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             addView(iconIv)
@@ -114,7 +115,6 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
 
     /**
      * 初始化红点样式, 如果需要自定义可[getTabLayoutCustomView]获取[badgeTv]自定义
-     *
      */
     private fun initBadgeStyle(isPoint: Boolean) {
         val h = (if(isPoint) 5F else 15F).dp2Px()
@@ -128,6 +128,7 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
         badgeTv.setTextColor(Color.WHITE)
     }
 
+    fun showBadge(num: Int?=null) { setBadge(num) }
     fun setBadge(num: Int?=null) {
         initBadgeStyle(num == null || num < 1)
         when (num) {
@@ -140,6 +141,9 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
             badgeTv.animate().scaleX(1F).scaleY(1F).start()
         }
         badgeTv.visibility = View.VISIBLE
+        if (badgeTv.text == "") {
+            badgeTv.updateLayoutParams { width = height }
+        }
     }
 
     fun removeBadge() {

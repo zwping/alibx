@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.ImageView
 import androidx.annotation.ColorInt
@@ -51,6 +52,9 @@ object ImageLoader {
               ctx: Context?=null,
               opt: ImgLoaderOpt.()->Unit = {}) {
         iv?.also { builder(it, url, ctx, opt)?.into(it) }
+    }
+    fun glideColor(iv: ImageView?, c: Int=Color.LTGRAY, radiusDp: Float?=null) {
+        iv?.setImageDrawable(GradientDrawable().apply { setColor(c); radiusDp?.also { cornerRadius = 0.5f + it * Resources.getSystem().displayMetrics.density } })
     }
 
     /**
@@ -331,5 +335,8 @@ enum class CacheType{ All, Memory, Disk, None }
 fun ImageView?.glide(url: String?, opt: ImgLoaderOpt.()->Unit = {}) { glide(url, null, opt) }
 fun ImageView?.glide(url: String?, ctx: Context?=null, opt: ImgLoaderOpt.()->Unit = {}) {
     ImageLoader.glide(this, url, ctx, opt)
+}
+fun ImageView?.glideColor(c: Int=Color.LTGRAY, radiusDp: Float?=null) {
+    ImageLoader.glideColor(this, c, radiusDp)
 }
 fun Context?.isDestroy(): Boolean = ImageLoader.isDestroy(this)
