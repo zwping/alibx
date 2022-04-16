@@ -356,6 +356,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
             private val btnHigh = 44F.dpToPx().toInt()      // btn高度
             private val lineHigh = 0.5F.dpToPx().toInt()    // line高度
+            private val txtPadding = btnHigh/2              // title message padding
             val lyRadius = 10F.dpToPx()                     // 布局圆角
 
             private val bigSize = 15F
@@ -364,13 +365,13 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
             val title by lazy { TextView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-                setPadding(btnHigh, 0, btnHigh, 0)
+                setPadding(txtPadding, 0, txtPadding, 0)
                 setTextColor(Color.BLACK); textSize = bigSize
                 typeface = Typeface.defaultFromStyle(Typeface.BOLD)
             } }
             val message by lazy { TextView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-                setPadding(btnHigh, 0, btnHigh, 0)
+                setPadding(txtPadding, 0, txtPadding, 0)
                 setTextColor(Color.BLACK); textSize = norSize
             } }
             val btnConfirm by lazy { TextView(context).apply {
@@ -403,11 +404,12 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                 val lyRoot = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
                     gravity = Gravity.CENTER
-                    setPadding(0, btnHigh/2, 0, 0)
+                    setPadding(0, txtPadding, 0, 0)
                     addView(title)
                     addView(message)
                     addView(View(context).also {
-                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, lineHigh).also { it.topMargin = btnHigh/2 }
+                        it.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, lineHigh)
+                            .also { it.topMargin = txtPadding }
                         it.setBackgroundColor((0xffb3b3b3).toInt())
                     })
                     addView(LinearLayout(context).also {

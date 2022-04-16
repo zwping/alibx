@@ -96,7 +96,7 @@ object RecyclerViewUtil {
         recyclerView?.addItemDecoration(object: RecyclerView.ItemDecoration(){
             override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
                 super.getItemOffsets(outRect, view, parent, state)
-                outRect.top = if(parent.indexOfChild(view) == 0) (0.5f + firstDp * Resources.getSystem().displayMetrics.density).toInt() else 0
+                outRect.top = if(parent.getChildAdapterPosition(view) == 0) (0.5f + firstDp * Resources.getSystem().displayMetrics.density).toInt() else 0
             }
         })
     }
@@ -196,7 +196,7 @@ abstract class BaseAdapter<E> : RecyclerView.Adapter<BaseViewHolder<E, View>>() 
     }
 }
 /*** 一行代码代码实现Adapter ***/
-open class AdapterQuick<E>(
+open class BaseAdapterQuick<E>(
     val createViewHolder: (ViewGroup) -> BaseViewHolder<E, View>
 ): BaseAdapter<E>(){
     final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<E, View> {
@@ -225,7 +225,7 @@ interface IViewHolderEnum : IEnumViewHolder
  *  enum类实现[IEnumViewHolder]ViewHolder
  *  entity类实现[ItemViewType]类型标注
  */
-open class AdapterMulti<ENUM>(enums: Array<ENUM>): BaseAdapterMulti<ENUM>(enums) where ENUM: Enum<*>, ENUM: IEnumViewHolder {
+open class BaseAdapterMultiQuick<ENUM>(enums: Array<ENUM>): BaseAdapterMulti<ENUM>(enums) where ENUM: Enum<*>, ENUM: IEnumViewHolder {
     override fun onCreateViewHolder(parent: ViewGroup, enum: ENUM): BaseViewHolder<out ItemViewType, View> {
         return enum.holder(parent)
     }
@@ -236,11 +236,12 @@ open class BaseViewHolder<E, out V: View>(
 ): RecyclerView.ViewHolder(view), IBaseViewHolder<E> {
     var entity: E?=null
     private var _datas: MutableList<E>?=null
+
     override fun bind(datas: MutableList<E>, position: Int) {
-        if (datas.isNullOrEmpty()) return
+        if (datas.isNullOrEmpty() || position >= datas.size) return
         _datas=datas; bind(datas[position])
     }
-    fun bind(entity: E) { this.entity=entity; bindViewHolder(this, view, entity) }
+    override fun bind(entity: E) { this.entity = entity; bindViewHolder(this, view, entity) }
 
     override fun isLastPosition() = (_datas?.size ?: 0)-1 == adapterPosition
 
@@ -249,6 +250,7 @@ open class BaseViewHolder<E, out V: View>(
 }
 internal interface IBaseViewHolder<E> {
     fun bind(datas: MutableList<E>, position: Int)
+    fun bind(entity: E)
     fun isLastPosition(): Boolean
 
     fun onAttach()

@@ -15,9 +15,11 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.ImageViewCompat
+import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 
 /**
  * tabLayout扩展
@@ -71,6 +73,20 @@ object TabLayoutUtil {
         }
     }
 
+    /* ======================== */
+    fun TabLayout?.attach(
+        vp2: ViewPager2?,
+        autoRefresh: Boolean = false,
+        smoothScroll: Boolean = true,
+        callback: TabLayoutMediator.TabConfigurationStrategy)
+    {
+        if (this == null || vp2 == null) return
+        TabLayoutMediator(this, vp2, autoRefresh, smoothScroll, callback).attach()
+    }
+
+
+
+
 }
 
 
@@ -87,7 +103,6 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
 
     init {
         addView(LinearLayout(context).apply {
-            setBackgroundColor((0x1a000000).toInt())
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             addView(iconIv)
@@ -115,6 +130,7 @@ class TabLayoutCustomView @JvmOverloads constructor(context: Context, attrs: Att
 
     /**
      * 初始化红点样式, 如果需要自定义可[getTabLayoutCustomView]获取[badgeTv]自定义
+     *
      */
     private fun initBadgeStyle(isPoint: Boolean) {
         val h = (if(isPoint) 5F else 15F).dp2Px()

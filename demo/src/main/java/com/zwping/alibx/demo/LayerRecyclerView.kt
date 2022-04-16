@@ -17,9 +17,13 @@ import com.zwping.alibx.*
 class LayerRecyclerView(val acMain: AcMain) {
 
     fun recyclerView() = RecyclerView(acMain).apply {
-        layoutParams = ViewGroup.LayoutParams(-1, 50F.dp2px()); setBackgroundColor(acMain.randomColor())
+        layoutParams = ViewGroup.LayoutParams(-1, 100F.dp2px()); setBackgroundColor(acMain.randomColor())
         layoutManager = LinearLayoutManager(context)
-//        adapter = BaseAdapter
+        adapter = BaseAdapterQuick{ Holder(it) }.also {
+            val data = mutableListOf<Int>()
+            for(i in 0 until 10) { data.add(i) }
+            it.setData(data)
+        }
     }
 
     init {
@@ -29,7 +33,7 @@ class LayerRecyclerView(val acMain: AcMain) {
     }
 
     private class Holder(parent: ViewGroup): BaseViewHolder<Int, TextView>(
-        TextView(parent.context).apply { layoutParams = ViewGroup.LayoutParams(-1, 15F.dp2px()) },
+        TextView(parent.context).apply { layoutParams = ViewGroup.LayoutParams(-1, 15F.dp2px()); setBackgroundColor((0x1a000000).toInt()) },
         { view, entity -> view.text = "$adapterPosition" }
     )
 

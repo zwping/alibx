@@ -32,6 +32,7 @@ class AcMain : BaseAc<AcMainBinding>() {
         TabLayout,
         RecyclerView,
         ImageLoader,
+        ProgressBar,
     }
 
     private fun Context.openAcMain(enum: Enum<*>){
@@ -56,6 +57,7 @@ class AcMain : BaseAc<AcMainBinding>() {
             TabLayout -> LayerTabLayout(this)
             RecyclerView -> LayerRecyclerView(this)
             Type.ImageLoader -> LayerImageLoader(this)
+            Type.ProgressBar -> LayerProgressBar(this)
         }
     }
 
@@ -87,6 +89,7 @@ class AcMain : BaseAc<AcMainBinding>() {
     }
 
     fun randomColor() = Color.argb(255, Random.nextInt(0, 255), Random.nextInt(0, 255), Random.nextInt(0, 255))
+    fun randomData(size: Int = 10) = mutableListOf<Int>().apply { for (i in 0 until size) add(i) }
 
     class CommRecyclerView(context: Context) : RecyclerView(context) {
         fun datas(size: Int=10): MutableList<Int> {
@@ -94,7 +97,7 @@ class AcMain : BaseAc<AcMainBinding>() {
             repeat(size) { data.add(it+1) }
             return data
         }
-        val adp by lazy { AdapterQuick<Int>{ BaseViewHolder(
+        val adp by lazy { BaseAdapterQuick<Int>{ BaseViewHolder(
             TextView(it.context).apply { gravity = Gravity.CENTER; layoutParams = ViewGroup.LayoutParams(-1, 40F.dp2px()) },
             { view, entity -> view.text = "$entity" }
         ) } }

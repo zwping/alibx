@@ -1,6 +1,8 @@
 package com.zwping.alibx
 
 import android.animation.LayoutTransition
+import android.app.Activity
+import android.app.Application
 import android.app.Dialog
 import android.content.res.Resources
 import android.graphics.drawable.GradientDrawable
@@ -13,6 +15,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewbinding.ViewBinding
@@ -229,4 +232,37 @@ abstract class BaseFm<VB: ViewBinding> : Fragment, IBaseFm<VB> {
         super.onDestroy()
         _binding = null
     }
+}
+
+open class BaseApp: Application(), Application.ActivityLifecycleCallbacks {
+    companion object {
+        var app: Application? = null
+
+        val acList = mutableListOf<Activity>()
+        fun topAc(): Activity? { return if (acList.isEmpty()) null else acList.last() }
+        // fun topBaseAC(): BaseAc<*>? { return with(topAc()) { if (this is BaseAc<*>) this else null } }
+        // agreePrivacy = false // 用户是否同意协议(过审需求)
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        app = this
+        unregisterActivityLifecycleCallbacks(this)
+        registerActivityLifecycleCallbacks(this)
+    }
+
+    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        // logd("ac创建: ${activity.javaClass.simpleName}")
+        acList.add(activity)
+    }
+    override fun onActivityStarted(activity: Activity) { }
+    override fun onActivityResumed(activity: Activity) { }
+    override fun onActivityPaused(activity: Activity) { }
+    override fun onActivityStopped(activity: Activity) { }
+    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) { }
+    override fun onActivityDestroyed(activity: Activity) {
+        // logd("ac销毁: ${activity.javaClass.simpleName}")
+        acList.remove(activity)
+    }
+
 }

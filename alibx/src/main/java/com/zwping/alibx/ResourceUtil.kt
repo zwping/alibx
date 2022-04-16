@@ -112,8 +112,11 @@ fun Context.getColor2(@ColorRes id: Int): Int = ResourceUtil.getColor2(this, id)
 
 /**
  * xml shape java代码实现方式
- * @param shape [GradientDrawable.LINE] 线 [GradientDrawable.OVAL] 圆
- * [GradientDrawable.RECTANGLE] 矩形 [GradientDrawable.LINEAR_GRADIENT] 虚线矩形
+ * @param shape
+ *  [GradientDrawable.LINE] 线
+ *  [GradientDrawable.OVAL] 圆
+ *  [GradientDrawable.RECTANGLE] 矩形
+ *  [GradientDrawable.LINEAR_GRADIENT] 虚线矩形
  */
 fun createGradientDrawable(shape: Int=GradientDrawable.RECTANGLE,
                            block: GradientDrawable.() -> Unit): Drawable {

@@ -7,7 +7,7 @@ import android.widget.LinearLayout
 import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.zwping.alibx.AdapterQuick
+import com.zwping.alibx.BaseAdapterQuick
 import com.zwping.alibx.SpanUtils
 
 /**
@@ -44,7 +44,7 @@ class LayerFormInput(val acMain: AcMain) {
                 window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
                 container.removeAllViews()
                 val rv = RecyclerView(container.context).apply { layoutManager = LinearLayoutManager(container.context) }
-                rv.adapter = AdapterQuick { AcMain.HolderEt(it) }.apply { setData(mutableListOf<Int>().apply { repeat(20) { add(it) } }) }
+                rv.adapter = BaseAdapterQuick { AcMain.HolderEt(it) }.apply { setData(mutableListOf<Int>().apply { repeat(20) { add(it) } }) }
                 container.addView(rv)
             })
             vb.lyContainer.addView(container)
