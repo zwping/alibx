@@ -8,6 +8,7 @@
 
 ##### 指令
 ```bash
+# 合并文件夹
 git status
 git checkout master alibx/src
 ```
