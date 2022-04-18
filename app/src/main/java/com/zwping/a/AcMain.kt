@@ -10,6 +10,7 @@ import android.os.ResultReceiver
 import android.view.inputmethod.InputMethodManager
 
 import androidx.annotation.NonNull
+import org.json.JSONArray
 import org.json.JSONObject
 
 
@@ -19,19 +20,23 @@ class AcMain : BaseAc<AcMainBinding>() {
         return AcMainBinding.inflate(inflater)
     }
 
+    class Bean(ob: JSONObject?): IJson(ob, true) {
+        var list1: JSONObject? = null
+        var list2: JSONArray? = null
+        override fun toString(): String {
+            return "Bean(list1=$list1, list2=$list2) _log=$_log ${JSONObject::class.java}"
+        }
+
+    }
 
     override fun initView() {
-//        Bar.showKeyboard(vb.etContent)
-//        ITimer({Bar.showKeyboard(vb.etContent)}, 400).schedule(this)
-//        vb.etContent.post { Bar.showKeyboard(vb.etContent) }
-        Requests.simpleLoggingInterceptor = { method, url, optional ->
-            val token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImp0aSI6IjEifQ.eyJpYXQiOjE2NTAyNTE2ODAsImp0aSI6IjEiLCJuYmYiOjE2NTAyNTE2ODAsImV4cCI6MTY1MDYxMTY4MCwidWlkIjoxfQ.YXtY7xSXf0Fa_UXXPYIwc7oWLnQaynQ79_7kjxLWyZk"
-            optional.setHeader("Authorization", "Bearer $token")
-            logd(method, url, optional)
-        }
-        Requests.get("http://app.shijianxingqiu.com/api/v1/cert/unreceived", hashMapOf("mobile" to "18870912166", "code" to "1111"))
-            .enqueue2(this, { call, response, s -> logd(s) },
-                { call, msg -> logd(msg)  })
+        val str = """
+            {
+                'list1': {'a': 1},
+                'list2': [1, 2, 3]
+            }
+        """.trimIndent()
+        logd(Bean(JSONObject(str)))
     }
 
     override fun onResume() {

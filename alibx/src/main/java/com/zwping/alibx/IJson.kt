@@ -56,6 +56,8 @@ abstract class IJson(obj: JSONObject?=null, autoReflexParse: Boolean=false) {
                             Float::class.java, Float::class.javaObjectType -> f.set(this, obj.optDouble(f.name).toFloat())
                             Double::class.java, Double::class.javaObjectType -> f.set(this, obj.optDouble(f.name))
                             Long::class.java, Long::class.javaObjectType -> f.set(this, obj.optLong(f.name))
+                            JSONObject::class.java, JSONObject::class.javaObjectType -> f.set(this, obj.optJSONObject(f.name))
+                            JSONArray::class.java, JSONArray::class.javaObjectType -> f.set(this, obj.optJSONArray(f.name))
                             List::class.java, List::class.javaObjectType -> {
                                 val type1 = f.genericType // 获取泛型
                                 if (type1 is ParameterizedType) {
