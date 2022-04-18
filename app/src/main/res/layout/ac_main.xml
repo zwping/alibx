@@ -9,30 +9,9 @@
     android:orientation="vertical"
     tools:context=".AcMain">
 
-    <TextView
-        android:id="@+id/tv1"
-        android:text="123"
+    <EditText
+        android:id="@+id/et_content"
         android:layout_width="match_parent"
-        android:layout_height="50dp" />
-    <TextView
-        android:id="@+id/tv2"
-        android:text="123"
-        android:layout_width="match_parent"
-        android:layout_height="50dp" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view1"
-        android:layout_width="match_parent"
-        android:layout_height="200dp" />
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view2"
-        android:layout_width="match_parent"
-        android:layout_height="200dp" />
-
-    <com.zwping.alibx.Banner
-        android:id="@+id/banner"
-        android:background="#999"
-        android:layout_width="match_parent"
-        android:layout_height="200dp" />
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

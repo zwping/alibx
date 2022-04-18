@@ -12,7 +12,7 @@ import com.zwping.alibx.*
  *
  * zwping @ 2021/11/24
  */
-class App : Application() {
+class App : BaseApp() {
     companion object {
         val acs = mutableListOf<Activity>()
     }

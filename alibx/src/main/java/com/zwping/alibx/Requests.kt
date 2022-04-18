@@ -44,6 +44,8 @@ object Requests {
     private val okHttpClient by lazy { _okHttpBuilder.build() }
     private val _okHttpBuilder by lazy { OkHttpClient.Builder() }
     val handler by lazy { Handler(Looper.getMainLooper()) }
+    // 简单的请求日志
+    var simpleLoggingInterceptor: ((method: String, url: String, optional: Optional)->Unit)? = null
 
     fun init(block: OkHttpClient.Builder.() -> Unit) {
         // okHttpBuilder.addInterceptor(LogInterceptor(ctx.isAppDebug()))
@@ -310,6 +312,7 @@ object Requests {
         if (null != _data) optional.data.putAll(_data)
         if (null != _json) optional.json = _json
         kwargs.invoke(optional)
+        simpleLoggingInterceptor?.invoke(method, url, optional)
 
         url(url.toHttpUrl().newBuilder().apply { optional.params.forEach{ addQueryParameter(it.key.toString(), it.value?.toString())} }.build())
         val requestBody = when { // 注意表单类型的优先级
@@ -412,6 +415,14 @@ class Optional(val request: Request.Builder,
     fun removeHeader(vararg names: String) { names.forEach { request.removeHeader(it) } }
 
     // fun addCookie 使用CookieJar自动管理
+
+    override fun toString(): String {
+        var str = ""
+        if (params.keys.size != 0) str += "params: $params"
+        if (data.keys.size != 0) str += "data: $data"
+        if (json != null) str += "json: $json"
+        return str
+    }
 }
 
 data class Response2(val isSuccessful: Boolean,

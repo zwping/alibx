@@ -378,6 +378,9 @@ object Bar {
         return insets(view)?.isVisible(ime()) ?: false
     }
 
+    /**
+     * 显示键盘, onCreate中需要延时100ms调用
+     */
     fun showKeyboard(view: View?) {
         view ?: return
         view.isFocusable = true
