@@ -66,12 +66,6 @@ object Scheme {
             schemeInterceptors.forEach {
                 if (it.process(ctx, scheme)) return
             }
-            if (scheme.uri?.scheme?.startsWith("http")==true || scheme.uri?.scheme?.startsWith("https")==true) {
-                if (schemeList?.webBrowser == null) { // 未定制内部WebView则使用系统浏览器打开
-                    ctx.startActivity(Intent(Intent.ACTION_VIEW, scheme.uri)); return
-                }
-                cls = schemeList?.webBrowser
-            }
             schemeList?.dataFunc?.filter { it.key.equals(scheme) }?.forEach {
                 it.value.invoke(ctx, scheme.extra)
                 return  // dataFunc优先级高于data
@@ -79,6 +73,12 @@ object Scheme {
             var schemeExist = false
             schemeList?.data?.filter { it.key.equals(scheme) }?.forEach {
                 cls = it.value; schemeExist = true
+            }
+            if (scheme.uri?.scheme?.startsWith("http")==true || scheme.uri?.scheme?.startsWith("https")==true) {
+                if (schemeList?.webBrowser == null) { // 未定制内部WebView则使用系统浏览器打开
+                    ctx.startActivity(Intent(Intent.ACTION_VIEW, scheme.uri)); return
+                }
+                cls = schemeList?.webBrowser; schemeExist = true
             }
             if (!schemeExist) {
                 showToast(ctx, "$ErrMsg2 $scheme"); return
