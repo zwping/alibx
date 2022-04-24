@@ -3,6 +3,7 @@ package com.zwping.alibx
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.drawable.*
 import android.net.Uri
 import android.os.Build
@@ -47,7 +48,10 @@ object WebViewUtil {
                    onProgress: (Int) -> Unit = {},
                    pageTitleLis:(String?)->Unit = {},
                    shouldOverrideUrlLoading: (web: WebView, url: String)-> Boolean = { _, _ -> false },
-                   onShowFileChooser: (web: WebView?, saf2webFileCallback: ValueCallback<Array<Uri>>?) -> Boolean = { _, _ -> false }){
+                   onShowFileChooser: (web: WebView?, saf2webFileCallback: ValueCallback<Array<Uri>>?) -> Boolean = { _, _ -> false },
+                   onPageStarted: (view: WebView?, url: String?, favicon: Bitmap?)->Unit = { _, _, _ -> },
+                   onPageFinished: (view: WebView?, url: String?)->Unit = { _, _ -> },
+    ){
        webView ?: return
         val webChromeClient = object: WebChromeClient() {
             override fun onReceivedTitle(view: WebView?, title: String?) {
@@ -70,6 +74,12 @@ object WebViewUtil {
                 if (shouldOverrideUrlLoading(view, url)) return true // js url协议外部消化, 不重载url
                 view.loadUrl(url)
                 return true
+            }
+            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                onPageStarted.invoke(view, url, favicon)
+            }
+            override fun onPageFinished(view: WebView?, url: String?) {
+                onPageFinished.invoke(view, url)
             }
         }
         webView.webChromeClient = webChromeClient
