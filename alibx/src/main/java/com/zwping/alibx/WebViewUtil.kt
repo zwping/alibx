@@ -173,8 +173,11 @@ fun WebView?.initClient(lis: (vc: WebViewClient, cc: WebChromeClient)->Unit,
                         onProgress: (Int) -> Unit = {},
                         pageTitleLis:(String?)->Unit = {},
                         shouldOverrideUrlLoading: (web: WebView, url: String)-> Boolean = { _, _ -> false },
-                        onShowFileChooser: (web: WebView?, saf2webFileCallback: ValueCallback<Array<Uri>>?) -> Boolean = { _, _ -> false }) {
-    WebViewUtil.initClient(this, lis, onProgress, pageTitleLis, shouldOverrideUrlLoading, onShowFileChooser)
+                        onShowFileChooser: (web: WebView?, saf2webFileCallback: ValueCallback<Array<Uri>>?) -> Boolean = { _, _ -> false },
+                        onPageStarted: (view: WebView?, url: String?, favicon: Bitmap?)->Unit = { _, _, _ -> },
+                        onPageFinished: (view: WebView?, url: String?)->Unit = { _, _ -> },
+) {
+    WebViewUtil.initClient(this, lis, onProgress, pageTitleLis, shouldOverrideUrlLoading, onShowFileChooser, onPageStarted, onPageFinished)
 }
 
 fun WebView?.goBack2(): Boolean = WebViewUtil.goBack2(this)

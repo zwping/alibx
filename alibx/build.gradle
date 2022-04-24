@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk 21
         targetSdk 30
-        versionCode 95
-        versionName "0.8.17"
+        versionCode 96
+        versionName "0.8.18"
         consumerProguardFiles 'consumer-rules.pro'
         manifestPlaceholders =
                 [
