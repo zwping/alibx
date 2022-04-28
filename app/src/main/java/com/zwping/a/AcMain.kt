@@ -25,6 +25,7 @@ class AcMain : BaseAc<AcMainBinding>() {
         vb.webView.initClient({vc, cc ->  })
         vb.webView.loadUrl("https://www.qq.com")
 
+        IDialog.DialogIOS(this).show()
     }
 
 }

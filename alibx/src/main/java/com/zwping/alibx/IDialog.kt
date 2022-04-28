@@ -81,7 +81,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
                 it.flags = WindowManager.LayoutParams.FLAG_DIM_BEHIND; it.dimAmount=0.5F
             }
             decorView?.setPadding(0, 0, 0, 0)
-            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            // requestWindowFeature(Window.FEATURE_NO_TITLE)      // theme为NoActionBar
             immersive()
         }
 
@@ -488,7 +488,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
             return super.create().also { dialog ->
                 _dialog = dialog
                 canceledOnTouchOutside?.also { dialog.setCanceledOnTouchOutside(it) }
-                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+                // dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
             }
         }
         override fun show(): AlertDialog {
@@ -757,7 +757,7 @@ class IDialog(private val alertDialog: AppCompatDialog?=null): AppCompatDialogFr
 
         override fun create(): AlertDialog {
             return super.create().also {
-                it.requestWindowFeature(Window.FEATURE_NO_TITLE)
+                // it.requestWindowFeature(Window.FEATURE_NO_TITLE)
                 _dialog = it
                 canceledOnTouchOutside?.also { _dialog?.setCanceledOnTouchOutside(it) }
             }

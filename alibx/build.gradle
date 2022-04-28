@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk 21
         targetSdk 30
-        versionCode 96
-        versionName "0.8.18"
+        versionCode 97
+        versionName "0.8.19"
         consumerProguardFiles 'consumer-rules.pro'
         manifestPlaceholders =
                 [
@@ -22,7 +22,7 @@ android {
     }
     android.libraryVariants.all { variant ->
         variant.outputs.all { output ->
-            outputFileName = "${rootProject.name}-${android.defaultConfig.versionName}.aar"
+            outputFileName = "${parent.name}-${android.defaultConfig.versionName}.aar"
         }
     }
     compileOptions {
